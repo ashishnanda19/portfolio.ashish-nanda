@@ -189,7 +189,7 @@ const BrowserContent = () => (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             
             <div className="border border-gray-200 rounded-xl p-4 hover:border-blue-300 transition-colors">
-              <h3 className="font-bold text-lg text-blue-600">Distributed Video Transcoding Platform</h3>
+              <h3 className="font-bold text-lg text-blue-600"> Video Transcoder</h3>
               <p className="text-xs text-gray-500 mt-1 mb-2">Node.js, Express.js, AWS (S3, Lambda, ECS, EventBridge), Redis, MongoDB, Docker, ffmpeg</p>
               <p className="text-sm text-gray-600">Engineered a distributed AWS-based video transcoding pipeline with Redis queues, leaky-bucket rate limiting, and multi-resolution output generation.</p>
             </div>
