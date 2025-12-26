@@ -304,7 +304,7 @@ const PhotoBooth = () => {
 };
 
 const TerminalContent = () => {
-  const [history, setHistory] = useState<string[]>(["Welcome to HarshOS v1.0", "Type 'help' to see commands."]);
+  const [history, setHistory] = useState<string[]>(["Welcome to AshishOS", "Type 'help' to see commands."]);
   const [input, setInput] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
 
