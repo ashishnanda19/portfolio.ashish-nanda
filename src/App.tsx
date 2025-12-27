@@ -5,7 +5,6 @@ import {
   Aperture, Download, Twitter, Monitor
 } from 'lucide-react';
 
-// --- Types & Interfaces ---
 
 interface WindowState {
   id: string;
@@ -24,6 +23,7 @@ interface AppIcon {
   id: string;
   name: string;
   icon: React.ReactNode;
+  iconSrc?: string; // Path to macOS icon image
   color: string;
 }
 
@@ -598,29 +598,104 @@ const App = () => {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  const appIcons: AppIcon[] = [
-    { id: 'finder', name: 'Finder', icon: <User size={28} className="text-white drop-shadow-md" />, color: 'bg-gradient-to-b from-blue-400 to-blue-600' },
-    { id: 'safari', name: 'Safari', icon: <Globe size={28} className="text-white drop-shadow-md" />, color: 'bg-gradient-to-b from-blue-300 to-blue-500' },
-    { id: 'vscode', name: 'Code', icon: <Code size={28} className="text-white drop-shadow-md" />, color: 'bg-gradient-to-b from-gray-700 to-gray-900' },
-    { id: 'terminal', name: 'Terminal', icon: <Terminal size={28} className="text-white drop-shadow-md" />, color: 'bg-gradient-to-b from-gray-800 to-black' },
-    { id: 'camera', name: 'Camera', icon: <Aperture size={28} className="text-white drop-shadow-md" />, color: 'bg-gradient-to-b from-gray-300 to-gray-500' },
-    { id: 'arcade', name: 'Arcade', icon: <Gamepad2 size={28} className="text-white drop-shadow-md" />, color: 'bg-gradient-to-b from-purple-400 to-purple-600' },
-  ];
+  // Helper function to render app icon (image or fallback React icon)
+  const renderAppIcon = (app: AppIcon, size: number = 28) => {
+    if (app.iconSrc) {
+      return (
+        <img 
+          src={app.iconSrc} 
+          alt={app.name} 
+          className="object-contain drop-shadow-md" 
+          style={{ 
+            width: size, 
+            height: size, 
+            maxWidth: '100%', 
+            maxHeight: '100%', 
+            display: 'block', 
+            flexShrink: 0,
+            objectFit: 'contain'
+          }}
+          loading="eager"
+          draggable={false}
+          onError={(e) => {
+            // Log error for debugging
+            console.error(`Failed to load icon: ${app.iconSrc}`, e);
+          }}
+          onLoad={() => {
+            console.log(`Icon loaded: ${app.iconSrc}`);
+          }}
+        />
+      );
+    }
+    return app.icon;
+  };
 
-  const [windows, setWindows] = useState<WindowState[]>([
+  const appIcons: AppIcon[] = [
     { 
       id: 'finder', 
-      title: 'Ashish Kumar Nanda', 
-      icon: <User size={16} />, 
-      component: <AboutContent />, 
-      isOpen: true, 
-      isMinimized: false, 
-      isMaximized: false,
-      zIndex: 1, 
-      position: { x: 50, y: 50 }, 
-      size: { width: 800, height: 600 } 
+      name: 'Finder', 
+      icon: <User size={28} className="text-white drop-shadow-md" />,
+      iconSrc: '/icons/finder.png',
+      color: 'bg-transparent' 
+    },
+    { 
+      id: 'safari', 
+      name: 'Safari', 
+      icon: <Globe size={28} className="text-white drop-shadow-md" />,
+      iconSrc: '/icons/safari.png',
+      color: 'bg-transparent' 
+    },
+    { 
+      id: 'vscode', 
+      name: 'Code', 
+      icon: <Code size={28} className="text-white drop-shadow-md" />,
+      iconSrc: '/icons/vscode.png',
+      color: 'bg-transparent' 
+    },
+    { 
+      id: 'terminal', 
+      name: 'Terminal', 
+      icon: <Terminal size={28} className="text-white drop-shadow-md" />,
+      iconSrc: '/icons/terminal.png',
+      color: 'bg-transparent' 
+    },
+    { 
+      id: 'camera', 
+      name: 'Camera', 
+      icon: <Aperture size={28} className="text-white drop-shadow-md" />,
+      iconSrc: '/icons/photobooth.png',
+      color: 'bg-transparent' 
+    },
+    { 
+      id: 'arcade', 
+      name: 'Arcade', 
+      icon: <Gamepad2 size={28} className="text-white drop-shadow-md" />,
+      iconSrc: '/icons/game-center.png',
+      color: 'bg-transparent' 
+    },
+  ];
+
+  const [windows, setWindows] = useState<WindowState[]>([]);
+  
+  // Initialize first window after appIcons is defined
+  useEffect(() => {
+    const finderApp = appIcons.find(a => a.id === 'finder');
+    if (finderApp && windows.length === 0) {
+      setWindows([{ 
+        id: 'finder', 
+        title: 'Ashish Kumar Nanda', 
+        icon: renderAppIcon(finderApp, 18), 
+        component: <AboutContent />, 
+        isOpen: true, 
+        isMinimized: false, 
+        isMaximized: false,
+        zIndex: 1, 
+        position: { x: 50, y: 50 }, 
+        size: { width: 800, height: 600 } 
+      }]);
     }
-  ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Optimized Drag Logic
   useEffect(() => {
@@ -666,7 +741,7 @@ const App = () => {
         case 'arcade': content = <SnakeGame />; title = 'Arcade'; size = { width: 440, height: 520 }; break;
         default: content = <div>Content not found</div>;
       }
-      setWindows(prev => [...prev, { id: appId, title, icon: appData?.icon, component: content, isOpen: true, isMinimized: false, isMaximized: false, zIndex: zIndexCounter + 1, position: { x: 80 + (windows.length * 30), y: 80 + (windows.length * 30) }, size }]);
+      setWindows(prev => [...prev, { id: appId, title, icon: appData ? renderAppIcon(appData, 18) : undefined, component: content, isOpen: true, isMinimized: false, isMaximized: false, zIndex: zIndexCounter + 1, position: { x: 80 + (windows.length * 30), y: 80 + (windows.length * 30) }, size }]);
       setZIndexCounter(prev => prev + 1);
       setActiveWindow(appId);
     }
@@ -682,7 +757,7 @@ const App = () => {
     const index = appIcons.findIndex(a => a.id === appId);
     if (index === -1) return '50%';
     const total = appIcons.length;
-    return `calc(50vw + ${(index - (total - 1) / 2) * 68}px)`;
+    return `calc(50vw + ${(index - (total - 1) / 2) * 76}px)`;
   };
 
   // If mobile, show restriction message
@@ -722,11 +797,21 @@ const App = () => {
         {/* Desktop Icons */}
         <div className="absolute right-4 top-12 flex flex-col items-end gap-6 p-2 z-0">
            <div className="group flex flex-col items-center cursor-pointer w-20" onDoubleClick={() => openApp('safari')}>
-             <div className="w-14 h-12 bg-blue-400/90 rounded-t-sm rounded-b-lg shadow-lg group-hover:bg-blue-300 transition-colors flex items-center justify-center border-t border-white/30 backdrop-blur-sm"><Globe className="text-white/90 w-6 h-6" /></div>
+             <div className="w-16 h-16 rounded-xl shadow-lg group-hover:scale-105 transition-transform flex items-center justify-center overflow-hidden bg-white/10 backdrop-blur-sm border border-white/20">
+               {(() => {
+                 const safariApp = appIcons.find(a => a.id === 'safari');
+                 return safariApp ? renderAppIcon(safariApp, 56) : <Globe className="text-white/90 w-6 h-6" />;
+               })()}
+             </div>
              <span className="text-white text-xs mt-1 font-medium bg-black/20 px-2 py-0.5 rounded-md shadow-sm backdrop-blur-sm">Projects</span>
            </div>
            <div className="group flex flex-col items-center cursor-pointer w-20" onDoubleClick={() => openApp('vscode')}>
-             <div className="w-14 h-12 bg-blue-400/90 rounded-t-sm rounded-b-lg shadow-lg group-hover:bg-blue-300 transition-colors flex items-center justify-center border-t border-white/30 backdrop-blur-sm"><Code className="text-white/90 w-6 h-6" /></div>
+             <div className="w-16 h-16 rounded-xl shadow-lg group-hover:scale-105 transition-transform flex items-center justify-center overflow-hidden bg-white/10 backdrop-blur-sm border border-white/20">
+               {(() => {
+                 const vscodeApp = appIcons.find(a => a.id === 'vscode');
+                 return vscodeApp ? renderAppIcon(vscodeApp, 56) : <Code className="text-white/90 w-6 h-6" />;
+               })()}
+             </div>
              <span className="text-white text-xs mt-1 font-medium bg-black/20 px-2 py-0.5 rounded-md shadow-sm backdrop-blur-sm">Resume</span>
            </div>
         </div>
@@ -775,7 +860,7 @@ const App = () => {
             return (
               <div key={app.id} className="group relative flex flex-col items-center">
                  <div className="absolute -top-14 bg-gray-800/90 text-white text-xs font-medium px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm shadow-lg pointer-events-none mb-2">{app.name}</div>
-                 <button onClick={() => openApp(app.id)} className={`${app.color} w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg transition-all duration-200 ease-out transform hover:scale-110 hover:-translate-y-2 active:scale-95 active:translate-y-0 ring-1 ring-white/20`}>{app.icon}</button>
+                 <button onClick={() => openApp(app.id)} className={`${app.color} w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg transition-all duration-200 ease-out transform hover:scale-110 hover:-translate-y-2 active:scale-95 active:translate-y-0 ring-1 ring-white/20 overflow-hidden`}>{renderAppIcon(app, 48)}</button>
                  <div className={`w-1 h-1 rounded-full bg-gray-800 mt-2 transition-all duration-300 ${isRunning ? 'opacity-100 scale-100' : 'opacity-0 scale-0'}`}></div>
               </div>
             );
