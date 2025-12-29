@@ -805,7 +805,7 @@ const App = () => {
              </div>
              <span className="text-white text-xs mt-1 font-medium bg-black/20 px-2 py-0.5 rounded-md shadow-sm backdrop-blur-sm">Projects</span>
            </div>
-           <div className="group flex flex-col items-center cursor-pointer w-20" onDoubleClick={() => openApp('vscode')}>
+           <div className="group flex flex-col items-center cursor-pointer w-20" onDoubleClick={() => window.open("https://drive.google.com/file/d/1ln5ZruwH_u-QLrTHfz-pgZiiZt-vmECd/view?usp=sharing", "_blank")}>
              <div className="w-16 h-16 rounded-xl shadow-lg group-hover:scale-105 transition-transform flex items-center justify-center overflow-hidden bg-white/10 backdrop-blur-sm border border-white/20">
                {(() => {
                  const vscodeApp = appIcons.find(a => a.id === 'vscode');
