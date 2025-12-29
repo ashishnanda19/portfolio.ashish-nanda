@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 
 
+
 interface WindowState {
   id: string;
   title: string;
@@ -336,12 +337,13 @@ const TerminalContent = () => {
           newHistory.push("Languages: C++, Python, Java, C, SQL, HTML, CSS, JavaScript", "Frameworks & Libraries: React, Node.js, Express.js, Tailwind CSS", "Cloud & Distributed Systems: AWS, Redis, Docker, CI/CD", "Tools & Platforms: Git, GitHub, Postman, Vite, MongoDB, REST APIs");
           break;
         case 'socials':
-  newHistory.push(
+  newHistory.push(...([
     <a
       href="https://github.com/ashishnanda19"
       target="_blank"
       rel="noopener noreferrer"
       className="text-green-400 hover:underline"
+      key="github"
     >
       GitHub: ashishnanda19
     </a>,
@@ -350,6 +352,7 @@ const TerminalContent = () => {
       target="_blank"
       rel="noopener noreferrer"
       className="text-green-400 hover:underline"
+      key="linkedin"
     >
       LinkedIn: ashishnanda19
     </a>,
@@ -358,6 +361,7 @@ const TerminalContent = () => {
       target="_blank"
       rel="noopener noreferrer"
       className="text-green-400 hover:underline"
+      key="leetcode"
     >
       LeetCode: ashishnanda19
     </a>,
@@ -366,6 +370,7 @@ const TerminalContent = () => {
       target="_blank"
       rel="noopener noreferrer"
       className="text-green-400 hover:underline"
+      key="x"
     >
       X: ashish19n
     </a>,
@@ -374,10 +379,11 @@ const TerminalContent = () => {
       target="_blank"
       rel="noopener noreferrer"
       className="text-green-400 hover:underline"
+      key="instagram"
     >
       Instagram: ashish19nanda
     </a>
-  );
+  ] as any));
   break;
 
         case 'clear':
