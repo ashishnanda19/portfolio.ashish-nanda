@@ -322,17 +322,64 @@ const TerminalContent = () => {
           newHistory.push("  about     - Bio", "  skills    - Tech Stack", "  projects  - My Work", "  socials   - Contact", "  clear");
           break;
         case 'about':
-          newHistory.push("Ashish Kumar Nanda | Research Intern @ IIT(BHU)");
-          break;
+  newHistory.push(
+    "Ashish Kumar Nanda | CS Undergrad | Web Developer \n\n" +
+    "Third year CS student at Manipal University Jaipur who codes by day and plays guitar by night.\n" +
+    "I build full-stack web apps, grind LeetCode for fun, and occasionally debug with emotional support from my music."
+  );
+  break;
+
         case 'projects':
-          newHistory.push("1. Distributed Video Transcoding Platform", "2. InvoSync", "3. SafeTrail");
+          newHistory.push("1. Distributed Video Transcoding Platform - Engineered a distributed AWS-based video transcoding pipeline with Redis queues, leaky-bucket rate limiting, and multi-resolution output generation.\n\n", "2. InvoSync - Engineered an automated invoice–PO reconciliation platform with OCR-based data extraction and fuzzy matching, improving accuracy to 98%+ and reducing verification time and operational effort by over 75%.\n\n", "3. SafeTrail - Developed a scalable backend safety platform with 25+ APIs, real-time location tracking, and ML-based threat analysis, improving system reliability by 40% and enabling sub-second inference.");
           break;
         case 'skills':
           newHistory.push("Languages: C++, Python, Java, C, SQL, HTML, CSS, JavaScript", "Frameworks & Libraries: React, Node.js, Express.js, Tailwind CSS", "Cloud & Distributed Systems: AWS, Redis, Docker, CI/CD", "Tools & Platforms: Git, GitHub, Postman, Vite, MongoDB, REST APIs");
           break;
         case 'socials':
-          newHistory.push("GitHub: ashishnanda19", "LinkedIn: ashishnanda19");
-          break;
+  newHistory.push(
+    <a
+      href="https://github.com/ashishnanda19"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-green-400 hover:underline"
+    >
+      GitHub: ashishnanda19
+    </a>,
+    <a
+      href="https://www.linkedin.com/ashishnanda19"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-green-400 hover:underline"
+    >
+      LinkedIn: ashishnanda19
+    </a>,
+    <a
+      href="https://www.leetcode.com/ashishnanda19"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-green-400 hover:underline"
+    >
+      LeetCode: ashishnanda19
+    </a>,
+    <a
+      href="https://www.x.com/in/ashish19n"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-green-400 hover:underline"
+    >
+      X: ashish19n
+    </a>,
+    <a
+      href="https://www.instagram.com/ashish19nanda"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-green-400 hover:underline"
+    >
+      Instagram: ashish19nanda
+    </a>
+  );
+  break;
+
         case 'clear':
           setHistory([]);
           setInput("");
@@ -783,10 +830,11 @@ const App = () => {
       
       {/* Reliable Background Image - MacOS Style */}
       <img 
-        src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop" 
-        className="absolute inset-0 w-full h-full object-cover z-0 pointer-events-none opacity-100"
-        alt="MacOS Wallpaper" 
-      />
+  src="/background.png"
+  className="absolute inset-0 w-full h-full object-cover z-0 pointer-events-none opacity-100"
+  alt="Background"
+ />
+
       
       {/* Top Menu Bar */}
       <TopBar title={activeWindow ? windows.find(w => w.id === activeWindow)?.title || '' : 'Finder'} activeMenu={activeMenu} setActiveMenu={setActiveMenu} />
