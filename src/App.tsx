@@ -783,7 +783,7 @@ const App = () => {
       
       {/* Reliable Background Image - MacOS Style */}
       <img 
-        src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop" 
+        src="https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=2564&auto=format&fit=crop" 
         className="absolute inset-0 w-full h-full object-cover z-0 pointer-events-none opacity-100"
         alt="MacOS Wallpaper" 
       />
