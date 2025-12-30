@@ -4,7 +4,7 @@ import {
   Github, Instagram, Linkedin, BookOpen, Search, Wifi, Battery, Play, RotateCcw, 
   Aperture, Download, Twitter, Monitor
 } from 'lucide-react';
-
+import InteractiveBackground from './InteractiveBackground';
 
 
 interface WindowState {
@@ -323,69 +323,17 @@ const TerminalContent = () => {
           newHistory.push("  about     - Bio", "  skills    - Tech Stack", "  projects  - My Work", "  socials   - Contact", "  clear");
           break;
         case 'about':
-  newHistory.push(
-    "Ashish Kumar Nanda | CS Undergrad | Web Developer \n\n" +
-    "Third year CS student at Manipal University Jaipur who codes by day and plays guitar by night.\n" +
-    "I build full-stack web apps, grind LeetCode for fun, and occasionally debug with emotional support from my music."
-  );
-  break;
-
+          newHistory.push("Ashish Kumar Nanda | Research Intern @ IIT(BHU)");
+          break;
         case 'projects':
-          newHistory.push("1. Distributed Video Transcoding Platform - Engineered a distributed AWS-based video transcoding pipeline with Redis queues, leaky-bucket rate limiting, and multi-resolution output generation.\n\n", "2. InvoSync - Engineered an automated invoice–PO reconciliation platform with OCR-based data extraction and fuzzy matching, improving accuracy to 98%+ and reducing verification time and operational effort by over 75%.\n\n", "3. SafeTrail - Developed a scalable backend safety platform with 25+ APIs, real-time location tracking, and ML-based threat analysis, improving system reliability by 40% and enabling sub-second inference.");
+          newHistory.push("1. Distributed Video Transcoding Platform", "2. InvoSync", "3. SafeTrail");
           break;
         case 'skills':
           newHistory.push("Languages: C++, Python, Java, C, SQL, HTML, CSS, JavaScript", "Frameworks & Libraries: React, Node.js, Express.js, Tailwind CSS", "Cloud & Distributed Systems: AWS, Redis, Docker, CI/CD", "Tools & Platforms: Git, GitHub, Postman, Vite, MongoDB, REST APIs");
           break;
         case 'socials':
-  newHistory.push(...([
-    <a
-      href="https://github.com/ashishnanda19"
-      target="_blank"
-      rel="noopener noreferrer"
-      className="text-green-400 hover:underline"
-      key="github"
-    >
-      GitHub: ashishnanda19
-    </a>,
-    <a
-      href="https://www.linkedin.com/ashishnanda19"
-      target="_blank"
-      rel="noopener noreferrer"
-      className="text-green-400 hover:underline"
-      key="linkedin"
-    >
-      LinkedIn: ashishnanda19
-    </a>,
-    <a
-      href="https://www.leetcode.com/ashishnanda19"
-      target="_blank"
-      rel="noopener noreferrer"
-      className="text-green-400 hover:underline"
-      key="leetcode"
-    >
-      LeetCode: ashishnanda19
-    </a>,
-    <a
-      href="https://www.x.com/in/ashish19n"
-      target="_blank"
-      rel="noopener noreferrer"
-      className="text-green-400 hover:underline"
-      key="x"
-    >
-      X: ashish19n
-    </a>,
-    <a
-      href="https://www.instagram.com/ashish19nanda"
-      target="_blank"
-      rel="noopener noreferrer"
-      className="text-green-400 hover:underline"
-      key="instagram"
-    >
-      Instagram: ashish19nanda
-    </a>
-  ] as any));
-  break;
-
+          newHistory.push("GitHub: ashishnanda19", "LinkedIn: ashishnanda19");
+          break;
         case 'clear':
           setHistory([]);
           setInput("");
@@ -834,22 +782,17 @@ const App = () => {
   return (
     <div className="h-screen w-screen overflow-hidden font-sans select-none relative text-gray-900 bg-gray-900" onClick={() => { setActiveWindow(null); setActiveMenu(null); }}>
       
-      {/* Reliable Background Image - MacOS Style */}
-      <img 
-  src="/background.png"
-  className="absolute inset-0 w-full h-full object-cover z-0 pointer-events-none opacity-100"
-  alt="Background"
- />
-
+      {/* Interactive Background with Doodle Hotspots */}
+      <InteractiveBackground />
       
       {/* Top Menu Bar */}
       <TopBar title={activeWindow ? windows.find(w => w.id === activeWindow)?.title || '' : 'Finder'} activeMenu={activeMenu} setActiveMenu={setActiveMenu} />
 
       {/* Desktop Area */}
-      <div className="relative w-full h-full pt-8 pb-24 z-10">
+      <div className="relative w-full h-full pt-8 pb-24 z-10 pointer-events-none">
         
         {/* Desktop Icons */}
-        <div className="absolute right-4 top-12 flex flex-col items-end gap-6 p-2 z-0">
+        <div className="absolute right-4 top-12 flex flex-col items-end gap-6 p-2 z-0 pointer-events-auto">
            <div className="group flex flex-col items-center cursor-pointer w-20" onDoubleClick={() => openApp('safari')}>
              <div className="w-16 h-16 rounded-xl shadow-lg group-hover:scale-105 transition-transform flex items-center justify-center overflow-hidden bg-white/10 backdrop-blur-sm border border-white/20">
                {(() => {
