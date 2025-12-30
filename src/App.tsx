@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useContext } from 'react';
 import { 
   Terminal, User, Code, Gamepad2, Globe, X, Minus, Maximize2, Minimize2, 
   Github, Instagram, Linkedin, BookOpen, Search, Wifi, Battery, Play, RotateCcw, 
-  Aperture, Download, Twitter, Monitor, Mail
+  Aperture, Download, Twitter, Monitor, Mail, Music, UserPlus
 } from 'lucide-react';
 import InteractiveBackground from './InteractiveBackground';
 
@@ -577,6 +577,197 @@ const PhotoBooth = () => {
           </div>
         </>
       )}
+    </div>
+  );
+};
+
+const SpotifyContent = () => {
+  const [selectedPlaylist, setSelectedPlaylist] = useState<string | null>(null);
+
+  // Helper function to extract playlist ID from URL
+  const extractPlaylistId = (url: string): string => {
+    // Try to match playlist ID in URL
+    const match = url.match(/playlist\/([a-zA-Z0-9]{22})/);
+    if (match && match[1]) {
+      return match[1];
+    }
+    // If URL format is different, try alternative patterns
+    const altMatch = url.match(/\/([a-zA-Z0-9]{22})(?:\?|$)/);
+    if (altMatch && altMatch[1]) {
+      return altMatch[1];
+    }
+    // If it's already just an ID (22 characters), return as is
+    if (url.length === 22 && /^[a-zA-Z0-9]+$/.test(url)) {
+      return url;
+    }
+    // Fallback: return empty string to show error
+    console.error('Could not extract playlist ID from:', url);
+    return '';
+  };
+
+  // Playlists with Spotify URLs - IDs will be extracted automatically
+  const playlists = [
+    {
+      id: 'coding-focus',
+      name: 'Hindi Music',
+      description: 'Chandani & Chai',
+      spotifyUrl: 'https://open.spotify.com/playlist/59jMJYSo97Dy5JTXuaAQrK?si=rsrKZ4SpSWSjT-Zse-3n6A&pi=4_pUzpe5SsO-6'
+    },
+    {
+      id: 'chill-vibes',
+      name: 'English Music',
+      description: 'Clouded Coffeehouse',
+      spotifyUrl: 'https://open.spotify.com/playlist/5Q59GgXHjOzY5vjeUBStbb?si=_sTg0OsuTCmoczXybYs4aQ'
+    },
+    {
+      id: 'workout',
+      name: 'Rap Music',
+      description: 'Drip & Drop',
+      spotifyUrl: 'https://open.spotify.com/playlist/477IgA9QgtRaxQ7s6LiFLR?si=QGMogWbpShWIzhEp-F-38w&pi=XnaY64pRTKq0V'
+    },
+  ];
+
+  return (
+    <div className="flex flex-col h-full bg-[var(--bg-elevated)] text-[var(--text-color)]">
+      {/* Spotify chrome */}
+      <div className="bg-[var(--chrome-bg)] border-b border-[var(--border-subtle)] p-3 flex items-center space-x-3 shadow-sm z-10">
+        <div className="flex space-x-2">
+          <div className="w-3 h-3 rounded-full bg-red-400"></div>
+          <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
+          <div className="w-3 h-3 rounded-full bg-green-400"></div>
+        </div>
+        <div className="flex-1 bg-[var(--bg-input)] rounded-lg border border-[var(--border-strong)] px-4 py-2 text-sm text-[var(--text-muted)] flex items-center shadow-inner">
+          <Music size={14} className="mr-3 text-[var(--icon-muted)]" />
+          open.spotify.com/user/ashishnanda19
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-auto bg-[var(--bg-subtle)]">
+        <div className="max-w-6xl mx-auto p-6 space-y-6">
+          
+          {/* Profile Section */}
+          <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-2xl shadow-sm p-6">
+            <div className="flex items-center gap-6">
+              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white text-3xl font-bold shadow-lg">
+                <Music size={40} />
+              </div>
+              <div className="flex-1">
+                <h1 className="text-3xl font-bold text-[var(--text-color)] mb-1">Ashish Kumar Nanda</h1>
+                <p className="text-[var(--text-muted)] mb-4">@ashishnanda19</p>
+                <div className="flex items-center gap-4">
+                  <a
+                    href="https://open.spotify.com/user/31l75eh4gpxsbgm4w4ocm23mtqem"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-4 py-2 bg-[#1DB954] text-white rounded-full text-sm font-medium hover:bg-[#1ed760] transition-colors"
+                  >
+                    <UserPlus size={16} />
+                    Send Friend Request
+                  </a>
+                  <a
+                    href="https://open.spotify.com/user/31l75eh4gpxsbgm4w4ocm23mtqem"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-[var(--link-muted)] hover:text-[#1DB954] underline"
+                  >
+                    View on Spotify
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Playlists Section */}
+          <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-2xl shadow-sm p-6">
+            <h2 className="text-2xl font-bold mb-4 text-[var(--text-color)]">My Playlists</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {playlists.map((playlist) => (
+                <div
+                  key={playlist.id}
+                  className="border border-[var(--card-border)] rounded-xl p-4 hover:border-[#1DB954] transition-colors cursor-pointer group"
+                  onClick={() => setSelectedPlaylist(playlist.id === selectedPlaylist ? null : playlist.id)}
+                >
+                  <div className="aspect-square bg-gradient-to-br from-green-400 to-green-600 rounded-lg mb-3 flex items-center justify-center text-white text-4xl font-bold shadow-md group-hover:scale-105 transition-transform">
+                    <Music size={48} />
+                  </div>
+                  <h3 className="font-bold text-lg text-[var(--text-color)] mb-1">{playlist.name}</h3>
+                  <p className="text-sm text-[var(--text-muted)]">{playlist.description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Spotify Player */}
+          {selectedPlaylist && (() => {
+            const playlist = playlists.find(p => p.id === selectedPlaylist);
+            if (!playlist) return null;
+            
+            const playlistId = extractPlaylistId(playlist.spotifyUrl);
+            
+            if (!playlistId) {
+              return (
+                <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-2xl shadow-sm p-6">
+                  <div className="text-center py-8">
+                    <p className="text-[var(--text-muted)] mb-4">Unable to load playlist. Please check the playlist URL.</p>
+                    <a
+                      href={playlist.spotifyUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-[#1DB954] text-white rounded-full text-sm font-medium hover:bg-[#1ed760] transition-colors"
+                    >
+                      Open in Spotify
+                    </a>
+                  </div>
+                </div>
+              );
+            }
+            
+            return (
+              <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-2xl shadow-sm p-6">
+                <h2 className="text-xl font-bold mb-4 text-[var(--text-color)]">
+                  Now Playing: {playlist.name}
+                </h2>
+                <div className="bg-black rounded-lg p-4">
+                  <iframe
+                    style={{ borderRadius: '12px' }}
+                    src={`https://open.spotify.com/embed/playlist/${playlistId}?utm_source=generator&theme=0`}
+                    width="100%"
+                    height="352"
+                    frameBorder="0"
+                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                    loading="lazy"
+                    title={`Spotify playlist: ${playlist.name}`}
+                  ></iframe>
+                </div>
+                <p className="text-xs text-[var(--text-muted)] mt-3 text-center">
+                  Click "Open in Spotify" to add me as a friend and follow my playlists!
+                </p>
+              </div>
+            );
+          })()}
+
+          {/* Instructions */}
+          {!selectedPlaylist && (
+            <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-2xl shadow-sm p-6">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-full bg-[#1DB954]/10 flex items-center justify-center flex-shrink-0">
+                  <Music size={24} className="text-[#1DB954]" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-[var(--text-color)] mb-2">How to Connect</h3>
+                  <ol className="text-sm text-[var(--text-muted)] space-y-2 list-decimal list-inside">
+                    <li>Click on any playlist above to start listening</li>
+                    <li>Click "Open in Spotify" in the player to view on Spotify</li>
+                    <li>Send me a friend request using the button above</li>
+                    <li>Follow my playlists to stay updated with my music taste!</li>
+                  </ol>
+                </div>
+              </div>
+            </div>
+          )}
+
+        </div>
+      </div>
     </div>
   );
 };
@@ -1245,6 +1436,13 @@ const App = () => {
       iconSrc: '/icons/system-preferences.png',
       color: 'bg-transparent'
     },
+    {
+      id: 'spotify',
+      name: 'Spotify',
+      icon: <Music size={28} className="text-white drop-shadow-md" />,
+      iconSrc: '/icons/spotify.png',
+      color: 'bg-transparent'
+    },
   ];
 
   const [windows, setWindows] = useState<WindowState[]>([]);
@@ -1313,6 +1511,7 @@ const App = () => {
         case 'camera': content = <PhotoBooth />; title = 'Photo Booth'; size = { width: 500, height: 600 }; break;
         case 'arcade': content = <SnakeGame />; title = 'Arcade'; size = { width: 440, height: 520 }; break;
         case 'settings': content = <SystemPreferencesContent />; title = 'System Preferences'; size = { width: 520, height: 260 }; break;
+        case 'spotify': content = <SpotifyContent />; title = 'Spotify'; size = { width: 1000, height: 750 }; break;
         default: content = <div>Content not found</div>;
       }
       setWindows(prev => [...prev, { id: appId, title, icon: appData ? renderAppIcon(appData, 18) : undefined, component: content, isOpen: true, isMinimized: false, isMaximized: false, zIndex: zIndexCounter + 1, position: { x: 80 + (windows.length * 30), y: 80 + (windows.length * 30) }, size }]);
