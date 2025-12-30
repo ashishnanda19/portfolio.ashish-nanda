@@ -1757,7 +1757,7 @@ const App = () => {
 
       {/* Dock */}
       <div className="fixed bottom-4 left-0 w-full flex justify-center z-[10000]">
-        <div className="flex items-end space-x-3 px-4 pb-3 pt-3 bg-white/20 backdrop-blur-2xl rounded-2xl border border-white/20 shadow-2xl transition-all duration-300">
+        <div className="flex items-end space-x-3 px-4 pb-3 pt-3 bg-white/2 backdrop-blur-sm rounded-2xl border border-white/5 shadow-md transition-all duration-300">
           {appIcons.map((app) => {
             // const isOpen = windows.some(w => w.id === app.id && !w.isMinimized);
             const isRunning = windows.some(w => w.id === app.id);
