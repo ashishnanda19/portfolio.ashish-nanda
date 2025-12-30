@@ -1433,9 +1433,16 @@ const App = () => {
           setActiveMenu(null);
         }}
       >
-      
-      {/* Interactive Background with Doodle Hotspots */}
-      <InteractiveBackground />
+  
+        {isFullscreen && (
+          <div className="absolute top-10 right-6 z-50 bg-black/70 text-white px-3 py-1 rounded text-xs">
+            Fullscreen mode
+          </div>
+        )}
+  
+        {/* Interactive Background */}
+        <InteractiveBackground />
+  
       
       {/* Top Menu Bar */}
       <TopBar
