@@ -1,1 +1,70 @@
 @import "tailwindcss";
+
+:root {
+  --bg-color: #020617; /* outer background already dark in design */
+  --bg-subtle: #f9fafb;
+  --bg-elevated: #ffffff;
+  --bg-input: #ffffff;
+  --chrome-bg: #f3f4f6;
+  --text-color: #111827;
+  --text-muted: #4b5563;
+  --icon-muted: #9ca3af;
+  --card-bg: #ffffff;
+  --card-border: rgba(209, 213, 219, 1);
+  --border-subtle: rgba(229, 231, 235, 1);
+  --border-strong: rgba(209, 213, 219, 1);
+  --link-muted: #6b7280;
+  --social-card-bg: #eff6ff;
+  --social-card-hover: #dbeafe;
+}
+
+body.theme-dark {
+  --bg-color: #020617;
+  --bg-subtle: #020617;
+  --bg-elevated: #020617;
+  --bg-input: #020617;
+  --chrome-bg: rgba(15, 23, 42, 0.9);
+  --text-color: #e5e7eb;
+  --text-muted: #9ca3af;
+  --icon-muted: #9ca3af;
+  --card-bg: rgba(15, 23, 42, 0.98);
+  --card-border: rgba(55, 65, 81, 1);
+  --border-subtle: rgba(31, 41, 55, 1);
+  --border-strong: rgba(55, 65, 81, 1);
+  --link-muted: #9ca3af;
+  --social-card-bg: rgba(15, 23, 42, 0.9);
+  --social-card-hover: rgba(30, 64, 175, 0.7);
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+}
+
+.app-root {
+  color: var(--text-color);
+}
+
+.doodle-quote {
+  color: #000;
+}
+
+body.theme-dark .doodle-quote {
+  color: #000;
+}
+.social-card {
+  background-color: var(--social-card-bg);
+  transition: background-color 150ms ease, box-shadow 150ms ease;
+}
+
+.social-card:hover {
+  background-color: var(--social-card-hover);
+}
+
+body.theme-dark .social-card {
+  background-color: var(--social-card-bg);
+}
+
+body.theme-dark .social-card:hover {
+  background-color: var(--social-card-hover);
+}

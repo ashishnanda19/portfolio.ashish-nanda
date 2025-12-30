@@ -1,11 +1,28 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import { 
   Terminal, User, Code, Gamepad2, Globe, X, Minus, Maximize2, Minimize2, 
   Github, Instagram, Linkedin, BookOpen, Search, Wifi, Battery, Play, RotateCcw, 
-  Aperture, Download, Twitter, Monitor
+  Aperture, Download, Twitter, Monitor, Mail
 } from 'lucide-react';
 import InteractiveBackground from './InteractiveBackground';
 
+
+type Theme = 'light' | 'dark';
+
+interface ThemeContextValue {
+  theme: Theme;
+  setTheme: (theme: Theme) => void;
+}
+
+const ThemeContext = React.createContext<ThemeContextValue | undefined>(undefined);
+
+const useTheme = () => {
+  const ctx = useContext(ThemeContext);
+  if (!ctx) {
+    throw new Error('useTheme must be used within ThemeContext.Provider');
+  }
+  return ctx;
+};
 
 interface WindowState {
   id: string;
@@ -30,55 +47,80 @@ interface AppIcon {
 
 // --- Content Components ---
 
-const AboutContent = () => (
-  <div className="p-8 font-sans text-gray-800 h-full overflow-y-auto bg-gradient-to-br from-white to-gray-50">
-    <div className="flex flex-col items-center mb-8">
-      <div className="w-32 h-32 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 mb-4 shadow-xl flex items-center justify-center text-white text-4xl font-bold border-4 border-white overflow-hidden relative">
-         <span className="z-10"><img src="/portimage.png" alt="image" /></span>
-         <div className="absolute inset-0 bg-black/10"></div>
-      </div>
-      <h1 className="text-4xl font-bold text-gray-900 tracking-tight">Ashish Kumar Nanda</h1>
-      <p className="text-blue-600 font-medium mt-1">Research Intern @ IIT(BHU) | CS @ MUJ ‘27 </p>
-    </div>
-    
-    <div className="max-w-3xl mx-auto space-y-8 pb-8">
-      <section className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-        <h2 className="text-xl font-bold border-b pb-3 mb-4 text-gray-800 flex items-center gap-2">
-           👋 About Me
-        </h2>
-        <p className="leading-relaxed text-gray-600 text-lg">
-          I am a Computer Science graduate from Manipal University with a CGPA of 9.22/10. 
-          Currently working as a <span className="font-semibold text-green-700">Research Intern at IIT (BHU)</span>.
-          I specialize in building full-stack applications, scalable backend systems, and integrating AI models into production. If you need someone who can write code and hit high notes, I'm your person. 
-        </p>
-      </section>
+const AboutContent = () => {
+  const { theme } = useTheme();
 
-      <section className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-        <h2 className="text-xl font-bold border-b pb-3 mb-4 text-gray-800 flex items-center gap-2">
-           🏆 Achievements
-        </h2>
-        <ul className="space-y-3">
-          <li className="flex items-start">
-            <span className="w-2 h-2 mt-2 mr-3 bg-blue-500 rounded-full flex-shrink-0"></span>
-            <span className="text-gray-700">Finalist - International Innovation Challenge (IIC)</span>
-          </li>
-          <li className="flex items-start">
-            <span className="w-2 h-2 mt-2 mr-3 bg-purple-500 rounded-full flex-shrink-0"></span>
-            <span className="text-gray-700">National Semifinalist - Flipkart GRiD 7.0 </span>
-          </li>
-          <li className="flex items-start">
-            <span className="w-2 h-2 mt-2 mr-3 bg-green-500 rounded-full flex-shrink-0"></span>
-            <span className="text-gray-700">4x Dean’s List of Excellence: Recognized for academic excellence.</span>
-          </li>
-          <li className="flex items-start">
-            <span className="w-2 h-2 mt-2 mr-3 bg-green-500 rounded-full flex-shrink-0"></span>
-            <span className="text-gray-700">Solved 300+ DSA problems on platforms like LeetCode and GeeksforGeeks</span>
-          </li>
-        </ul>
-      </section>
+  return (
+    <div
+      className={
+        theme === 'dark'
+          ? 'p-8 font-sans h-full overflow-y-auto bg-(--bg-subtle) text-(--text-color)'
+          : 'p-8 font-sans h-full overflow-y-auto bg-white text-gray-800'
+      }
+    >
+      <div className="flex flex-col items-center mb-8">
+        <div className="w-32 h-32 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 mb-4 shadow-xl flex items-center justify-center text-white text-4xl font-bold border-4 border-white overflow-hidden relative">
+          <span className="z-10">
+            <img src="/portimage.png" alt="image" />
+          </span>
+          <div className="absolute inset-0 bg-black/10" />
+        </div>
+        <h1
+          className={
+            theme === 'dark'
+              ? 'text-4xl font-bold tracking-tight text-(--text-color)'
+              : 'text-4xl font-bold tracking-tight text-gray-900'
+          }
+        >
+          Ashish Kumar Nanda
+        </h1>
+        <p className="text-blue-500 font-medium mt-1">
+          Research Intern @ IIT(BHU) | CS @ MUJ ‘27
+        </p>
+      </div>
+
+      <div className="max-w-3xl mx-auto space-y-8 pb-8">
+        <section className="bg-(--card-bg) p-6 rounded-2xl shadow-sm border border-(--card-border)">
+          <h2 className="text-xl font-bold border-b pb-3 mb-4 text-(--text-color) flex items-center gap-2">
+            👋 About Me
+          </h2>
+          <p className="leading-relaxed text-(--text-muted) text-lg">
+            I am a Computer Science graduate from Manipal University with a CGPA of 9.22/10.
+            Currently working as a{' '}
+            <span className="font-semibold text-green-500">Research Intern at IIT (BHU)</span>.
+            I specialize in building full-stack applications, scalable backend systems, and integrating
+            AI models into production. If you need someone who can write code and hit high notes, I'm
+            your person.
+          </p>
+        </section>
+
+        <section className="bg-(--card-bg) p-6 rounded-2xl shadow-sm border border-(--card-border)">
+          <h2 className="text-xl font-bold border-b pb-3 mb-4 text-(--text-color) flex items-center gap-2">
+            🏆 Achievements
+          </h2>
+          <ul className="space-y-3 text-(--text-muted)">
+            <li className="flex items-start">
+              <span className="w-2 h-2 mt-2 mr-3 bg-blue-500 rounded-full shrink-0" />
+              <span>Finalist - International Innovation Challenge (IIC)</span>
+            </li>
+            <li className="flex items-start">
+              <span className="w-2 h-2 mt-2 mr-3 bg-purple-500 rounded-full shrink-0" />
+              <span>National Semifinalist - Flipkart GRiD 7.0</span>
+            </li>
+            <li className="flex items-start">
+              <span className="w-2 h-2 mt-2 mr-3 bg-green-500 rounded-full shrink-0" />
+              <span>4x Dean’s List of Excellence: Recognized for academic excellence.</span>
+            </li>
+            <li className="flex items-start">
+              <span className="w-2 h-2 mt-2 mr-3 bg-green-500 rounded-full shrink-0" />
+              <span>Solved 300+ DSA problems on platforms like LeetCode and GeeksforGeeks</span>
+            </li>
+          </ul>
+        </section>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 const SkillsExperienceContent = () => (
   <div className="bg-[#1e1e1e] h-full text-gray-300 font-mono text-sm flex flex-col">
@@ -135,76 +177,122 @@ const SkillsExperienceContent = () => (
 );
 
 const BrowserContent = () => (
-  <div className="flex flex-col h-full bg-white">
-    <div className="bg-gray-100 border-b border-gray-200 p-3 flex items-center space-x-3 shadow-sm z-10">
+  <div className="flex flex-col h-full bg-[var(--bg-elevated)] text-[var(--text-color)]">
+    <div className="bg-[var(--chrome-bg)] border-b border-[var(--border-subtle)] p-3 flex items-center space-x-3 shadow-sm z-10">
       <div className="flex space-x-2">
         <div className="w-3 h-3 rounded-full bg-red-400"></div>
         <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
         <div className="w-3 h-3 rounded-full bg-green-400"></div>
       </div>
-      <div className="flex-1 bg-white rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700 flex items-center shadow-inner">
-        <Search size={14} className="mr-3 text-gray-400" />
+      <div className="flex-1 bg-[var(--bg-input)] rounded-lg border border-[var(--border-strong)] px-4 py-2 text-sm text-[var(--text-muted)] flex items-center shadow-inner">
+        <Search size={14} className="mr-3 text-[var(--icon-muted)]" />
         portfolio.ashish-nanda.dev
       </div>
     </div>
 
-    <div className="flex-1 overflow-auto p-6 bg-gray-50">
+    <div className="flex-1 overflow-auto p-6 bg-[var(--bg-subtle)]">
       <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 pb-12">
         
         {/* Research */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-          <h2 className="text-2xl font-bold mb-4 flex items-center gap-2 text-gray-800">
+        <div className="bg-[var(--card-bg)] p-6 rounded-2xl shadow-sm border border-[var(--card-border)] hover:shadow-md transition-shadow">
+          <h2 className="text-2xl font-bold mb-4 flex items-center gap-2 text-[var(--text-color)]">
             <BookOpen className="text-blue-500" /> Research Intern
           </h2>
           <div className="block group">
-            <h3 className="font-bold text-lg text-gray-800 group-hover:text-blue-600 transition-colors"> Indian Institute of Technology (BHU)</h3>
+            <h3 className="font-bold text-lg text-[var(--text-color)] group-hover:text-blue-500 transition-colors"> Indian Institute of Technology (BHU)</h3>
             <p className="text-xs font-semibold text-blue-500 uppercase tracking-wide mt-1">Dec 2025 • Present</p>
-            <p className="text-sm text-gray-600 mt-2 leading-relaxed">Mathematical Model for Integrating Net Zero Practices in MSMEs.</p>
+            <p className="text-sm text-[var(--text-muted)] mt-2 leading-relaxed">Mathematical Model for Integrating Net Zero Practices in MSMEs.</p>
           </div>
         </div>
 
         {/* Socials */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-          <h2 className="text-2xl font-bold mb-4 flex items-center gap-2 text-gray-800">
+        <div className="bg-[var(--card-bg)] p-6 rounded-2xl shadow-sm border border-[var(--card-border)] hover:shadow-md transition-shadow">
+          <h2 className="text-2xl font-bold mb-4 flex items-center gap-2 text-[var(--text-color)]">
             <Globe className="text-green-500" /> Socials
           </h2>
           <div className="grid grid-cols-2 gap-3">
-            <a href="https://www.linkedin.com/in/ashishnanda19/" target="_blank" rel="noreferrer" className="flex items-center p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors gap-3">
+            <a
+              href="https://www.linkedin.com/in/ashishnanda19/"
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center p-3 rounded-lg transition-colors gap-3 social-card social-card--linkedin"
+            >
               <Linkedin size={20} className="text-blue-700" /> <span className="text-sm font-medium">LinkedIn</span>
             </a>
-            <a href="https://github.com/ashishnanda19" target="_blank" rel="noreferrer" className="flex items-center p-3 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors gap-3">
+            <a
+              href="https://github.com/ashishnanda19"
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center p-3 rounded-lg transition-colors gap-3 social-card social-card--github"
+            >
               <Github size={20} className="text-gray-900" /> <span className="text-sm font-medium">GitHub</span>
             </a>
-            <a href="https://www.instagram.com/ashish19nanda/" className="flex items-center p-3 bg-pink-50 rounded-lg hover:bg-pink-100 transition-colors gap-3">
+            <a
+              href="https://www.instagram.com/ashish19nanda/"
+              className="flex items-center p-3 rounded-lg transition-colors gap-3 social-card social-card--instagram"
+            >
               <Instagram size={20} className="text-pink-600" /> <span className="text-sm font-medium">@ashish19nanda</span>
             </a>
-             <a href="https://x.com/ashish19n" className="flex items-center p-3 bg-black rounded-lg hover:bg-gray-800 transition-colors gap-3">
-              <Twitter size={20} className="text-white" /> <span className="text-sm font-medium text-white">@ashish19n</span>
-            </a>
+             <a
+              href="https://x.com/ashish19n"
+              className="flex items-center p-3 rounded-lg transition-colors gap-3 social-card social-card--twitter"
+            >
+              <Twitter size={20} className="text-sky-500" /> <span className="text-sm font-medium">@ashish19n</span>
+             </a>
           </div>
         </div>
 
         {/* Projects */}
-        <div className="col-span-1 md:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-          <h2 className="text-2xl font-bold mb-6 text-gray-800">Featured Projects</h2>
+        <div className="col-span-1 md:col-span-2 bg-[var(--card-bg)] p-6 rounded-2xl shadow-sm border border-[var(--card-border)] hover:shadow-md transition-shadow">
+          <h2 className="text-2xl font-bold mb-6 text-[var(--text-color)]">Featured Projects</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             
-            <div className="border border-gray-200 rounded-xl p-4 hover:border-blue-300 transition-colors">
-              <h3 className="font-bold text-lg text-blue-600"> Video Transcoder</h3>
-              <p className="text-xs text-gray-500 mt-1 mb-2">Node.js, Express.js, AWS (S3, Lambda, ECS, EventBridge), Redis, MongoDB, Docker, ffmpeg</p>
-              <p className="text-sm text-gray-600">Engineered a distributed AWS-based video transcoding pipeline with Redis queues, leaky-bucket rate limiting, and multi-resolution output generation.</p>
+            <div className="border border-[var(--card-border)] rounded-xl p-4 hover:border-blue-300 transition-colors">
+              <h3 className="font-bold text-lg text-blue-600 flex items-center justify-between gap-2">
+                <span>Video Transcoder</span>
+                <a
+                  href="https://github.com/ashishnanda19/video-transcoder"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-[var(--link-muted)] hover:text-blue-500 underline-offset-2 hover:underline"
+                >
+                  GitHub
+                </a>
+              </h3>
+              <p className="text-xs text-[var(--text-muted)] mt-1 mb-2">Node.js, Express.js, AWS (S3, Lambda, ECS, EventBridge), Redis, MongoDB, Docker, ffmpeg</p>
+              <p className="text-sm text-[var(--text-muted)]">Engineered a distributed AWS-based video transcoding pipeline with Redis queues, leaky-bucket rate limiting, and multi-resolution output generation.</p>
             </div>
 
-            <div className="border border-gray-200 rounded-xl p-4 hover:border-blue-300 transition-colors">
-              <h3 className="font-bold text-lg text-blue-600">InvoSync</h3>
-              <p className="text-xs text-gray-500 mt-1 mb-2">React.js, Vite, Flask, Python, Tesseract OCR, RapidFuzz, Pandas, TailwindCSS</p>
-              <p className="text-sm text-gray-600">Engineered an automated invoice–PO reconciliation platform with OCR-based data extraction and fuzzy matching, improving accuracy to 98%+ and reducing verification time and operational effort by over 75%.</p>
+            <div className="border border-[var(--card-border)] rounded-xl p-4 hover:border-blue-300 transition-colors">
+              <h3 className="font-bold text-lg text-blue-600 flex items-center justify-between gap-2">
+                <span>InvoSync</span>
+                <a
+                  href="https://github.com/ashishnanda19/InvoSync"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-[var(--link-muted)] hover:text-blue-500 underline-offset-2 hover:underline"
+                >
+                  GitHub
+                </a>
+              </h3>
+              <p className="text-xs text-[var(--text-muted)] mt-1 mb-2">React.js, Vite, Flask, Python, Tesseract OCR, RapidFuzz, Pandas, TailwindCSS</p>
+              <p className="text-sm text-[var(--text-muted)]">Engineered an automated invoice–PO reconciliation platform with OCR-based data extraction and fuzzy matching, improving accuracy to 98%+ and reducing verification time and operational effort by over 75%.</p>
             </div>
 
-            <div className="border border-gray-200 rounded-xl p-4 hover:border-blue-300 transition-colors">
-              <h3 className="font-bold text-lg text-blue-600">SafeTrail</h3>
-              <p className="text-xs text-gray-500 mt-1 mb-2">React.js, React Native, Node.js, Express, MongoDB, Python, JWT, TailwindCSS</p>
-              <p className="text-sm text-gray-600">Developed a scalable backend safety platform with 25+ APIs, real-time location tracking, and ML-based threat analysis, improving system reliability by 40% and enabling sub-second inference.</p>
+            <div className="border border-[var(--card-border)] rounded-xl p-4 hover:border-blue-300 transition-colors">
+              <h3 className="font-bold text-lg text-blue-600 flex items-center justify-between gap-2">
+                <span>SafeTrail</span>
+                <a
+                  href="https://github.com/ashishnanda19/SafeTrail"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-[var(--link-muted)] hover:text-blue-500 underline-offset-2 hover:underline"
+                >
+                  GitHub
+                </a>
+              </h3>
+              <p className="text-xs text-[var(--text-muted)] mt-1 mb-2">React.js, React Native, Node.js, Express, MongoDB, Python, JWT, TailwindCSS</p>
+              <p className="text-sm text-[var(--text-muted)]">Developed a scalable backend safety platform with 25+ APIs, real-time location tracking, and ML-based threat analysis, improving system reliability by 40% and enabling sub-second inference.</p>
             </div>
 
           </div>
@@ -214,6 +302,195 @@ const BrowserContent = () => (
     </div>
   </div>
 );
+
+const MailContent = () => {
+  const { theme } = useTheme();
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [subject, setSubject] = useState('');
+  const [message, setMessage] = useState('');
+  const [sent, setSent] = useState(false);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const to = 'ashish.nanda1902@gmail.com';
+    const mailSubject = subject || 'Message from AshishOS Mail';
+    const bodyLines = [
+      `From: ${name || 'Anonymous'}`,
+      `Email: ${email || 'not provided'}`,
+      '',
+      message || '',
+    ];
+    const mailto = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(
+      mailSubject
+    )}&body=${encodeURIComponent(bodyLines.join('\n'))}`;
+    window.location.href = mailto;
+    setSent(true);
+  };
+
+  return (
+    <div className="flex flex-col h-full bg-[var(--bg-elevated)] text-[var(--text-color)]">
+      {/* Mail chrome */}
+      <div className="bg-[var(--chrome-bg)] border-b border-[var(--border-subtle)] px-4 py-2 flex items-center gap-3 text-sm">
+        <div className="flex space-x-2">
+          <div className="w-3 h-3 rounded-full bg-red-400" />
+          <div className="w-3 h-3 rounded-full bg-yellow-400" />
+          <div className="w-3 h-3 rounded-full bg-green-400" />
+        </div>
+        <span className="ml-3 font-semibold">Inbox</span>
+        <div className="ml-auto flex items-center gap-2">
+          <button className="px-3 py-1 rounded-md bg-blue-500 text-white text-xs font-medium hover:bg-blue-600 transition-colors flex items-center gap-1">
+            <Mail size={14} /> New Message
+          </button>
+          <div className="flex items-center bg-[var(--bg-input)] border border-[var(--border-strong)] rounded-lg px-2 py-1 text-xs text-[var(--text-muted)]">
+            <Search size={12} className="mr-1 text-[var(--icon-muted)]" />
+            Search
+          </div>
+        </div>
+      </div>
+
+      <div className="flex flex-1 overflow-hidden">
+        {/* Sidebar */}
+        <aside className="w-56 border-r border-[var(--card-border)] bg-[var(--card-bg)] px-3 py-3 text-xs">
+          <div className="mb-4">
+            <p className="uppercase text-[10px] tracking-wide text-[var(--text-muted)] mb-1">FAVOURITES</p>
+            <button className="w-full flex items-center justify-between px-2 py-1.5 rounded-md bg-blue-500/10 text-blue-400 text-xs font-medium">
+              <span>Inbox</span>
+              <span className="text-[10px] bg-blue-500 text-white rounded-full px-1.5">1</span>
+            </button>
+            <button className="w-full flex items-center justify-between px-2 py-1.5 rounded-md hover:bg-[var(--bg-subtle)] mt-1">
+              <span>Sent</span>
+            </button>
+            <button className="w-full flex items-center justify-between px-2 py-1.5 rounded-md hover:bg-[var(--bg-subtle)] mt-1">
+              <span>Archive</span>
+            </button>
+          </div>
+          <div>
+            <p className="uppercase text-[10px] tracking-wide text-[var(--text-muted)] mb-1">MAILBOXES</p>
+            <p className="px-2 py-1.5 rounded-md hover:bg-[var(--bg-subtle)]">All Inboxes</p>
+            <p className="px-2 py-1.5 rounded-md hover:bg-[var(--bg-subtle)]">AshishOS</p>
+          </div>
+        </aside>
+
+        {/* Message list */}
+        <section className="w-72 border-r border-[var(--card-border)] bg-[var(--bg-subtle)] overflow-auto text-sm">
+          <div className="px-3 py-2 border-b border-[var(--card-border)] text-[11px] uppercase tracking-wide text-[var(--text-muted)]">
+            Today
+          </div>
+          <div className="px-3 py-3 space-y-3">
+            <div className="bg-[var(--card-bg)] rounded-xl border border-[var(--card-border)] px-3 py-2 shadow-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold">AshishOS</span>
+                <span className="text-[10px] text-[var(--text-muted)]">Now</span>
+              </div>
+              <p className="text-xs font-medium mt-1">New message for Ashish</p>
+              <p className="text-[11px] text-[var(--text-muted)] truncate">
+                Use the composer on the right to send me a message for roles, collaborations, or questions.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* Message / composer */}
+        <main className="flex-1 bg-[var(--bg-elevated)] p-6 overflow-auto">
+          <div className="max-w-2xl mx-auto bg-[var(--card-bg)] border border-[var(--card-border)] rounded-2xl shadow-sm">
+            <div className="border-b border-[var(--card-border)] px-5 py-3 flex items-center justify-between text-sm">
+              <div>
+                <p className="font-semibold">New Message</p>
+                <p className="text-[11px] text-[var(--text-muted)]">
+                  This will open your default mail app with the details you fill in.
+                </p>
+              </div>
+              {sent && (
+                <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/40">
+                  Ready to send
+                </span>
+              )}
+            </div>
+
+            <form className="px-5 py-4 space-y-3 text-sm" onSubmit={handleSubmit}>
+              <div className="flex items-center gap-3">
+                <label className="w-16 text-[11px] text-[var(--text-muted)] uppercase tracking-wide">
+                  To
+                </label>
+                <div className="flex-1 text-[13px]">
+                  <span className="inline-flex items-center gap-2 rounded-full bg-blue-500/10 px-3 py-1 text-blue-400 border border-blue-500/30">
+                    {theme === 'dark' ? 'ashish.nanda1902@gmail.com' : 'Ashish Kumar Nanda'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <label className="w-16 text-[11px] text-[var(--text-muted)] uppercase tracking-wide">
+                  Your Name
+                </label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="flex-1 text-sm rounded-md bg-[var(--bg-input)] border border-[var(--border-strong)] px-2 py-1.5 outline-none focus:ring-2 focus:ring-blue-500/60"
+                  placeholder="Who is reaching out?"
+                />
+              </div>
+
+              <div className="flex items-center gap-3">
+                <label className="w-16 text-[11px] text-[var(--text-muted)] uppercase tracking-wide">
+                  Your Email
+                </label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="flex-1 text-sm rounded-md bg-[var(--bg-input)] border border-[var(--border-strong)] px-2 py-1.5 outline-none focus:ring-2 focus:ring-blue-500/60"
+                  placeholder="For follow-ups"
+                />
+              </div>
+
+              <div className="flex items-center gap-3">
+                <label className="w-16 text-[11px] text-[var(--text-muted)] uppercase tracking-wide">
+                  Subject
+                </label>
+                <input
+                  type="text"
+                  value={subject}
+                  onChange={(e) => setSubject(e.target.value)}
+                  className="flex-1 text-sm rounded-md bg-[var(--bg-input)] border border-[var(--border-strong)] px-2 py-1.5 outline-none focus:ring-2 focus:ring-blue-500/60"
+                  placeholder="Role, collaboration, question..."
+                />
+              </div>
+
+              <div className="flex items-start gap-3">
+                <label className="w-16 text-[11px] text-[var(--text-muted)] uppercase tracking-wide mt-1">
+                  Message
+                </label>
+                <textarea
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  rows={6}
+                  className="flex-1 text-sm rounded-md bg-[var(--bg-input)] border border-[var(--border-strong)] px-2 py-1.5 outline-none resize-none focus:ring-2 focus:ring-blue-500/60"
+                  placeholder="Write your message as if you were emailing me directly."
+                />
+              </div>
+
+              <div className="flex items-center justify-between pt-2">
+                <p className="text-[11px] text-[var(--text-muted)]">
+                  Clicking **Send** opens your mail client with everything pre‑filled.
+                </p>
+                <button
+                  type="submit"
+                  className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500 text-white text-sm font-medium shadow-sm hover:bg-blue-600 transition-colors"
+                >
+                  <Mail size={14} />
+                  Send
+                </button>
+              </div>
+            </form>
+          </div>
+        </main>
+      </div>
+    </div>
+  );
+};
 
 const PhotoBooth = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -300,6 +577,72 @@ const PhotoBooth = () => {
           </div>
         </>
       )}
+    </div>
+  );
+};
+
+const SystemPreferencesContent = () => {
+  const { theme, setTheme } = useTheme();
+
+  return (
+    <div
+      className={
+        theme === 'dark'
+          ? 'h-full p-8 font-sans bg-(--card-bg) text-(--text-color)'
+          : 'h-full p-8 font-sans bg-white text-gray-900'
+      }
+    >
+      <h1 className="text-2xl font-semibold mb-2">System Preferences</h1>
+      <p className="text-xs text-gray-500 mb-6">Customize how AshishOS looks and feels.</p>
+      <h2 className="text-sm font-semibold mb-3">Appearance</h2>
+      <p className="text-sm text-(--text-muted) mb-4">
+        Choose between light and dark appearance for AshishOS.
+      </p>
+      <div className="flex gap-6">
+        <button
+          type="button"
+          onClick={() => setTheme('light')}
+          className={`flex-1 rounded-2xl border p-4 text-left transition-all cursor-pointer ${
+            theme === 'light'
+              ? 'border-blue-500 bg-slate-900 text-white shadow-md ring-2 ring-blue-500/60'
+              : 'border-(--card-border) bg-slate-900 text-white opacity-80 hover:opacity-100'
+          }`}
+        >
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-semibold">Light</span>
+            {theme === 'light' && (
+              <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-[10px] text-white">
+                ✓
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-[var(--text-muted)]">
+            Default macOS-style light appearance. Current design is preserved.
+          </p>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setTheme('dark')}
+          className={`flex-1 rounded-2xl border p-4 text-left transition-all cursor-pointer ${
+            theme === 'dark'
+              ? 'border-blue-500 bg-slate-900 text-white shadow-md ring-2 ring-blue-500/60'
+              : 'border-(--card-border) bg-slate-900 text-white opacity-80 hover:opacity-100'
+          }`}
+        >
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-semibold">Dark</span>
+            {theme === 'dark' && (
+              <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-[10px] text-white">
+                ✓
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-[var(--text-muted)]">
+            A macOS-like dark appearance with dimmed surfaces and light text.
+          </p>
+        </button>
+      </div>
     </div>
   );
 };
@@ -517,9 +860,27 @@ type TopBarProps = {
   title: string;
   activeMenu: string | null;
   setActiveMenu: (m: string | null) => void;
+  onOpenSystemPreferences: () => void;
+  onNewWindow: () => void;
+  onCloseAllWindows: () => void;
+  onUndo: () => void;
+  onRedo: () => void;
+  onEnterFullScreen: () => void;
+  onActualSize: () => void;
 };
 
-const TopBar = ({ title, activeMenu, setActiveMenu }: TopBarProps) => {
+const TopBar = ({ 
+  title, 
+  activeMenu, 
+  setActiveMenu, 
+  onOpenSystemPreferences,
+  onNewWindow,
+  onCloseAllWindows,
+  onUndo,
+  onRedo,
+  onEnterFullScreen,
+  onActualSize
+}: TopBarProps) => {
   const [date, setDate] = useState(new Date());
 
   useEffect(() => {
@@ -530,7 +891,7 @@ const TopBar = ({ title, activeMenu, setActiveMenu }: TopBarProps) => {
   const menus: Record<string, MenuItem[]> = {
     "": [
       { label: "About This Portfolio", action: () => alert("Ashish's Portfolio") },
-      { label: "System Preferences...", action: () => {} },
+      { label: "System Preferences...", action: () => onOpenSystemPreferences() },
       { type: "separator" },
       { label: "Sleep", action: () => alert("Zzz...") },
       { label: "Restart", action: () => window.location.reload() },
@@ -538,15 +899,15 @@ const TopBar = ({ title, activeMenu, setActiveMenu }: TopBarProps) => {
     ],
 
     File: [
-      { label: "New Window", shortcut: "⌘N", action: () => {} },
-      { label: "Close Window", shortcut: "⌘W", action: () => {} },
+      { label: "New Window", shortcut: "⌘N", action: () => onNewWindow() },
+      { label: "Close Window", shortcut: "⌘W", action: () => onCloseAllWindows() },
       { type: "separator" },
       { label: "Download Resume", action: () => window.open("https://drive.google.com/file/d/1ln5ZruwH_u-QLrTHfz-pgZiiZt-vmECd/view?usp=sharing", "_blank") },
     ],
 
     Edit: [
-      { label: "Undo", shortcut: "⌘Z" },
-      { label: "Redo", shortcut: "⇧⌘Z" },
+      { label: "Undo", shortcut: "⌘Z", action: () => onUndo() },
+      { label: "Redo", shortcut: "⇧⌘Z", action: () => onRedo() },
       { type: "separator" },
       { label: "Cut", shortcut: "⌘X" },
       { label: "Copy", shortcut: "⌘C" },
@@ -554,12 +915,12 @@ const TopBar = ({ title, activeMenu, setActiveMenu }: TopBarProps) => {
     ],
 
     View: [
-      { label: "Enter Full Screen", shortcut: "^⌘F" },
-      { label: "Actual Size", shortcut: "⌘0" },
+      { label: "Enter Full Screen", shortcut: "^⌘F", action: () => onEnterFullScreen() },
+      { label: "Actual Size", shortcut: "⌘0", action: () => onActualSize() },
     ],
 
     Help: [
-      { label: "Portfolio Help" },
+      { label: "Portfolio Help", action: () => alert("Mail me at ashish.nanda1902@gmail.com if you find any bug!") },
       { label: "View Source Code", action: () => window.open("https://github.com/ashishnanda19", "_blank") },
     ],
   };
@@ -629,6 +990,136 @@ const TopBar = ({ title, activeMenu, setActiveMenu }: TopBarProps) => {
   );
 };
 
+// macOS-style Mail Icon Component - Blue gradient with white envelope
+const MailIcon = ({ size = 28 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 512 512" className="drop-shadow-md">
+    <defs>
+      <linearGradient id="mailGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stopColor="#007AFF" />
+        <stop offset="50%" stopColor="#00B8FF" />
+        <stop offset="100%" stopColor="#00D4FF" />
+      </linearGradient>
+    </defs>
+    {/* Rounded square background with blue-to-cyan vertical gradient */}
+    <rect width="512" height="512" rx="102" fill="url(#mailGradient)"/>
+    
+    {/* White envelope - clean minimalist design, horizontal orientation */}
+    <g transform="translate(256, 256)">
+      {/* Main envelope body - horizontal rectangle */}
+      <rect x="-170" y="-60" width="340" height="150" fill="#FFFFFF" rx="8"/>
+      
+      {/* Envelope flap - V shape formed by two diagonal lines meeting at bottom center */}
+      <path 
+        d="M -170 -60 L 0 60 L 170 -60" 
+        fill="#FFFFFF" 
+        stroke="none"
+      />
+      
+      {/* Subtle curved line running horizontally across lower half */}
+      <path
+        d="M -150 50 Q 0 40 150 50"
+        stroke="#FFFFFF"
+        strokeWidth="10"
+        strokeLinecap="round"
+        fill="none"
+        opacity="0.85"
+      />
+    </g>
+  </svg>
+);
+
+// macOS-style System Settings Icon Component - Metallic gear with 3D effect
+const SettingsIcon = ({ size = 28 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 512 512" className="drop-shadow-md">
+    <defs>
+      {/* Metallic silver/gray gradient - light source from top-left */}
+      <linearGradient id="gearGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#F8F8F8" />
+        <stop offset="20%" stopColor="#E8E8E8" />
+        <stop offset="40%" stopColor="#D0D0D0" />
+        <stop offset="60%" stopColor="#B8B8B8" />
+        <stop offset="80%" stopColor="#A0A0A0" />
+        <stop offset="100%" stopColor="#8E8E8E" />
+      </linearGradient>
+      {/* Top-left highlight for 3D metallic effect */}
+      <radialGradient id="gearHighlight" cx="25%" cy="25%">
+        <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.6" />
+        <stop offset="50%" stopColor="#FFFFFF" stopOpacity="0.3" />
+        <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0" />
+      </radialGradient>
+      {/* Shadow gradient */}
+      <radialGradient id="gearShadow" cx="60%" cy="70%">
+        <stop offset="0%" stopColor="#000000" stopOpacity="0.5" />
+        <stop offset="100%" stopColor="#000000" stopOpacity="0" />
+      </radialGradient>
+    </defs>
+    
+    {/* Rounded square background - solid black */}
+    <rect width="512" height="512" rx="102" fill="#000000"/>
+    
+    {/* Gear with metallic 3D appearance */}
+    <g transform="translate(256, 256)">
+      {/* Outer gear with distinct sharp triangular teeth around circumference */}
+      <path
+        d="M 0 -195
+           L 8 -195 L 12 -215 L 16 -195 L 24 -195
+           L 22 -182 L 30 -178 L 24 -165 L 34 -152 L 22 -148
+           L 24 -135 L 16 -135 L 12 -115 L 8 -135 L 0 -135
+           L -8 -135 L -12 -115 L -16 -135 L -24 -135
+           L -22 -148 L -34 -152 L -24 -165 L -30 -178 L -22 -182
+           L -24 -195 L -16 -195 L -12 -215 L -8 -195 L 0 -195 Z"
+        fill="url(#gearGradient)"
+        stroke="#AAAAAA"
+        strokeWidth="1"
+      />
+      
+      {/* Inner rings with smaller teeth */}
+      <circle cx="0" cy="0" r="152" fill="url(#gearGradient)" stroke="#AAAAAA" strokeWidth="2"/>
+      <circle cx="0" cy="0" r="132" fill="url(#gearGradient)" stroke="#AAAAAA" strokeWidth="1.5"/>
+      <circle cx="0" cy="0" r="112" fill="none" stroke="#AAAAAA" strokeWidth="1" opacity="0.6"/>
+      
+      {/* Three thick Y-shaped spokes connecting hub to outermost gear */}
+      {/* Top spoke */}
+      <path
+        d="M 0 -112 L 0 -152 
+           M -22 -112 L 22 -112"
+        stroke="#AAAAAA"
+        strokeWidth="18"
+        strokeLinecap="round"
+        fill="none"
+      />
+      {/* Bottom left spoke */}
+      <path
+        d="M -79 -79 L -108 -108
+           M -79 -58 L -58 -79"
+        stroke="#AAAAAA"
+        strokeWidth="18"
+        strokeLinecap="round"
+        fill="none"
+      />
+      {/* Bottom right spoke */}
+      <path
+        d="M 79 -79 L 108 -108
+           M 79 -58 L 58 -79"
+        stroke="#AAAAAA"
+        strokeWidth="18"
+        strokeLinecap="round"
+        fill="none"
+      />
+      
+      {/* Solid smooth circular hub */}
+      <circle cx="0" cy="0" r="58" fill="url(#gearGradient)" stroke="#AAAAAA" strokeWidth="2"/>
+      <circle cx="0" cy="0" r="42" fill="#D0D0D0" opacity="0.25"/>
+      
+      {/* 3D highlight from top-left light source */}
+      <ellipse cx="-40" cy="-40" rx="190" ry="190" fill="url(#gearHighlight)" opacity="0.7"/>
+    </g>
+    
+    {/* Soft shadow beneath gear for depth */}
+    <ellipse cx="280" cy="290" rx="175" ry="55" fill="url(#gearShadow)" opacity="0.35"/>
+  </svg>
+);
+
 // --- Main App Component ---
 
 const App = () => {
@@ -636,8 +1127,18 @@ const App = () => {
   const [zIndexCounter, setZIndexCounter] = useState(10);
   const [draggedWindow, setDraggedWindow] = useState<string | null>(null);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
+  const [theme, setTheme] = useState<Theme>('light');
   const [isMobile, setIsMobile] = useState(false); // Mobile state check
+  const [closedWindowsHistory, setClosedWindowsHistory] = useState<WindowState[]>([]); // For undo/redo
+  const [redoStack, setRedoStack] = useState<WindowState[]>([]); // For redo
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const dragRef = useRef<{ id: string; startX: number; startY: number; initialLeft: number; initialTop: number } | null>(null);
+
+  useEffect(() => {
+    // Apply theme class to body for global styling
+    document.body.classList.remove('theme-light', 'theme-dark');
+    document.body.classList.add(theme === 'dark' ? 'theme-dark' : 'theme-light');
+  }, [theme]);
 
   useEffect(() => {
     // Check screen size on mount and resize
@@ -649,9 +1150,11 @@ const App = () => {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Helper function to render app icon (image or fallback React icon)
-  const renderAppIcon = (app: AppIcon, size: number = 28) => {
-    if (app.iconSrc) {
+  // Icon component with error handling
+  const IconWithFallback = ({ app, size }: { app: AppIcon; size: number }) => {
+    const [imageError, setImageError] = useState(false);
+    
+    if (app.iconSrc && !imageError) {
       return (
         <img 
           src={app.iconSrc} 
@@ -668,9 +1171,8 @@ const App = () => {
           }}
           loading="eager"
           draggable={false}
-          onError={(e) => {
-            // Log error for debugging
-            console.error(`Failed to load icon: ${app.iconSrc}`, e);
+          onError={() => {
+            setImageError(true);
           }}
           onLoad={() => {
             console.log(`Icon loaded: ${app.iconSrc}`);
@@ -678,7 +1180,12 @@ const App = () => {
         />
       );
     }
-    return app.icon;
+    return <>{app.icon}</>;
+  };
+
+  // Helper function to render app icon (image or fallback React icon)
+  const renderAppIcon = (app: AppIcon, size: number = 28) => {
+    return <IconWithFallback app={app} size={size} />;
   };
 
   const appIcons: AppIcon[] = [
@@ -723,6 +1230,20 @@ const App = () => {
       icon: <Gamepad2 size={28} className="text-white drop-shadow-md" />,
       iconSrc: '/icons/game-center.png',
       color: 'bg-transparent' 
+    },
+    {
+      id: 'mail',
+      name: 'Mail',
+      icon: <MailIcon size={28} />,
+      iconSrc: '/icons/mail.png',
+      color: 'bg-transparent'
+    },
+    {
+      id: 'settings',
+      name: 'System Preferences',
+      icon: <SettingsIcon size={28} />,
+      iconSrc: '/icons/system-preferences.png',
+      color: 'bg-transparent'
     },
   ];
 
@@ -786,10 +1307,12 @@ const App = () => {
       switch(appId) {
         case 'finder': content = <AboutContent />; title = 'Ashish Kumar Nanda'; break;
         case 'safari': content = <BrowserContent />; title = 'Safari'; size = { width: 950, height: 680 }; break;
+        case 'mail': content = <MailContent />; title = 'Mail'; size = { width: 980, height: 640 }; break;
         case 'vscode': content = <SkillsExperienceContent />; title = 'VS Code'; break;
         case 'terminal': content = <TerminalContent />; title = 'Terminal'; size = { width: 600, height: 400 }; break;
         case 'camera': content = <PhotoBooth />; title = 'Photo Booth'; size = { width: 500, height: 600 }; break;
         case 'arcade': content = <SnakeGame />; title = 'Arcade'; size = { width: 440, height: 520 }; break;
+        case 'settings': content = <SystemPreferencesContent />; title = 'System Preferences'; size = { width: 520, height: 260 }; break;
         default: content = <div>Content not found</div>;
       }
       setWindows(prev => [...prev, { id: appId, title, icon: appData ? renderAppIcon(appData, 18) : undefined, component: content, isOpen: true, isMinimized: false, isMaximized: false, zIndex: zIndexCounter + 1, position: { x: 80 + (windows.length * 30), y: 80 + (windows.length * 30) }, size }]);
@@ -798,7 +1321,18 @@ const App = () => {
     }
   };
 
-  const closeWindow = (id: string, e?: React.MouseEvent) => { e?.stopPropagation(); setWindows(prev => prev.filter(w => w.id !== id)); if (activeWindow === id) setActiveWindow(null); };
+  const closeWindow = (id: string, e?: React.MouseEvent) => { 
+    e?.stopPropagation(); 
+    const windowToClose = windows.find(w => w.id === id);
+    if (windowToClose) {
+      // Add to closed windows history for undo
+      setClosedWindowsHistory(prev => [windowToClose, ...prev]);
+      // Clear redo stack when a new action is performed
+      setRedoStack([]);
+    }
+    setWindows(prev => prev.filter(w => w.id !== id)); 
+    if (activeWindow === id) setActiveWindow(null); 
+  };
   const minimizeWindow = (id: string, e?: React.MouseEvent) => { e?.stopPropagation(); setWindows(prev => prev.map(w => w.id === id ? { ...w, isMinimized: true } : w)); setActiveWindow(null); };
   const maximizeWindow = (id: string, e?: React.MouseEvent) => { e?.stopPropagation(); setWindows(prev => prev.map(w => w.id === id ? { ...w, isMaximized: !w.isMaximized } : w)); };
   const focusWindow = (id: string) => { if (activeWindow !== id) { setZIndexCounter(prev => prev + 1); setWindows(prev => prev.map(w => w.id === id ? { ...w, zIndex: zIndexCounter + 1 } : w)); setActiveWindow(id); } };
@@ -809,6 +1343,67 @@ const App = () => {
     if (index === -1) return '50%';
     const total = appIcons.length;
     return `calc(50vw + ${(index - (total - 1) / 2) * 76}px)`;
+  };
+
+  // Menu action handlers
+  const handleNewWindow = () => {
+    openApp('finder');
+  };
+
+  const handleCloseAllWindows = () => {
+    // Save all windows to history for undo
+    setClosedWindowsHistory(prev => [...windows, ...prev]);
+    setRedoStack([]);
+    setWindows([]);
+    setActiveWindow(null);
+  };
+
+  const handleUndo = () => {
+    if (closedWindowsHistory.length > 0) {
+      const windowToRestore = closedWindowsHistory[0];
+      // Remove from history
+      setClosedWindowsHistory(prev => prev.slice(1));
+      // Add to redo stack
+      setRedoStack(prev => [windowToRestore, ...prev]);
+      // Restore the window with updated z-index
+      setZIndexCounter(prev => prev + 1);
+      const restoredWindow = { ...windowToRestore, zIndex: zIndexCounter + 1 };
+      setWindows(prev => [...prev, restoredWindow]);
+      setActiveWindow(windowToRestore.id);
+    }
+  };
+
+  const handleRedo = () => {
+    if (redoStack.length > 0) {
+      const windowToClose = redoStack[0];
+      // Remove from redo stack
+      setRedoStack(prev => prev.slice(1));
+      // Add back to closed history
+      setClosedWindowsHistory(prev => [windowToClose, ...prev]);
+      // Close the window
+      setWindows(prev => prev.filter(w => w.id !== windowToClose.id));
+      if (activeWindow === windowToClose.id) setActiveWindow(null);
+    }
+  };
+
+  const handleEnterFullScreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().then(() => {
+        setIsFullscreen(true);
+      }).catch(err => {
+        console.error('Error attempting to enable fullscreen:', err);
+      });
+    }
+  };
+
+  const handleActualSize = () => {
+    if (document.fullscreenElement) {
+      document.exitFullscreen().then(() => {
+        setIsFullscreen(false);
+      }).catch(err => {
+        console.error('Error attempting to exit fullscreen:', err);
+      });
+    }
   };
 
   // If mobile, show restriction message
@@ -830,13 +1425,31 @@ const App = () => {
   }
 
   return (
-    <div className="h-screen w-screen overflow-hidden font-sans select-none relative text-gray-900 bg-gray-900" onClick={() => { setActiveWindow(null); setActiveMenu(null); }}>
+    <ThemeContext.Provider value={{ theme, setTheme }}>
+      <div
+        className="h-screen w-screen overflow-hidden font-sans select-none relative text-gray-900 bg-gray-900 app-root"
+        onClick={() => {
+          setActiveWindow(null);
+          setActiveMenu(null);
+        }}
+      >
       
       {/* Interactive Background with Doodle Hotspots */}
       <InteractiveBackground />
       
       {/* Top Menu Bar */}
-      <TopBar title={activeWindow ? windows.find(w => w.id === activeWindow)?.title || '' : 'Finder'} activeMenu={activeMenu} setActiveMenu={setActiveMenu} />
+      <TopBar
+        title={activeWindow ? windows.find(w => w.id === activeWindow)?.title || '' : 'Finder'}
+        activeMenu={activeMenu}
+        setActiveMenu={setActiveMenu}
+        onOpenSystemPreferences={() => openApp('settings')}
+        onNewWindow={handleNewWindow}
+        onCloseAllWindows={handleCloseAllWindows}
+        onUndo={handleUndo}
+        onRedo={handleRedo}
+        onEnterFullScreen={handleEnterFullScreen}
+        onActualSize={handleActualSize}
+      />
 
       {/* Desktop Area */}
       <div className="relative w-full h-full pt-8 pb-24 z-10 pointer-events-none">
@@ -914,7 +1527,8 @@ const App = () => {
           })}
         </div>
       </div>
-    </div>
+      </div>
+    </ThemeContext.Provider>
   );
 };
 

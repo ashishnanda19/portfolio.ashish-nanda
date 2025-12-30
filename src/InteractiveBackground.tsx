@@ -116,7 +116,7 @@ const InteractiveBackground: React.FC = () => {
                   <div className="absolute top-2 -left-1 w-4 h-4 bg-white/98 rounded-full border-2 border-white/40"></div>
                   
                   {/* Quote text with better typography */}
-                  <p className="text-gray-900 text-sm leading-relaxed font-medium relative z-10 tracking-wide">
+                  <p className="doodle-quote text-gray-900 text-sm leading-relaxed font-medium relative z-10 tracking-wide">
                     "{doodle.quote}"
                   </p>
                   
@@ -157,7 +157,7 @@ const InteractiveBackground: React.FC = () => {
                   <div className="absolute top-2 -left-1 w-4 h-4 bg-white/98 rounded-full border-2 border-white/40"></div>
                   
                   {/* Quote text with better typography */}
-                  <p className="text-gray-900 text-sm leading-relaxed font-medium relative z-10 tracking-wide">
+                  <p className="doodle-quote text-gray-900 text-sm leading-relaxed font-medium relative z-10 tracking-wide">
                     "{doodle.quote}"
                   </p>
                   
