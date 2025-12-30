@@ -583,6 +583,7 @@ const PhotoBooth = () => {
 
 const SpotifyContent = () => {
   const [selectedPlaylist, setSelectedPlaylist] = useState<string | null>(null);
+  const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
 
   // Helper function to extract playlist ID from URL
   const extractPlaylistId = (url: string): string => {
@@ -611,93 +612,115 @@ const SpotifyContent = () => {
       id: 'coding-focus',
       name: 'Hindi Music',
       description: 'Chandani & Chai',
-      spotifyUrl: 'https://open.spotify.com/playlist/59jMJYSo97Dy5JTXuaAQrK?si=rsrKZ4SpSWSjT-Zse-3n6A&pi=4_pUzpe5SsO-6'
+      spotifyUrl: 'https://open.spotify.com/playlist/59jMJYSo97Dy5JTXuaAQrK?si=rsrKZ4SpSWSjT-Zse-3n6A&pi=4_pUzpe5SsO-6',
+      image: 'https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=400&h=400&fit=crop'
     },
     {
       id: 'chill-vibes',
       name: 'English Music',
       description: 'Clouded Coffeehouse',
-      spotifyUrl: 'https://open.spotify.com/playlist/5Q59GgXHjOzY5vjeUBStbb?si=_sTg0OsuTCmoczXybYs4aQ'
+      spotifyUrl: 'https://open.spotify.com/playlist/5Q59GgXHjOzY5vjeUBStbb?si=_sTg0OsuTCmoczXybYs4aQ',
+      image: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=400&fit=crop'
     },
     {
       id: 'workout',
       name: 'Rap Music',
       description: 'Drip & Drop',
-      spotifyUrl: 'https://open.spotify.com/playlist/477IgA9QgtRaxQ7s6LiFLR?si=QGMogWbpShWIzhEp-F-38w&pi=XnaY64pRTKq0V'
+      spotifyUrl: 'https://open.spotify.com/playlist/477IgA9QgtRaxQ7s6LiFLR?si=QGMogWbpShWIzhEp-F-38w&pi=XnaY64pRTKq0V',
+      image: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400&h=400&fit=crop'
     },
   ];
 
   return (
-    <div className="flex flex-col h-full bg-[var(--bg-elevated)] text-[var(--text-color)]">
+    <div className="flex flex-col h-full bg-black text-white">
       {/* Spotify chrome */}
-      <div className="bg-[var(--chrome-bg)] border-b border-[var(--border-subtle)] p-3 flex items-center space-x-3 shadow-sm z-10">
+      <div className="bg-[#121212] border-b border-gray-800 p-3 flex items-center space-x-3 shadow-sm z-10">
         <div className="flex space-x-2">
           <div className="w-3 h-3 rounded-full bg-red-400"></div>
           <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
           <div className="w-3 h-3 rounded-full bg-green-400"></div>
         </div>
-        <div className="flex-1 bg-[var(--bg-input)] rounded-lg border border-[var(--border-strong)] px-4 py-2 text-sm text-[var(--text-muted)] flex items-center shadow-inner">
-          <Music size={14} className="mr-3 text-[var(--icon-muted)]" />
+        <div className="flex-1 bg-[#242424] rounded-lg border border-gray-700 px-4 py-2 text-sm text-gray-400 flex items-center">
+          <Music size={14} className="mr-3 text-gray-500" />
           open.spotify.com/user/ashishnanda19
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto bg-[var(--bg-subtle)]">
-        <div className="max-w-6xl mx-auto p-6 space-y-6">
+      <div className="flex-1 overflow-auto bg-gradient-to-b from-[#1e1e1e] to-black">
+        <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
           
-          {/* Profile Section */}
-          <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-2xl shadow-sm p-6">
-            <div className="flex items-center gap-6">
-              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white text-3xl font-bold shadow-lg">
-                <Music size={40} />
-              </div>
-              <div className="flex-1">
-                <h1 className="text-3xl font-bold text-[var(--text-color)] mb-1">Ashish Kumar Nanda</h1>
-                <p className="text-[var(--text-muted)] mb-4">@ashishnanda19</p>
-                <div className="flex items-center gap-4">
-                  <a
-                    href="https://open.spotify.com/user/31l75eh4gpxsbgm4w4ocm23mtqem"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 px-4 py-2 bg-[#1DB954] text-white rounded-full text-sm font-medium hover:bg-[#1ed760] transition-colors"
-                  >
-                    <UserPlus size={16} />
-                    Send Friend Request
-                  </a>
-                  <a
-                    href="https://open.spotify.com/user/31l75eh4gpxsbgm4w4ocm23mtqem"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-[var(--link-muted)] hover:text-[#1DB954] underline"
-                  >
-                    View on Spotify
-                  </a>
-                </div>
+          {/* Profile Section - Spotify Style */}
+          <div className="flex flex-col sm:flex-row items-center sm:items-end gap-6 pb-8">
+            <div className="w-48 h-48 rounded-full overflow-hidden shadow-2xl flex-shrink-0 ring-4 ring-black/50">
+              <img 
+                src="/portimage.png" 
+                alt="Ashish Kumar Nanda"
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div className="flex-1 w-full sm:w-auto text-center sm:text-left">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Profile</p>
+              <h1 className="text-6xl sm:text-7xl font-black text-white mb-4 leading-none">Ashish Kumar Nanda</h1>
+              <p className="text-gray-400 mb-6 text-sm">@ashishnanda19</p>
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3">
+                <a
+                  href="https://open.spotify.com/user/31l75eh4gpxsbgm4w4ocm23mtqem"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 px-6 py-3 bg-[#1DB954] text-white rounded-full text-sm font-bold hover:bg-[#1ed760] hover:scale-105 transition-all shadow-lg"
+                >
+                  <UserPlus size={18} />
+                  Send Friend Request
+                </a>
+                <a
+                  href="https://open.spotify.com/user/31l75eh4gpxsbgm4w4ocm23mtqem"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 px-6 py-3 bg-transparent border-2 border-white/30 text-white rounded-full text-sm font-bold hover:border-white hover:scale-105 transition-all"
+                >
+                  View on Spotify
+                </a>
               </div>
             </div>
           </div>
 
-          {/* Playlists Section */}
-          <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-2xl shadow-sm p-6">
-            <h2 className="text-2xl font-bold mb-4 text-[var(--text-color)]">My Playlists</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {/* Playlists Section - Spotify Style */}
+          <div>
+            <h2 className="text-2xl font-bold mb-6 text-white">Public Playlists</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
               {playlists.map((playlist) => (
                 <div
                   key={playlist.id}
-                  className="border border-[var(--card-border)] rounded-xl p-4 hover:border-[#1DB954] transition-colors cursor-pointer group"
+                  className="bg-[#181818] hover:bg-[#282828] rounded-lg p-4 transition-all duration-200 cursor-pointer group"
                   onClick={() => setSelectedPlaylist(playlist.id === selectedPlaylist ? null : playlist.id)}
                 >
-                  <div className="aspect-square bg-gradient-to-br from-green-400 to-green-600 rounded-lg mb-3 flex items-center justify-center text-white text-4xl font-bold shadow-md group-hover:scale-105 transition-transform">
-                    <Music size={48} />
+                  <div className="relative aspect-square mb-4 rounded-lg overflow-hidden shadow-lg group-hover:shadow-xl transition-shadow">
+                    {imageErrors[playlist.id] ? (
+                      <div className="w-full h-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center">
+                        <span className="text-white text-5xl font-bold">{playlist.name.charAt(0)}</span>
+                      </div>
+                    ) : (
+                      <img 
+                        src={playlist.image} 
+                        alt={playlist.name}
+                        className="w-full h-full object-cover"
+                        onError={() => setImageErrors(prev => ({ ...prev, [playlist.id]: true }))}
+                      />
+                    )}
+                    <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="w-12 h-12 bg-[#1DB954] rounded-full flex items-center justify-center shadow-xl hover:scale-110 transition-transform">
+                        <Play size={24} className="text-black ml-0.5" fill="black" />
+                      </div>
+                    </div>
                   </div>
-                  <h3 className="font-bold text-lg text-[var(--text-color)] mb-1">{playlist.name}</h3>
-                  <p className="text-sm text-[var(--text-muted)]">{playlist.description}</p>
+                  <h3 className="font-bold text-white mb-1 truncate">{playlist.name}</h3>
+                  <p className="text-sm text-gray-400 line-clamp-2">{playlist.description}</p>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Spotify Player */}
+          {/* Spotify Player - Spotify Style */}
           {selectedPlaylist && (() => {
             const playlist = playlists.find(p => p.id === selectedPlaylist);
             if (!playlist) return null;
@@ -706,14 +729,14 @@ const SpotifyContent = () => {
             
             if (!playlistId) {
               return (
-                <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-2xl shadow-sm p-6">
+                <div className="bg-[#181818] rounded-lg p-8">
                   <div className="text-center py-8">
-                    <p className="text-[var(--text-muted)] mb-4">Unable to load playlist. Please check the playlist URL.</p>
+                    <p className="text-gray-400 mb-6">Unable to load playlist. Please check the playlist URL.</p>
                     <a
                       href={playlist.spotifyUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-4 py-2 bg-[#1DB954] text-white rounded-full text-sm font-medium hover:bg-[#1ed760] transition-colors"
+                      className="inline-flex items-center gap-2 px-6 py-3 bg-[#1DB954] text-white rounded-full text-sm font-bold hover:bg-[#1ed760] transition-colors"
                     >
                       Open in Spotify
                     </a>
@@ -723,13 +746,15 @@ const SpotifyContent = () => {
             }
             
             return (
-              <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-2xl shadow-sm p-6">
-                <h2 className="text-xl font-bold mb-4 text-[var(--text-color)]">
-                  Now Playing: {playlist.name}
-                </h2>
-                <div className="bg-black rounded-lg p-4">
+              <div className="bg-[#181818] rounded-lg p-6 lg:p-8">
+                <div className="flex items-center gap-4 mb-6">
+                  <h2 className="text-2xl font-bold text-white">
+                    {playlist.name}
+                  </h2>
+                </div>
+                <div className="bg-[#000000] rounded-lg p-4 shadow-2xl">
                   <iframe
-                    style={{ borderRadius: '12px' }}
+                    style={{ borderRadius: '12px', minHeight: '352px' }}
                     src={`https://open.spotify.com/embed/playlist/${playlistId}?utm_source=generator&theme=0`}
                     width="100%"
                     height="352"
@@ -737,29 +762,42 @@ const SpotifyContent = () => {
                     allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
                     loading="lazy"
                     title={`Spotify playlist: ${playlist.name}`}
+                    className="w-full"
                   ></iframe>
                 </div>
-                <p className="text-xs text-[var(--text-muted)] mt-3 text-center">
-                  Click "Open in Spotify" to add me as a friend and follow my playlists!
+                <p className="text-xs text-gray-400 mt-4 text-center">
+                  Click "Open in Spotify" in the player to add me as a friend and follow my playlists!
                 </p>
               </div>
             );
           })()}
 
-          {/* Instructions */}
+          {/* Instructions - Spotify Style */}
           {!selectedPlaylist && (
-            <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-2xl shadow-sm p-6">
+            <div className="bg-[#181818] rounded-lg p-6 lg:p-8">
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-full bg-[#1DB954]/10 flex items-center justify-center flex-shrink-0">
+                <div className="w-12 h-12 rounded-full bg-[#1DB954]/20 flex items-center justify-center flex-shrink-0">
                   <Music size={24} className="text-[#1DB954]" />
                 </div>
-                <div>
-                  <h3 className="font-semibold text-[var(--text-color)] mb-2">How to Connect</h3>
-                  <ol className="text-sm text-[var(--text-muted)] space-y-2 list-decimal list-inside">
-                    <li>Click on any playlist above to start listening</li>
-                    <li>Click "Open in Spotify" in the player to view on Spotify</li>
-                    <li>Send me a friend request using the button above</li>
-                    <li>Follow my playlists to stay updated with my music taste!</li>
+                <div className="flex-1">
+                  <h3 className="font-bold text-white mb-3 text-lg">How to Connect</h3>
+                  <ol className="text-sm text-gray-400 space-y-3">
+                    <li className="flex items-start gap-3">
+                      <span className="flex-shrink-0 w-6 h-6 rounded-full bg-[#1DB954]/20 text-[#1DB954] flex items-center justify-center text-xs font-bold">1</span>
+                      <span>Click on any playlist above to start listening</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <span className="flex-shrink-0 w-6 h-6 rounded-full bg-[#1DB954]/20 text-[#1DB954] flex items-center justify-center text-xs font-bold">2</span>
+                      <span>Click "Open in Spotify" in the player to view on Spotify</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <span className="flex-shrink-0 w-6 h-6 rounded-full bg-[#1DB954]/20 text-[#1DB954] flex items-center justify-center text-xs font-bold">3</span>
+                      <span>Send me a friend request using the button above</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <span className="flex-shrink-0 w-6 h-6 rounded-full bg-[#1DB954]/20 text-[#1DB954] flex items-center justify-center text-xs font-bold">4</span>
+                      <span>Follow my playlists to stay updated with my music taste!</span>
+                    </li>
                   </ol>
                 </div>
               </div>
