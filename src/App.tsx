@@ -58,13 +58,13 @@ const AboutContent = () => {
           : 'p-8 font-sans h-full overflow-y-auto bg-white text-gray-800'
       }
     >
-      <div className="flex flex-col items-center mb-8">
-        <div className="w-32 h-32 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 mb-4 shadow-xl flex items-center justify-center text-white text-4xl font-bold border-4 border-white overflow-hidden relative">
+    <div className="flex flex-col items-center mb-8">
+      <div className="w-32 h-32 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 mb-4 shadow-xl flex items-center justify-center text-white text-4xl font-bold border-4 border-white overflow-hidden relative">
           <span className="z-10">
             <img src="/portimage.png" alt="image" />
           </span>
           <div className="absolute inset-0 bg-black/10" />
-        </div>
+      </div>
         <h1
           className={
             theme === 'dark'
@@ -77,49 +77,49 @@ const AboutContent = () => {
         <p className="text-blue-500 font-medium mt-1">
           Research Intern @ IIT(BHU) | CS @ MUJ ‘27
         </p>
-      </div>
-
-      <div className="max-w-3xl mx-auto space-y-8 pb-8">
+    </div>
+    
+    <div className="max-w-3xl mx-auto space-y-8 pb-8">
         <section className="bg-(--card-bg) p-6 rounded-2xl shadow-sm border border-(--card-border)">
           <h2 className="text-xl font-bold border-b pb-3 mb-4 text-(--text-color) flex items-center gap-2">
-            👋 About Me
-          </h2>
+           👋 About Me
+        </h2>
           <p className="leading-relaxed text-(--text-muted) text-lg">
-            I am a Computer Science graduate from Manipal University with a CGPA of 9.22/10.
+          I am a Computer Science graduate from Manipal University with a CGPA of 9.22/10. 
             Currently working as a{' '}
             <span className="font-semibold text-green-500">Research Intern at IIT (BHU)</span>.
             I specialize in building full-stack applications, scalable backend systems, and integrating
             AI models into production. If you need someone who can write code and hit high notes, I'm
             your person.
-          </p>
-        </section>
+        </p>
+      </section>
 
         <section className="bg-(--card-bg) p-6 rounded-2xl shadow-sm border border-(--card-border)">
           <h2 className="text-xl font-bold border-b pb-3 mb-4 text-(--text-color) flex items-center gap-2">
-            🏆 Achievements
-          </h2>
+           🏆 Achievements
+        </h2>
           <ul className="space-y-3 text-(--text-muted)">
-            <li className="flex items-start">
+          <li className="flex items-start">
               <span className="w-2 h-2 mt-2 mr-3 bg-blue-500 rounded-full shrink-0" />
               <span>Finalist - International Innovation Challenge (IIC)</span>
-            </li>
-            <li className="flex items-start">
+          </li>
+          <li className="flex items-start">
               <span className="w-2 h-2 mt-2 mr-3 bg-purple-500 rounded-full shrink-0" />
               <span>National Semifinalist - Flipkart GRiD 7.0</span>
-            </li>
-            <li className="flex items-start">
+          </li>
+          <li className="flex items-start">
               <span className="w-2 h-2 mt-2 mr-3 bg-green-500 rounded-full shrink-0" />
               <span>4x Dean’s List of Excellence: Recognized for academic excellence.</span>
-            </li>
-            <li className="flex items-start">
+          </li>
+          <li className="flex items-start">
               <span className="w-2 h-2 mt-2 mr-3 bg-green-500 rounded-full shrink-0" />
               <span>Solved 300+ DSA problems on platforms like LeetCode and GeeksforGeeks</span>
-            </li>
-          </ul>
-        </section>
-      </div>
+          </li>
+        </ul>
+      </section>
     </div>
-  );
+  </div>
+);
 };
 
 const SkillsExperienceContent = () => (
@@ -238,7 +238,7 @@ const BrowserContent = () => (
               className="flex items-center p-3 rounded-lg transition-colors gap-3 social-card social-card--twitter"
             >
               <Twitter size={20} className="text-sky-500" /> <span className="text-sm font-medium">@ashish19n</span>
-             </a>
+            </a>
           </div>
         </div>
 
@@ -817,8 +817,8 @@ const SystemPreferencesContent = () => {
     <div
       className={
         theme === 'dark'
-          ? 'h-full p-8 font-sans bg-(--card-bg) text-(--text-color)'
-          : 'h-full p-8 font-sans bg-white text-gray-900'
+          ? 'h-full overflow-y-auto p-8 font-sans bg-(--card-bg) text-(--text-color)'
+          : 'h-full overflow-y-auto p-8 font-sans bg-white text-gray-900'
       }
     >
       <h1 className="text-2xl font-semibold mb-2">System Preferences</h1>
@@ -827,11 +827,11 @@ const SystemPreferencesContent = () => {
       <p className="text-sm text-(--text-muted) mb-4">
         Choose between light and dark appearance for AshishOS.
       </p>
-      <div className="flex gap-6">
+      <div className="flex gap-4 sm:gap-6 flex-col sm:flex-row">
         <button
           type="button"
           onClick={() => setTheme('light')}
-          className={`flex-1 rounded-2xl border p-4 text-left transition-all cursor-pointer ${
+          className={`flex-1 min-w-0 rounded-2xl border p-4 text-left transition-all cursor-pointer ${
             theme === 'light'
               ? 'border-blue-500 bg-slate-900 text-white shadow-md ring-2 ring-blue-500/60'
               : 'border-(--card-border) bg-slate-900 text-white opacity-80 hover:opacity-100'
@@ -853,7 +853,7 @@ const SystemPreferencesContent = () => {
         <button
           type="button"
           onClick={() => setTheme('dark')}
-          className={`flex-1 rounded-2xl border p-4 text-left transition-all cursor-pointer ${
+          className={`flex-1 min-w-0 rounded-2xl border p-4 text-left transition-all cursor-pointer ${
             theme === 'dark'
               ? 'border-blue-500 bg-slate-900 text-white shadow-md ring-2 ring-blue-500/60'
               : 'border-(--card-border) bg-slate-900 text-white opacity-80 hover:opacity-100'
@@ -1479,7 +1479,7 @@ const App = () => {
       name: 'Spotify',
       icon: <Music size={28} className="text-white drop-shadow-md" />,
       iconSrc: '/icons/spotify.png',
-      color: 'bg-transparent'
+      color: 'bg-transparent' 
     },
   ];
 
@@ -1548,7 +1548,7 @@ const App = () => {
         case 'terminal': content = <TerminalContent />; title = 'Terminal'; size = { width: 600, height: 400 }; break;
         case 'camera': content = <PhotoBooth />; title = 'Photo Booth'; size = { width: 500, height: 600 }; break;
         case 'arcade': content = <SnakeGame />; title = 'Arcade'; size = { width: 440, height: 520 }; break;
-        case 'settings': content = <SystemPreferencesContent />; title = 'System Preferences'; size = { width: 520, height: 260 }; break;
+        case 'settings': content = <SystemPreferencesContent />; title = 'System Preferences'; size = { width: 700, height: 450 }; break;
         case 'spotify': content = <SpotifyContent />; title = 'Spotify'; size = { width: 1000, height: 750 }; break;
         default: content = <div>Content not found</div>;
       }
@@ -1678,7 +1678,7 @@ const App = () => {
         )}
   
         {/* Interactive Background */}
-        <InteractiveBackground />
+      <InteractiveBackground />
   
       
       {/* Top Menu Bar */}
@@ -1771,7 +1771,7 @@ const App = () => {
           })}
         </div>
       </div>
-      </div>
+    </div>
     </ThemeContext.Provider>
   );
 };
