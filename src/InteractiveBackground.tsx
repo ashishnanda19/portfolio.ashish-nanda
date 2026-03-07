@@ -1,190 +1,200 @@
-import React, { useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import { Html } from '@react-three/drei';
+import * as THREE from 'three';
 
-interface DoodleHotspot {
+interface CharacterHotspot {
   id: number;
+  label: string;
   quote: string;
-  position: {
-    top: string; // percentage
-    left: string; // percentage
-    width: string; // percentage
-    height: string; // percentage
-  };
+  normPosition: [number, number, number]; // Normalized coordinates (-0.5 to 0.5)
+  tooltipOffset: [number, number, number]; // Offset for the tooltip
 }
 
-const doodles: DoodleHotspot[] = [
+const characters: CharacterHotspot[] = [
   {
     id: 1,
-    quote: "I design backends like I compose music: every microservice must be in perfect harmony.",
-    position: {
-      top: "5%",
-      left: "5%",
-      width: "30%",
-      height: "40%"
-    }
+    label: "DRIVE & DISCIPLINE",
+    quote: "Relentless pursuit of excellence. Every line of code must be in perfect harmony.",
+    normPosition: [-0.38, 0.15, 0.5], // Top Left (Ferrari jacket)
+    tooltipOffset: [0, -2.5, 0] // Show below
   },
   {
     id: 2,
-    quote: "Finding the shortest path in a graph feels exactly like nailing a complex guitar solo.",
-    position: {
-      top: "5%",
-      left: "35%",
-      width: "30%",
-      height: "40%"
-    }
+    label: "PROFOUND VISION",
+    quote: "Seeing the architecture before it's built. Clarity in complexity.",
+    normPosition: [0.02, 0.25, 0.8], // Top Center (Portrait)
+    tooltipOffset: [0, -2.5, 0] // Show below
   },
   {
     id: 3,
-    quote: "My flow state exists somewhere between optimizing O(n) complexity and shredding the pentatonic scale.",
-    position: {
-      top: "5%",
-      left: "65%",
-      width: "30%",
-      height: "40%"
-    }
+    label: "GROWTH",
+    quote: "Continuous learning. Finding the shortest path in a graph and in life.",
+    normPosition: [-0.22, -0.25, 0.6], // Bottom Left (Looking down)
+    tooltipOffset: [0, 2.5, 0] // Show above
   },
   {
     id: 4,
-    quote: "Backend architecture is the rhythm section; algorithms are the lead guitar.",
-    position: {
-      top: "45%",
-      left: "10%",
-      width: "35%",
-      height: "45%"
-    }
+    label: "TIMELESS ELEGANCE",
+    quote: "Building systems that scale beautifully and stand the test of time.",
+    normPosition: [0.15, -0.35, 0.4], // Bottom Center/Right (Walking away)
+    tooltipOffset: [0, 2.5, 0] // Show above
   },
   {
     id: 5,
-    quote: "I handle string manipulation in my code and string bending on my fretboard.",
-    position: {
-      top: "45%",
-      left: "50%",
-      width: "35%",
-      height: "45%"
-    }
+    label: "QUIET CONFIDENCE",
+    quote: "Letting the work speak for itself. Flow state achieved.",
+    normPosition: [0.4, 0.05, 0.7], // Right (Sitting in swing)
+    tooltipOffset: [0, 2.5, 0] // Show above
   }
 ];
 
-const InteractiveBackground: React.FC = () => {
+function InteractiveCollage() {
+  const [texture, setTexture] = useState<THREE.Texture | null>(null);
+  const { viewport } = useThree();
+  const planeRef = useRef<THREE.Mesh>(null);
+  const groupRef = useRef<THREE.Group>(null);
   const [hoveredId, setHoveredId] = useState<number | null>(null);
 
+  useEffect(() => {
+    const loader = new THREE.TextureLoader();
+    // Assuming the user saves their image as collage.png in the public folder
+    loader.load('/collage.png', (tex) => {
+      tex.colorSpace = THREE.SRGBColorSpace;
+      setTexture(tex);
+    }, undefined, () => {
+      console.warn("Please save the uploaded image as public/collage.png to see the background!");
+    });
+  }, []);
+
+  useFrame((state) => {
+    if (!groupRef.current) return;
+
+    // Smooth Parallax effect based on mouse movement - increased multiplier for deeper feel
+    const targetX = (state.pointer.x * viewport.width) / 15;
+    const targetY = (state.pointer.y * viewport.height) / 15;
+
+    // Add a natural floating breathing effect
+    const floatY = Math.sin(state.clock.elapsedTime * 0.5) * 0.2;
+
+    groupRef.current.position.x = THREE.MathUtils.lerp(groupRef.current.position.x, targetX, 0.05);
+    groupRef.current.position.y = THREE.MathUtils.lerp(groupRef.current.position.y, targetY + floatY, 0.05);
+
+    // Enhanced rotation tilt
+    groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, -state.pointer.y * 0.15, 0.05);
+    groupRef.current.rotation.y = THREE.MathUtils.lerp(groupRef.current.rotation.y, state.pointer.x * 0.15, 0.05);
+  });
+
+  // Calculate scaling so the image fits nicely without excessive overflow
+  // We want to fit the image inside the viewport while maintaining its aspect ratio
+  const imageAspect = 16 / 9; // Assuming the collage is roughly 16:9
+  const viewportAspect = viewport.width / viewport.height;
+
+  let scaleWidth, scaleHeight;
+
+  // To "contain" like background-size: contain so the WHOLE image is visible
+  if (viewportAspect > imageAspect) {
+    // Viewport is wider than image. Constrain by height to fit entirely.
+    scaleHeight = viewport.height * 0.95; // Slight padding for parallax
+    scaleWidth = scaleHeight * imageAspect;
+  } else {
+    // Viewport is taller than image. Constrain by width.
+    scaleWidth = viewport.width * 0.95;
+    scaleHeight = scaleWidth / imageAspect;
+  }
+
   return (
-    <div className="absolute inset-0 w-full h-full z-0">
-      {/* Background Image */}
-      <img 
-        src="/background.png" 
-        className="absolute inset-0 w-full h-full object-cover opacity-100 pointer-events-none"
-        alt="Interactive Background" 
-      />
-      
-      {/* Hotspot Overlay Container */}
-      <div className="absolute inset-0 w-full h-full">
-        {doodles.map((doodle) => (
-          <div
-            key={doodle.id}
-            className="absolute cursor-pointer group"
-            style={{
-              top: doodle.position.top,
-              left: doodle.position.left,
-              width: doodle.position.width,
-              height: doodle.position.height,
-            }}
-            onMouseEnter={() => setHoveredId(doodle.id)}
-            onMouseLeave={() => setHoveredId(null)}
-          >
-            {/* Invisible hover zone - make sure it fills the area */}
-            <div className="w-full h-full bg-transparent" />
-            
-            {/* Speech Bubble Cloud Tooltip - positioned based on character location */}
-            {/* Lower doodles (4, 5) show tooltip above, upper doodles (1, 2, 3) show below */}
-            {doodle.id >= 4 ? (
-              // Lower doodles - tooltip above
-              <div 
-                className={`absolute bottom-full left-1/2 transform -translate-x-1/2 mb-0.5 z-[40] transition-all duration-300 ease-out ${
-                  hoveredId === doodle.id 
-                    ? 'opacity-100 scale-100 pointer-events-auto' 
-                    : 'opacity-0 scale-90 pointer-events-none'
-                }`}
-                style={{ maxWidth: '340px', minWidth: '280px' }}
-              >
-                {/* Cloud-shaped speech bubble with multiple rounded sections */}
-                <div className="relative bg-white/98 backdrop-blur-lg rounded-[2.5rem] p-6 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.4)] border-2 border-white/40">
-                  {/* Cloud decoration bubbles around edges */}
-                  <div className="absolute -top-3 -left-3 w-8 h-8 bg-white/98 rounded-full border-2 border-white/40 shadow-lg"></div>
-                  <div className="absolute -top-2 -right-4 w-7 h-7 bg-white/98 rounded-full border-2 border-white/40 shadow-lg"></div>
-                  <div className="absolute top-1 right-10 w-5 h-5 bg-white/98 rounded-full border-2 border-white/40"></div>
-                  <div className="absolute -bottom-2 left-8 w-6 h-6 bg-white/98 rounded-full border-2 border-white/40"></div>
-                  <div className="absolute top-2 -left-1 w-4 h-4 bg-white/98 rounded-full border-2 border-white/40"></div>
-                  
-                  {/* Quote text with better typography */}
-                  <p className="doodle-quote text-gray-900 text-sm leading-relaxed font-medium relative z-10 tracking-wide">
-                    "{doodle.quote}"
-                  </p>
-                  
-                  {/* Speech bubble tail pointing down - cloud style */}
-                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
-                    <svg width="28" height="20" viewBox="0 0 28 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path 
-                        d="M14 20C9 20 5 15 0 10C5 10 9 5 14 5C19 5 23 10 28 10C23 15 19 20 14 20Z" 
-                        fill="white" 
-                        fillOpacity="0.98"
-                        stroke="rgba(255,255,255,0.4)"
-                        strokeWidth="2"
-                      />
-                      {/* Small cloud bubble on tail */}
-                      <circle cx="10" cy="12" r="3" fill="white" fillOpacity="0.98" stroke="rgba(255,255,255,0.4)" strokeWidth="2"/>
-                      <circle cx="18" cy="12" r="3" fill="white" fillOpacity="0.98" stroke="rgba(255,255,255,0.4)" strokeWidth="2"/>
-                    </svg>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              // Upper doodles - tooltip below
-              <div 
-                className={`absolute top-full left-1/2 transform -translate-x-1/2 mt-2 z-[40] transition-all duration-300 ease-out ${
-                  hoveredId === doodle.id 
-                    ? 'opacity-100 scale-100 pointer-events-auto' 
-                    : 'opacity-0 scale-90 pointer-events-none'
-                }`}
-                style={{ maxWidth: '340px', minWidth: '280px' }}
-              >
-                {/* Cloud-shaped speech bubble with multiple rounded sections */}
-                <div className="relative bg-white/98 backdrop-blur-lg rounded-[2.5rem] p-6 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.4)] border-2 border-white/40">
-                  {/* Cloud decoration bubbles around edges */}
-                  <div className="absolute -top-3 -left-3 w-8 h-8 bg-white/98 rounded-full border-2 border-white/40 shadow-lg"></div>
-                  <div className="absolute -top-2 -right-4 w-7 h-7 bg-white/98 rounded-full border-2 border-white/40 shadow-lg"></div>
-                  <div className="absolute top-1 right-10 w-5 h-5 bg-white/98 rounded-full border-2 border-white/40"></div>
-                  <div className="absolute -bottom-2 left-8 w-6 h-6 bg-white/98 rounded-full border-2 border-white/40"></div>
-                  <div className="absolute top-2 -left-1 w-4 h-4 bg-white/98 rounded-full border-2 border-white/40"></div>
-                  
-                  {/* Quote text with better typography */}
-                  <p className="doodle-quote text-gray-900 text-sm leading-relaxed font-medium relative z-10 tracking-wide">
-                    "{doodle.quote}"
-                  </p>
-                  
-                  {/* Speech bubble tail pointing up - cloud style */}
-                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 -mb-1">
-                    <svg width="28" height="20" viewBox="0 0 28 20" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ transform: 'rotate(180deg)' }}>
-                      <path 
-                        d="M14 20C9 20 5 15 0 10C5 10 9 5 14 5C19 5 23 10 28 10C23 15 19 20 14 20Z" 
-                        fill="white" 
-                        fillOpacity="0.98"
-                        stroke="rgba(255,255,255,0.4)"
-                        strokeWidth="2"
-                      />
-                      {/* Small cloud bubble on tail */}
-                      <circle cx="10" cy="12" r="3" fill="white" fillOpacity="0.98" stroke="rgba(255,255,255,0.4)" strokeWidth="2"/>
-                      <circle cx="18" cy="12" r="3" fill="white" fillOpacity="0.98" stroke="rgba(255,255,255,0.4)" strokeWidth="2"/>
-                    </svg>
-                  </div>
-                </div>
-              </div>
-            )}
+    <group ref={groupRef}>
+      {/* Dynamic Backing Shadow/Glow behind the image */}
+      <mesh position={[0, 0, -2]}>
+        <planeGeometry args={[scaleWidth * 2, scaleHeight * 2]} />
+        <meshBasicMaterial color="#0A0A0A" />
+      </mesh>
+
+      {texture ? (
+        <mesh ref={planeRef} position={[0, 0, 0]}>
+          <planeGeometry args={[scaleWidth, scaleHeight, 32, 32]} />
+          {/* We use MeshStandardMaterial to let ambient light affect it, but emissive makes it visible */}
+          <meshStandardMaterial
+            map={texture}
+            transparent
+            opacity={0.8}
+            metalness={0.2}
+            roughness={0.8}
+          />
+        </mesh>
+      ) : (
+        <Html center>
+          <div className="text-white/50 font-mono text-sm tracking-widest select-none pointer-events-none border border-white/10 p-4 rounded-xl bg-black/20 backdrop-blur-md">
+            Waiting for public/collage.png...
           </div>
-        ))}
-      </div>
+        </Html>
+      )}
+
+      {/* Interactive Hotspots over the character coordinates */}
+      {texture && characters.map((char) => (
+        <mesh
+          key={char.id}
+          position={[char.normPosition[0] * scaleWidth, char.normPosition[1] * scaleHeight, char.normPosition[2]]}
+          onPointerOver={() => setHoveredId(char.id)}
+          onPointerOut={() => setHoveredId(null)}
+        >
+          {/* Invisible hit box for raycasting */}
+          <sphereGeometry args={[1.5, 16, 16]} />
+          <meshBasicMaterial visible={false} />
+
+          {/* Aesthetic Scanner/Ring indicator */}
+          <Html center zIndexRange={[100, 0]}>
+            <div className={`w-10 h-10 rounded-full border border-white/20 cursor-pointer transition-all duration-700 ease-out flex items-center justify-center ${hoveredId === char.id ? 'scale-150 border-white/60 bg-white/5 backdrop-blur-md' : ''}`}>
+              <div className={`w-1.5 h-1.5 rounded-full bg-white/40 transition-all duration-500 ${hoveredId === char.id ? 'bg-white shadow-[0_0_10px_white]' : 'animate-ping'}`} />
+            </div>
+          </Html>
+
+          {/* Holographic Label Tooltip */}
+          {hoveredId === char.id && (
+            <Html position={char.tooltipOffset} center zIndexRange={[100, 0]}>
+              <div
+                className="relative bg-black/70 backdrop-blur-2xl rounded-2xl p-6 border border-white/10 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.8)] animate-in fade-in zoom-in-95 duration-300 pointer-events-none"
+                style={{ width: '320px' }}
+              >
+                <div className="absolute top-0 left-0 w-full h-full rounded-2xl bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
+                <h3 className="text-white text-xs font-bold tracking-[0.2em] uppercase mb-3 flex items-center gap-3">
+                  <span className="w-2 h-2 rounded-full bg-white/80 animate-pulse" />
+                  {char.label}
+                </h3>
+                <p className="text-white/60 text-sm leading-relaxed font-medium relative z-10">
+                  {char.quote}
+                </p>
+                {/* Cybernetic connector line extending towards the dot */}
+                {char.tooltipOffset[1] > 0 ? (
+                  <div className="absolute -bottom-10 left-1/2 w-[1px] h-10 bg-gradient-to-t from-transparent to-white/30 transform -translate-x-1/2" />
+                ) : (
+                  <div className="absolute -top-10 left-1/2 w-[1px] h-10 bg-gradient-to-b from-transparent to-white/30 transform -translate-x-1/2" />
+                )}
+              </div>
+            </Html>
+          )}
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+const InteractiveBackground: React.FC = () => {
+  return (
+    <div className="absolute inset-0 w-full h-full z-0 bg-[#0A0A0A] overflow-hidden">
+      {/* Clean elegant vignette gradient */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-transparent via-[#0A0A0A]/40 to-[#0A0A0A] pointer-events-none z-10" />
+
+      <Canvas camera={{ position: [0, 0, 8], fov: 60 }} dpr={[1, 2]}>
+        <ambientLight intensity={1.5} />
+        {/* Subtle directed light to interact with StandardMaterial roughness */}
+        <directionalLight position={[5, 5, 5]} intensity={0.5} color="#ffffff" />
+        <directionalLight position={[-5, -5, -5]} intensity={0.2} color="#ffffff" />
+        <InteractiveCollage />
+      </Canvas>
     </div>
   );
 };
 
 export default InteractiveBackground;
-
