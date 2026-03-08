@@ -49,7 +49,7 @@ const characters: CharacterHotspot[] = [
   }
 ];
 
-function InteractiveCollage() {
+function InteractiveCollage({ isDark }: { isDark: boolean }) {
   const [texture, setTexture] = useState<THREE.Texture | null>(null);
   const { viewport } = useThree();
   const planeRef = useRef<THREE.Mesh>(null);
@@ -125,7 +125,7 @@ function InteractiveCollage() {
         </mesh>
       ) : (
         <Html center>
-          <div className="text-white/50 font-mono text-sm tracking-widest select-none pointer-events-none border border-white/10 p-4 rounded-xl bg-black/20 backdrop-blur-md">
+          <div className={`${isDark ? 'text-white/50' : 'text-black/50'} font-mono text-sm tracking-widest select-none pointer-events-none border ${isDark ? 'border-white/10' : 'border-black/10'} p-4 rounded-xl ${isDark ? 'bg-black/20' : 'bg-white/20'} backdrop-blur-md`}>
             Waiting for public/collage.png...
           </div>
         </Html>
@@ -145,8 +145,8 @@ function InteractiveCollage() {
 
           {/* Aesthetic Scanner/Ring indicator */}
           <Html center zIndexRange={[100, 0]}>
-            <div className={`w-10 h-10 rounded-full border border-white/20 cursor-pointer transition-all duration-700 ease-out flex items-center justify-center ${hoveredId === char.id ? 'scale-150 border-white/60 bg-white/5 backdrop-blur-md' : ''}`}>
-              <div className={`w-1.5 h-1.5 rounded-full bg-white/40 transition-all duration-500 ${hoveredId === char.id ? 'bg-white shadow-[0_0_10px_white]' : 'animate-ping'}`} />
+            <div className={`w-10 h-10 rounded-full border ${isDark ? 'border-white/20' : 'border-black/20'} cursor-pointer transition-all duration-700 ease-out flex items-center justify-center ${hoveredId === char.id ? `scale-150 ${isDark ? 'border-white/60 bg-white/5' : 'border-black/60 bg-black/5'} backdrop-blur-md` : ''}`}>
+              <div className={`w-1.5 h-1.5 rounded-full transition-all duration-500 ${hoveredId === char.id ? (isDark ? 'bg-white shadow-[0_0_10px_white]' : 'bg-black shadow-[0_0_10px_black]') : `animate-ping ${isDark ? 'bg-white/40' : 'bg-black/40'}`}`} />
             </div>
           </Html>
 
@@ -154,22 +154,22 @@ function InteractiveCollage() {
           {hoveredId === char.id && (
             <Html position={char.tooltipOffset} center zIndexRange={[100, 0]}>
               <div
-                className="relative bg-black/70 backdrop-blur-2xl rounded-2xl p-6 border border-white/10 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.8)] animate-in fade-in zoom-in-95 duration-300 pointer-events-none"
+                className={`relative ${isDark ? 'bg-black/70 border-white/10' : 'bg-white/70 border-black/10'} backdrop-blur-2xl rounded-2xl p-6 border shadow-[0_20px_40px_-15px_rgba(0,0,0,0.8)] animate-in fade-in zoom-in-95 duration-300 pointer-events-none`}
                 style={{ width: '320px' }}
               >
-                <div className="absolute top-0 left-0 w-full h-full rounded-2xl bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
-                <h3 className="text-white text-xs font-bold tracking-[0.2em] uppercase mb-3 flex items-center gap-3">
-                  <span className="w-2 h-2 rounded-full bg-white/80 animate-pulse" />
+                <div className={`absolute top-0 left-0 w-full h-full rounded-2xl bg-gradient-to-br ${isDark ? 'from-white/5' : 'from-black/5'} to-transparent pointer-events-none`} />
+                <h3 className={`${isDark ? 'text-white' : 'text-black'} text-xs font-bold tracking-[0.2em] uppercase mb-3 flex items-center gap-3`}>
+                  <span className={`w-2 h-2 rounded-full ${isDark ? 'bg-white/80' : 'bg-black/80'} animate-pulse`} />
                   {char.label}
                 </h3>
-                <p className="text-white/60 text-sm leading-relaxed font-medium relative z-10">
+                <p className={`${isDark ? 'text-white/60' : 'text-black/60'} text-sm leading-relaxed font-medium relative z-10`}>
                   {char.quote}
                 </p>
                 {/* Cybernetic connector line extending towards the dot */}
                 {char.tooltipOffset[1] > 0 ? (
-                  <div className="absolute -bottom-10 left-1/2 w-[1px] h-10 bg-gradient-to-t from-transparent to-white/30 transform -translate-x-1/2" />
+                  <div className={`absolute -bottom-10 left-1/2 w-[1px] h-10 bg-gradient-to-t from-transparent ${isDark ? 'to-white/30' : 'to-black/30'} transform -translate-x-1/2`} />
                 ) : (
-                  <div className="absolute -top-10 left-1/2 w-[1px] h-10 bg-gradient-to-b from-transparent to-white/30 transform -translate-x-1/2" />
+                  <div className={`absolute -top-10 left-1/2 w-[1px] h-10 bg-gradient-to-b from-transparent ${isDark ? 'to-white/30' : 'to-black/30'} transform -translate-x-1/2`} />
                 )}
               </div>
             </Html>
@@ -180,18 +180,19 @@ function InteractiveCollage() {
   );
 }
 
-const InteractiveBackground: React.FC = () => {
+const InteractiveBackground: React.FC<{ theme: string }> = ({ theme }) => {
+  const isDark = theme === 'dark';
   return (
-    <div className="absolute inset-0 w-full h-full z-0 bg-[#0A0A0A] overflow-hidden">
+    <div className={`absolute inset-0 w-full h-full z-0 overflow-hidden transition-colors duration-500 ${isDark ? 'bg-[#0A0A0A]' : 'bg-[#f1f5f9]'}`}>
       {/* Clean elegant vignette gradient */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-transparent via-[#0A0A0A]/40 to-[#0A0A0A] pointer-events-none z-10" />
+      <div className={`absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] pointer-events-none z-10 transition-colors duration-500 ${isDark ? 'from-transparent via-[#0A0A0A]/40 to-[#0A0A0A]' : 'from-transparent via-[#f1f5f9]/40 to-[#f1f5f9]'}`} />
 
       <Canvas camera={{ position: [0, 0, 8], fov: 60 }} dpr={[1, 2]}>
         <ambientLight intensity={1.5} />
         {/* Subtle directed light to interact with StandardMaterial roughness */}
         <directionalLight position={[5, 5, 5]} intensity={0.5} color="#ffffff" />
         <directionalLight position={[-5, -5, -5]} intensity={0.2} color="#ffffff" />
-        <InteractiveCollage />
+        <InteractiveCollage isDark={isDark} />
       </Canvas>
     </div>
   );

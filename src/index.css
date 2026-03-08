@@ -1,8 +1,9 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.theme-dark, .theme-dark *));
+
 :root {
-  --bg-color: #020617;
-  /* outer background already dark in design */
+  --bg-color: #ffffff;
   --bg-subtle: #f9fafb;
   --bg-elevated: #ffffff;
   --bg-input: #ffffff;
@@ -87,4 +88,14 @@ body.theme-dark .social-card {
 
 body.theme-dark .social-card:hover {
   background-color: var(--social-card-hover);
+}
+
+.honk-heading {
+  font-family: "Honk", system-ui;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
+  font-variation-settings:
+    "MORF" 15,
+    "SHLN" 50;
 }

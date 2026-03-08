@@ -1,0 +1,21 @@
+const displayedContent = `const developer = {
+  name: "Ashish Kumar Nanda",
+  role: "Full Stack Developer",
+  languages: ["C++", "Python", "JavaScript", "TypeScript"],
+  frameworks: ["React", "Node.js", "Express.js"],
+  tools: ["Docker", "AWS", "Redis", "MongoDB"]
+};`;
+
+// Safer tokenization approach
+const highlighted = displayedContent
+  // 1. Strings (we match quotes and inner content)
+  .replace(/"([^"\\]*(\\.[^"\\]*)*)"/g, '<span class="text-[#ce9178]">"$&"</span>')
+  .replace(/'([^'\\]*(\\.[^'\\]*)*)'/g, '<span class="text-[#ce9178]">'+"'$&'"+'</span>')
+  // 2. Keywords (only match if not inside a span tag)
+  .replace(/\b(const|let|var|function|return|import|export)\b(?![^<]*>|[^<>]*<\/span>)/g, '<span class="text-[#c586c0]">$&</span>')
+  // 3. Booleans/Null
+  .replace(/\b(true|false|null|undefined)\b(?![^<]*>|[^<>]*<\/span>)/g, '<span class="text-[#569cd6]">$&</span>')
+  // 4. Object Keys
+  .replace(/([a-zA-Z_]\w*):(?![^<]*>|[^<>]*<\/span>)/g, '<span class="text-[#9cdcfe]">$1</span>:');
+
+console.log(highlighted);
