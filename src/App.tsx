@@ -12,7 +12,6 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 gsap.registerPlugin(ScrollTrigger);
 import InteractiveBackground from './InteractiveBackground';
-import CustomCursor from './components/CustomCursor';
 
 
 type Theme = 'light' | 'dark';
@@ -141,7 +140,7 @@ const AboutContent = () => {
                     </span>
                   </div>
 
-                  <h1 className="text-4xl md:text-5xl lg:text-6xl font-black mb-2 md:mb-3 honk-heading">
+                  <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold mb-2 md:mb-3 tracking-tight text-gray-900 dark:text-white">
                     Ashish Kumar Nanda
                   </h1>
 
@@ -179,9 +178,9 @@ const AboutContent = () => {
                   {[
                     { title: "Finalist - International Innovation Challenge (IIC)", bg: "bg-blue-500/10", hover: "group-hover:bg-blue-500/20", text: "text-blue-500" },
                     { title: "National Semifinalist - Flipkart GRiD 7.0", bg: "bg-purple-500/10", hover: "group-hover:bg-purple-500/20", text: "text-purple-500" },
-                    { title: "4x Dean’s List of Excellence", bg: "bg-green-500/10", hover: "group-hover:bg-green-500/20", text: "text-green-500" },
-                    { title: "LeetCode – Solved over 360 problems with a peak contest rating of 1,697 (Top 13.45%).", bg: "bg-orange-500/10", hover: "group-hover:bg-orange-500/20", text: "text-orange-500" },
-                    { title: "CodeChef – 2 star on CodeChef with a max contest rating of 1425.", bg: "bg-indigo-500/10", hover: "group-hover:bg-indigo-500/20", text: "text-indigo-500" }
+                    { title: "5x Dean’s List of Excellence", bg: "bg-green-500/10", hover: "group-hover:bg-green-500/20", text: "text-green-500" },
+                    { title: "LeetCode – Solved over 400 problems with a peak contest rating of 1,704 (Top 12.96%).", bg: "bg-orange-500/10", hover: "group-hover:bg-orange-500/20", text: "text-orange-500" },
+                    { title: "CodeChef – 2 star on CodeChef with a max contest rating of 1450.", bg: "bg-indigo-500/10", hover: "group-hover:bg-indigo-500/20", text: "text-indigo-500" }
                   ].map((honor, i) => (
                     <motion.div
                       key={i}
@@ -230,18 +229,17 @@ const fileData: Record<string, string> = {
 const developer = {
   name: "Ashish Kumar Nanda",
   role: "Full Stack Developer",
-  languages: ["C++", "Python", "JavaScript", "TypeScript"],
-  frameworks: ["React", "Node.js", "Express.js"],
-  tools: ["Docker", "AWS", "Redis", "MongoDB"]
+  languages: ["C++", "Python", "Java", "JavaScript"],
+  frameworks: ["React", "Node.js", "Express.js", "TailwindCSS"],
+  tools: ["Docker", "Jenkins", "AWS", "Redis", "MongoDB"]
 };`,
   'skills.js':
     `/// skills.js
 const skills = [
-    "C++", "Python", "Java", "SQL",
-    "JavaScript", "TypeScript",
+    "C++", "Python", "Java", "SQL", "JavaScript",
     "React.js", "Node.js", "Express.js",
-    "MongoDB", "AWS", "Docker", "Redis",
-    "CI/CD", "Git", "GitHub"
+    "MongoDB", "AWS", "Docker","Jenkins", "Redis",
+    "CI/CD", "Git", "GitHub", "Linux", "MySQL"
 ];`,
   'experience.js': `/// experience.js
 const experience = [
@@ -423,7 +421,7 @@ const BrowserContent = () => {
     { id: 'overview', title: 'Profile', url: 'portfolio.ashish-nanda.dev' },
     { id: 'transcoder', title: 'Video Transcoder', url: 'github.com/ashishnanda19/video-transcoder' },
     { id: 'invosync', title: 'InvoSync', url: 'github.com/ashishnanda19/InvoSync' },
-    { id: 'safetrail', title: 'SafeTrail', url: 'github.com/ashishnanda19/SafeTrail' }
+    { id: 'safetrail', title: 'SafeTrail', url: 'github.com/ashishnanda19/Safe_Trail' }
   ];
 
   const handleTabChange = (tabId: string) => {
@@ -540,7 +538,7 @@ const BrowserContent = () => {
                 <div className="max-w-4xl mx-auto space-y-8">
                   <div className="text-center pt-8 pb-4">
                     <img src="/portimage.png" alt="Profile" className="w-20 h-20 rounded-full mx-auto mb-4 shadow-lg border-2 border-white dark:border-gray-800" />
-                    <h1 className="text-4xl honk-heading">My Profile</h1>
+                    <h1 className="text-4xl font-extrabold tracking-tight text-gray-900 dark:text-white">My Profile</h1>
                   </div>
 
                   {/* Research & Socials (gsap-card class for staggered scroll anim) */}
@@ -602,11 +600,11 @@ const BrowserContent = () => {
                       <a href={`https://${activeUrl}`} target="_blank" rel="noreferrer" className="hover:text-blue-500 transition-colors flex items-center gap-1">Open in GitHub <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3" /></svg></a>
                     </div>
                     <div className="p-8 text-left prose dark:prose-invert max-w-none">
-                      <h1 className="text-4xl honk-heading mb-4">{tabs.find(t => t.id === activeTab)?.title}</h1>
+                      <h1 className="text-4xl font-extrabold tracking-tight mb-4">{tabs.find(t => t.id === activeTab)?.title}</h1>
                       <div className="flex flex-wrap gap-2 mb-6">
                         {activeTab === 'transcoder' && ['Node.js', 'Express.js', 'AWS', 'Redis', 'MongoDB', 'Docker', 'ffmpeg'].map(t => <span key={t} className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xs font-bold rounded">{t}</span>)}
                         {activeTab === 'invosync' && ['React.js', 'Vite', 'Flask', 'Python', 'Tesseract OCR', 'RapidFuzz', 'Pandas', 'TailwindCSS'].map(t => <span key={t} className="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 text-xs font-bold rounded">{t}</span>)}
-                        {activeTab === 'safetrail' && ['React.js', 'React Native', 'Node.js', 'Express', 'MongoDB', 'Python', 'JWT', 'TailwindCSS'].map(t => <span key={t} className="px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 text-xs font-bold rounded">{t}</span>)}
+                        {activeTab === 'safetrail' && ['Node.js', 'Express.js', 'Socket.IO', 'PostgreSQL (PostGIS)', 'Redis', 'BullMQ'].map(t => <span key={t} className="px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 text-xs font-bold rounded">{t}</span>)}
                       </div>
                       <p className="text-gray-700 dark:text-gray-300 text-lg leading-relaxed dark:mix-blend-plus-lighter">
                         {activeTab === 'transcoder' && "An infinite-scale distributed video transcoder that processes video content and streams securely."}
@@ -1056,21 +1054,21 @@ const SpotifyContent = () => {
   const playlists = [
     {
       id: 'coding-focus',
-      name: 'Hindi Music',
+      name: 'Chandani & Chai',
       description: 'Chandani & Chai',
       spotifyUrl: 'https://open.spotify.com/playlist/59jMJYSo97Dy5JTXuaAQrK?si=rsrKZ4SpSWSjT-Zse-3n6A&pi=4_pUzpe5SsO-6',
       image: 'https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=400&h=400&fit=crop'
     },
     {
       id: 'chill-vibes',
-      name: 'English Music',
+      name: 'Clouded Coffeehouse',
       description: 'Clouded Coffeehouse',
       spotifyUrl: 'https://open.spotify.com/playlist/5Q59GgXHjOzY5vjeUBStbb?si=_sTg0OsuTCmoczXybYs4aQ',
       image: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=400&fit=crop'
     },
     {
       id: 'workout',
-      name: 'Rap Music',
+      name: 'Drip & Drop',
       description: 'Drip & Drop',
       spotifyUrl: 'https://open.spotify.com/playlist/477IgA9QgtRaxQ7s6LiFLR?si=QGMogWbpShWIzhEp-F-38w&pi=XnaY64pRTKq0V',
       image: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400&h=400&fit=crop'
@@ -1106,7 +1104,7 @@ const SpotifyContent = () => {
             </div>
             <div className="flex-1 w-full sm:w-auto text-center sm:text-left">
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Profile</p>
-              <h1 className="text-6xl sm:text-7xl font-black mb-4 leading-none honk-heading">Ashish Kumar Nanda</h1>
+              <h1 className="text-5xl sm:text-6xl font-extrabold mb-4 leading-none tracking-tight">Ashish Kumar Nanda</h1>
               <p className="text-gray-400 mb-6 text-sm">@ashishnanda19</p>
               <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3">
                 <a
@@ -1285,7 +1283,7 @@ const SystemPreferencesContent = () => {
           : 'h-full overflow-y-auto p-8 font-sans bg-white text-gray-900'
       }
     >
-      <h1 className="text-3xl honk-heading mb-2">System Preferences</h1>
+      <h1 className="text-3xl font-extrabold tracking-tight mb-2">System Preferences</h1>
       <p className="text-xs text-gray-500 mb-6">Customize how AshishOS looks and feels.</p>
       <h2 className="text-sm font-semibold mb-3">Appearance</h2>
       <p className="text-sm text-(--text-muted) mb-4">
@@ -1448,17 +1446,22 @@ const TerminalContent = () => {
         case 'skills':
           output = `> Languages: C++, Python, Java, C, SQL, HTML, CSS, JavaScript\n> Frameworks: React, Node.js, Express.js, Tailwind CSS\n> Cloud/Sys: AWS, Redis, Docker, CI/CD\n> Tools: Git, GitHub, Postman, Vite, MongoDB, REST APIs`;
           break;
-        case 'leetcode':
-          output = `🏆 LeetCode Stats:\n- Over 360 problems solved\n- Peak contest rating: 1697 (Top 13.45%)\n🔗 Link: https://www.leetcode.com/ashishnanda19`;
-          break;
         case 'github':
-          output = `🐙 GitHub Profile exploring open-source contributions & systems programming.\n🔗 Link: https://github.com/ashishnanda19`;
+          output = `GitHub Profile exploring open-source contributions & systems programming.\n Link: https://github.com/ashishnanda19`;
+          break;
+        case 'leetcode':
+          output = `LeetCode Stats:\n- Over 400 problems solved\n- Peak contest rating: 1704 (Top 12.96%)\n Link: https://www.leetcode.com/ashishnanda19`;
+          break;
+        case 'codechef':
+          output = `2 star on CodeChef with a max contest rating of 1450.\n Link: https://www.codechef.com/users/ashishnanda19`;
           break;
         case 'contact':
-          output = `Let's connect or collaborate!\n📧 Email: ashish.nanda1902@gmail.com\n🔗 LinkedIn: https://www.linkedin.com/in/ashishnanda19/\n🔗 Twitter: https://x.com/ashish19n\n(Or open the Mail app to send me a fast, direct message!)`;
+          output = `Let's connect or collaborate!\n Email: ashish.nanda1902@gmail.com\n LinkedIn: https://www.linkedin.com/in/ashishnanda19/\n Twitter: https://x.com/ashish19n\n(Or open the Mail app to send me a fast, direct message!)`;
           break;
         case 'socials':
-          output = `🔗 GitHub:    https://github.com/ashishnanda19\n🔗 LinkedIn:  https://www.linkedin.com/in/ashishnanda19/\n🔗 LeetCode:  https://www.leetcode.com/ashishnanda19\n🔗 Instagram: https://www.instagram.com/ashish19nanda`;
+          output = `GitHub: https://github.com/ashishnanda19\n LinkedIn:  https://www.linkedin.com/in/ashishnanda19/\n LeetCode:  https://www.leetcode.com/ashishnanda19\n 
+          CodeChef:  https://www.codechef.com/users/ashishnanda19\n
+          Instagram: https://www.instagram.com/ashish19nanda`;
           break;
         case '':
           break; // Empty enter just prints prompt
@@ -1756,7 +1759,7 @@ const TopBar = ({
       { label: "New Window", shortcut: "⌘N", action: () => onNewWindow() },
       { label: "Close Window", shortcut: "⌘W", action: () => onCloseAllWindows() },
       { type: "separator" },
-      { label: "Download Resume", action: () => window.open("https://drive.google.com/file/d/1ln5ZruwH_u-QLrTHfz-pgZiiZt-vmECd/view?usp=sharing", "_blank") },
+      { label: "Download Resume", action: () => window.open("https://drive.google.com/file/d/15WXrrq561L2D8in8baT1LVJNn3sdP-m6/view?usp=sharing", "_blank") },
     ],
 
     Edit: [
@@ -2281,7 +2284,6 @@ const App = () => {
           setActiveMenu(null);
         }}
       >
-        <CustomCursor />
         {isFullscreen && (
           <div className="absolute top-10 right-6 z-50 bg-black/70 text-white px-3 py-1 rounded text-xs">
             Fullscreen mode
@@ -2320,7 +2322,7 @@ const App = () => {
               </div>
               <span className="text-white text-xs mt-1 font-medium bg-black/20 px-2 py-0.5 rounded-md shadow-sm backdrop-blur-sm">Projects</span>
             </div>
-            <div className="group flex flex-col items-center cursor-pointer w-20" onDoubleClick={() => window.open("https://drive.google.com/file/d/1ln5ZruwH_u-QLrTHfz-pgZiiZt-vmECd/view?usp=sharing", "_blank")}>
+            <div className="group flex flex-col items-center cursor-pointer w-20" onDoubleClick={() => window.open("https://drive.google.com/file/d/15WXrrq561L2D8in8baT1LVJNn3sdP-m6/view?usp=sharing", "_blank")}>
               <div className="w-16 h-16 rounded-xl shadow-lg group-hover:scale-105 transition-transform flex items-center justify-center overflow-hidden bg-white/10 backdrop-blur-sm border border-white/20">
                 {(() => {
                   const vscodeApp = appIcons.find(a => a.id === 'vscode');

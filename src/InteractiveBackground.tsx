@@ -1,199 +1,172 @@
-import React, { useRef, useState, useEffect } from 'react';
-import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { Html } from '@react-three/drei';
-import * as THREE from 'three';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
-interface CharacterHotspot {
+interface Figure {
   id: number;
+  // Position of the hover hotspot as % of container
+  left: string;
+  top: string;
+  // Where the quote bubble appears relative to hotspot
+  bubbleDir: 'top' | 'bottom' | 'left' | 'right';
   label: string;
   quote: string;
-  normPosition: [number, number, number]; // Normalized coordinates (-0.5 to 0.5)
-  tooltipOffset: [number, number, number]; // Offset for the tooltip
+  emoji: string;
 }
 
-const characters: CharacterHotspot[] = [
+const figures: Figure[] = [
   {
     id: 1,
-    label: "DRIVE & DISCIPLINE",
-    quote: "Relentless pursuit of excellence. Every line of code must be in perfect harmony.",
-    normPosition: [-0.38, 0.15, 0.5], // Top Left (Ferrari jacket)
-    tooltipOffset: [0, -2.5, 0] // Show below
+    left: '18%',
+    top: '28%',
+    bubbleDir: 'right',
+    label: 'DISCIPLINE & DRIVE',
+    quote: 'sudo rm -rf distractions/ && git commit -m "stayed focused"',
+    emoji: '🏎️',
   },
   {
     id: 2,
-    label: "PROFOUND VISION",
-    quote: "Seeing the architecture before it's built. Clarity in complexity.",
-    normPosition: [0.02, 0.25, 0.8], // Top Center (Portrait)
-    tooltipOffset: [0, -2.5, 0] // Show below
+    left: '46%',
+    top: '22%',
+    bubbleDir: 'bottom',
+    label: 'VISION & CLARITY',
+    quote: "I don't always write clean code, but when I do… I forget to comment it.",
+    emoji: '😤',
   },
   {
     id: 3,
-    label: "GROWTH",
-    quote: "Continuous learning. Finding the shortest path in a graph and in life.",
-    normPosition: [-0.22, -0.25, 0.6], // Bottom Left (Looking down)
-    tooltipOffset: [0, 2.5, 0] // Show above
+    left: '30%',
+    top: '68%',
+    bubbleDir: 'top',
+    label: 'GROWTH',
+    quote: 'npm install --save-dev sanity\n⚠️  Package not found.',
+    emoji: '😭',
   },
   {
     id: 4,
-    label: "TIMELESS ELEGANCE",
-    quote: "Building systems that scale beautifully and stand the test of time.",
-    normPosition: [0.15, -0.35, 0.4], // Bottom Center/Right (Walking away)
-    tooltipOffset: [0, 2.5, 0] // Show above
+    left: '61%',
+    top: '58%',
+    bubbleDir: 'top',
+    label: 'TIMELESS ELEGANCE',
+    quote: "Deployed to prod on a Friday. See you on the other side. Or never.",
+    emoji: '💀',
   },
   {
     id: 5,
-    label: "QUIET CONFIDENCE",
-    quote: "Letting the work speak for itself. Flow state achieved.",
-    normPosition: [0.4, 0.05, 0.7], // Right (Sitting in swing)
-    tooltipOffset: [0, 2.5, 0] // Show above
-  }
+    left: '81%',
+    top: '35%',
+    bubbleDir: 'left',
+    label: 'QUIET CONFIDENCE',
+    quote: "Googling 'how to center a div' for the 847th time. Quietly.",
+    emoji: '🤫',
+  },
 ];
 
-function InteractiveCollage({ isDark }: { isDark: boolean }) {
-  const [texture, setTexture] = useState<THREE.Texture | null>(null);
-  const { viewport } = useThree();
-  const planeRef = useRef<THREE.Mesh>(null);
-  const groupRef = useRef<THREE.Group>(null);
+const bubbleOffset: Record<Figure['bubbleDir'], React.CSSProperties> = {
+  top:    { bottom: 'calc(100% + 14px)', left: '50%', transform: 'translateX(-50%)' },
+  bottom: { top:    'calc(100% + 14px)', left: '50%', transform: 'translateX(-50%)' },
+  left:   { right:  'calc(100% + 14px)', top:  '50%', transform: 'translateY(-50%)' },
+  right:  { left:   'calc(100% + 14px)', top:  '50%', transform: 'translateY(-50%)' },
+};
+
+// Small caret pointing from bubble back toward the hotspot
+const Caret = ({ dir }: { dir: Figure['bubbleDir'] }) => {
+  const base = 'absolute w-0 h-0 border-[7px] border-transparent';
+  const styles: Record<Figure['bubbleDir'], string> = {
+    top:    `${base} border-t-gray-900/90 top-full left-1/2 -translate-x-1/2`,
+    bottom: `${base} border-b-gray-900/90 bottom-full left-1/2 -translate-x-1/2`,
+    left:   `${base} border-l-gray-900/90 left-full top-1/2 -translate-y-1/2`,
+    right:  `${base} border-r-gray-900/90 right-full top-1/2 -translate-y-1/2`,
+  };
+  return <div className={styles[dir]} />;
+};
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const InteractiveBackground: React.FC<{ theme: string }> = ({ theme: _theme }) => {
   const [hoveredId, setHoveredId] = useState<number | null>(null);
 
-  useEffect(() => {
-    const loader = new THREE.TextureLoader();
-    // Assuming the user saves their image as collage.png in the public folder
-    loader.load('/collage.png', (tex) => {
-      tex.colorSpace = THREE.SRGBColorSpace;
-      setTexture(tex);
-    }, undefined, () => {
-      console.warn("Please save the uploaded image as public/collage.png to see the background!");
-    });
-  }, []);
-
-  useFrame((state) => {
-    if (!groupRef.current) return;
-
-    // Smooth Parallax effect based on mouse movement - increased multiplier for deeper feel
-    const targetX = (state.pointer.x * viewport.width) / 15;
-    const targetY = (state.pointer.y * viewport.height) / 15;
-
-    // Add a natural floating breathing effect
-    const floatY = Math.sin(state.clock.elapsedTime * 0.5) * 0.2;
-
-    groupRef.current.position.x = THREE.MathUtils.lerp(groupRef.current.position.x, targetX, 0.05);
-    groupRef.current.position.y = THREE.MathUtils.lerp(groupRef.current.position.y, targetY + floatY, 0.05);
-
-    // Enhanced rotation tilt
-    groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, -state.pointer.y * 0.15, 0.05);
-    groupRef.current.rotation.y = THREE.MathUtils.lerp(groupRef.current.rotation.y, state.pointer.x * 0.15, 0.05);
-  });
-
-  // Calculate scaling so the image fits nicely without excessive overflow
-  // We want to fit the image inside the viewport while maintaining its aspect ratio
-  const imageAspect = 16 / 9; // Assuming the collage is roughly 16:9
-  const viewportAspect = viewport.width / viewport.height;
-
-  let scaleWidth, scaleHeight;
-
-  // To "contain" like background-size: contain so the WHOLE image is visible
-  if (viewportAspect > imageAspect) {
-    // Viewport is wider than image. Constrain by height to fit entirely.
-    scaleHeight = viewport.height * 0.95; // Slight padding for parallax
-    scaleWidth = scaleHeight * imageAspect;
-  } else {
-    // Viewport is taller than image. Constrain by width.
-    scaleWidth = viewport.width * 0.95;
-    scaleHeight = scaleWidth / imageAspect;
-  }
-
   return (
-    <group ref={groupRef}>
-      {/* Dynamic Backing Shadow/Glow behind the image */}
-      <mesh position={[0, 0, -2]}>
-        <planeGeometry args={[scaleWidth * 2, scaleHeight * 2]} />
-        <meshBasicMaterial color="#0A0A0A" />
-      </mesh>
+    <div className="absolute inset-0 w-full h-full z-0 overflow-hidden bg-[#111111]">
+      {/* Static wallpaper — same in light and dark */}
+      <img
+        src="/background.png"
+        alt=""
+        draggable={false}
+        className="absolute inset-0 w-full h-full object-cover select-none"
+        style={{ opacity: 0.9 }}
+      />
 
-      {texture ? (
-        <mesh ref={planeRef} position={[0, 0, 0]}>
-          <planeGeometry args={[scaleWidth, scaleHeight, 32, 32]} />
-          {/* We use MeshStandardMaterial to let ambient light affect it, but emissive makes it visible */}
-          <meshStandardMaterial
-            map={texture}
-            transparent
-            opacity={0.8}
-            metalness={0.2}
-            roughness={0.8}
-          />
-        </mesh>
-      ) : (
-        <Html center>
-          <div className={`${isDark ? 'text-white/50' : 'text-black/50'} font-mono text-sm tracking-widest select-none pointer-events-none border ${isDark ? 'border-white/10' : 'border-black/10'} p-4 rounded-xl ${isDark ? 'bg-black/20' : 'bg-white/20'} backdrop-blur-md`}>
-            Waiting for public/collage.png...
-          </div>
-        </Html>
-      )}
+      {/* Subtle vignette — same in both modes */}
+      <div
+        className="absolute inset-0 pointer-events-none z-10"
+        style={{
+          background: 'radial-gradient(ellipse at center, transparent 30%, rgba(10,10,10,0.5) 100%)',
+        }}
+      />
 
-      {/* Interactive Hotspots over the character coordinates */}
-      {texture && characters.map((char) => (
-        <mesh
-          key={char.id}
-          position={[char.normPosition[0] * scaleWidth, char.normPosition[1] * scaleHeight, char.normPosition[2]]}
-          onPointerOver={() => setHoveredId(char.id)}
-          onPointerOut={() => setHoveredId(null)}
+      {/* Interactive figure hotspots */}
+      {figures.map((fig) => (
+        <div
+          key={fig.id}
+          className="absolute z-20"
+          style={{ left: fig.left, top: fig.top, transform: 'translate(-50%, -50%)' }}
+          onMouseEnter={() => setHoveredId(fig.id)}
+          onMouseLeave={() => setHoveredId(null)}
         >
-          {/* Invisible hit box for raycasting */}
-          <sphereGeometry args={[1.5, 16, 16]} />
-          <meshBasicMaterial visible={false} />
+          {/* Pulsing ring hotspot */}
+          <div className="relative flex items-center justify-center w-10 h-10 cursor-pointer">
+            {/* Outer pulse ring */}
+            <motion.div
+              animate={hoveredId === fig.id
+                ? { scale: 1.6, opacity: 0 }
+                : { scale: [1, 1.8], opacity: [0.5, 0] }}
+              transition={hoveredId === fig.id
+                ? { duration: 0.3 }
+                : { repeat: Infinity, duration: 1.6, ease: 'easeOut' }}
+              className="absolute inset-0 rounded-full border border-white/50"
+            />
+            {/* Inner dot */}
+            <motion.div
+              animate={{ scale: hoveredId === fig.id ? 1.3 : 1 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+              className={`w-3 h-3 rounded-full border-2 border-white/80 ${
+                hoveredId === fig.id ? 'bg-white' : 'bg-white/30'
+              } shadow-[0_0_8px_rgba(255,255,255,0.6)]`}
+            />
+          </div>
 
-          {/* Aesthetic Scanner/Ring indicator */}
-          <Html center zIndexRange={[100, 0]}>
-            <div className={`w-10 h-10 rounded-full border ${isDark ? 'border-white/20' : 'border-black/20'} cursor-pointer transition-all duration-700 ease-out flex items-center justify-center ${hoveredId === char.id ? `scale-150 ${isDark ? 'border-white/60 bg-white/5' : 'border-black/60 bg-black/5'} backdrop-blur-md` : ''}`}>
-              <div className={`w-1.5 h-1.5 rounded-full transition-all duration-500 ${hoveredId === char.id ? (isDark ? 'bg-white shadow-[0_0_10px_white]' : 'bg-black shadow-[0_0_10px_black]') : `animate-ping ${isDark ? 'bg-white/40' : 'bg-black/40'}`}`} />
-            </div>
-          </Html>
-
-          {/* Holographic Label Tooltip */}
-          {hoveredId === char.id && (
-            <Html position={char.tooltipOffset} center zIndexRange={[100, 0]}>
-              <div
-                className={`relative ${isDark ? 'bg-black/70 border-white/10' : 'bg-white/70 border-black/10'} backdrop-blur-2xl rounded-2xl p-6 border shadow-[0_20px_40px_-15px_rgba(0,0,0,0.8)] animate-in fade-in zoom-in-95 duration-300 pointer-events-none`}
-                style={{ width: '320px' }}
+          {/* Quote bubble */}
+          <AnimatePresence>
+            {hoveredId === fig.id && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.88 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.88 }}
+                transition={{ type: 'spring', stiffness: 380, damping: 26 }}
+                className="absolute pointer-events-none z-30"
+                style={bubbleOffset[fig.bubbleDir]}
               >
-                <div className={`absolute top-0 left-0 w-full h-full rounded-2xl bg-gradient-to-br ${isDark ? 'from-white/5' : 'from-black/5'} to-transparent pointer-events-none`} />
-                <h3 className={`${isDark ? 'text-white' : 'text-black'} text-xs font-bold tracking-[0.2em] uppercase mb-3 flex items-center gap-3`}>
-                  <span className={`w-2 h-2 rounded-full ${isDark ? 'bg-white/80' : 'bg-black/80'} animate-pulse`} />
-                  {char.label}
-                </h3>
-                <p className={`${isDark ? 'text-white/60' : 'text-black/60'} text-sm leading-relaxed font-medium relative z-10`}>
-                  {char.quote}
-                </p>
-                {/* Cybernetic connector line extending towards the dot */}
-                {char.tooltipOffset[1] > 0 ? (
-                  <div className={`absolute -bottom-10 left-1/2 w-[1px] h-10 bg-gradient-to-t from-transparent ${isDark ? 'to-white/30' : 'to-black/30'} transform -translate-x-1/2`} />
-                ) : (
-                  <div className={`absolute -top-10 left-1/2 w-[1px] h-10 bg-gradient-to-b from-transparent ${isDark ? 'to-white/30' : 'to-black/30'} transform -translate-x-1/2`} />
-                )}
-              </div>
-            </Html>
-          )}
-        </mesh>
+                <div className="relative bg-gray-900/90 backdrop-blur-md text-white rounded-xl shadow-2xl border border-white/10 p-4"
+                  style={{ width: 240 }}>
+                  <Caret dir={fig.bubbleDir} />
+
+                  {/* Label row */}
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-lg leading-none">{fig.emoji}</span>
+                    <span className="text-[10px] font-bold tracking-widest text-white/50 uppercase">
+                      {fig.label}
+                    </span>
+                  </div>
+
+                  {/* Quote */}
+                  <p className="text-sm text-white/90 leading-relaxed whitespace-pre-line font-mono">
+                    "{fig.quote}"
+                  </p>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       ))}
-    </group>
-  );
-}
-
-const InteractiveBackground: React.FC<{ theme: string }> = ({ theme }) => {
-  const isDark = theme === 'dark';
-  return (
-    <div className={`absolute inset-0 w-full h-full z-0 overflow-hidden transition-colors duration-500 ${isDark ? 'bg-[#0A0A0A]' : 'bg-[#f1f5f9]'}`}>
-      {/* Clean elegant vignette gradient */}
-      <div className={`absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] pointer-events-none z-10 transition-colors duration-500 ${isDark ? 'from-transparent via-[#0A0A0A]/40 to-[#0A0A0A]' : 'from-transparent via-[#f1f5f9]/40 to-[#f1f5f9]'}`} />
-
-      <Canvas camera={{ position: [0, 0, 8], fov: 60 }} dpr={[1, 2]}>
-        <ambientLight intensity={1.5} />
-        {/* Subtle directed light to interact with StandardMaterial roughness */}
-        <directionalLight position={[5, 5, 5]} intensity={0.5} color="#ffffff" />
-        <directionalLight position={[-5, -5, -5]} intensity={0.2} color="#ffffff" />
-        <InteractiveCollage isDark={isDark} />
-      </Canvas>
     </div>
   );
 };

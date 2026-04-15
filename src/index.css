@@ -41,18 +41,8 @@ body.theme-dark {
 body {
   background-color: var(--bg-color);
   color: var(--text-color);
-  font-family: 'Orbitron', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   scroll-behavior: smooth;
-  letter-spacing: 0.02em;
-  /* Gives that futuristic spaced-out feel */
-}
-
-@media (min-width: 640px) {
-
-  body,
-  * {
-    cursor: none !important;
-  }
 }
 
 ::selection {
@@ -91,11 +81,8 @@ body.theme-dark .social-card:hover {
 }
 
 .honk-heading {
-  font-family: "Honk", system-ui;
-  font-optical-sizing: auto;
-  font-weight: 400;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-weight: 800;
   font-style: normal;
-  font-variation-settings:
-    "MORF" 15,
-    "SHLN" 50;
+  letter-spacing: -0.02em;
 }
