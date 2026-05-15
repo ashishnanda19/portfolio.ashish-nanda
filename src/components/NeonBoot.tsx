@@ -73,7 +73,7 @@ export default function NeonBoot({ onBoot }: NeonBootProps) {
                   <Terminal size={24} className="text-indigo-300" />
                 </div>
 
-                <h1 className="text-5xl sm:text-7xl font-extrabold tracking-tight neon-gradient-text mb-4">
+                <h1 className="text-4xl sm:text-7xl font-extrabold tracking-tight neon-gradient-text mb-4">
                   AshishOS
                 </h1>
 
@@ -103,7 +103,7 @@ export default function NeonBoot({ onBoot }: NeonBootProps) {
                 </div>
 
                 {/* Mini stats */}
-                <div className="grid grid-cols-3 gap-8 text-center">
+                <div className="grid grid-cols-3 gap-4 sm:gap-8 text-center">
                   {[
                     { v: '9.22', l: 'CGPA · MUJ' },
                     { v: '400+', l: 'LeetCode' },

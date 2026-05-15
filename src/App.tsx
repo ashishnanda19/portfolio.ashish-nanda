@@ -1695,6 +1695,12 @@ type MenuActionItem = {
 
 type MenuItem = MenuSeparator | MenuActionItem;
 
+const AppleLogoSVG = ({ size = 16 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701" />
+  </svg>
+);
+
 type TopBarProps = {
   title: string;
   activeMenu: string | null;
@@ -1785,7 +1791,7 @@ const TopBar = ({
                 style={{ zIndex: -1 }}
               />
             )}
-            <span className="relative text-[19px] leading-none text-slate-200 select-none" style={{ fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif" }}></span>
+            <AppleLogoSVG size={17} />
           </motion.button>
           {activeMenu === '' && (
             <motion.div
@@ -1810,11 +1816,11 @@ const TopBar = ({
             </motion.div>
           )}
         </div>
-        <div className="w-px h-4 bg-white/[0.08] mx-1" />
+        <div className="hidden sm:block w-px h-4 bg-white/[0.08] mx-1" />
         {Object.entries(menus).filter(([k]) => k !== '').map(([key, items]) => (
           <div
             key={key}
-            className="relative h-full flex items-center"
+            className="relative h-full hidden sm:flex items-center"
             onMouseEnter={() => { if (activeMenu !== null && activeMenu !== key) setActiveMenu(key); }}
           >
             <motion.button
@@ -1863,8 +1869,8 @@ const TopBar = ({
         ))}
         {title && (
           <>
-            <div className="w-px h-4 bg-white/[0.08] mx-2" />
-            <span className="text-[11px] font-medium text-slate-500 max-w-[140px] truncate">{title}</span>
+            <div className="hidden sm:block w-px h-4 bg-white/[0.08] mx-2" />
+            <span className="hidden sm:block text-[11px] font-medium text-slate-500 max-w-[140px] truncate">{title}</span>
           </>
         )}
       </div>
@@ -1890,7 +1896,7 @@ const TopBar = ({
         </div>
         <div className="w-px h-4 bg-white/[0.08] mx-1" />
         <div className="flex items-center gap-2 px-3 h-7 rounded-lg hover:bg-white/[0.05] transition-colors cursor-default">
-          <span className="text-[11px] text-slate-500 tabular-nums hidden sm:block">
+          <span className="hidden sm:block text-[11px] text-slate-500 tabular-nums">
             {date.toLocaleString([], { weekday: 'short', month: 'short', day: 'numeric' })}
           </span>
           <span className="text-[11px] font-semibold text-slate-300 tabular-nums">
@@ -2270,8 +2276,8 @@ const App = () => {
         {/* Desktop Area */}
         <div className="relative w-full h-full pt-8 pb-24 z-10 pointer-events-none">
 
-          {/* Desktop Icons */}
-          <div className="absolute right-4 top-12 flex flex-col items-end gap-6 p-2 z-0 pointer-events-auto">
+          {/* Desktop Icons — hidden on mobile */}
+          <div className="absolute right-4 top-12 hidden sm:flex flex-col items-end gap-6 p-2 z-0 pointer-events-auto">
             <div className="group flex flex-col items-center cursor-pointer w-20" onDoubleClick={() => openApp('safari')}>
               <div className="w-16 h-16 rounded-xl shadow-lg group-hover:scale-105 transition-transform flex items-center justify-center overflow-hidden bg-white/10 backdrop-blur-sm border border-white/20">
                 {(() => {
@@ -2330,9 +2336,9 @@ const App = () => {
                 >
                   <div className="h-10 bg-white/40 dark:bg-black/40 border-b border-black/5 dark:border-white/5 flex items-center px-4 justify-between select-none backdrop-blur-md" onMouseDown={(e) => startDrag(e, win.id)} onDoubleClick={(e) => maximizeWindow(win.id, e)}>
                     <div className="flex space-x-2.5 group">
-                      <button onClick={(e) => closeWindow(win.id, e)} className="w-3.5 h-3.5 rounded-full bg-[#ff5f57] border border-[#e0443e] hover:bg-[#ff5f57]/80 flex items-center justify-center transition-colors"><X size={8} className="text-red-900 opacity-0 group-hover:opacity-100" /></button>
-                      <button onClick={(e) => minimizeWindow(win.id, e)} className="w-3.5 h-3.5 rounded-full bg-[#febc2e] border border-[#d89e24] hover:bg-[#febc2e]/80 flex items-center justify-center transition-colors"><Minus size={10} className="text-yellow-900 opacity-0 group-hover:opacity-100" /></button>
-                      <button onClick={(e) => maximizeWindow(win.id, e)} className="w-3.5 h-3.5 rounded-full bg-[#28c840] border border-[#1aab29] hover:bg-[#28c840]/80 flex items-center justify-center transition-colors">{win.isMaximized ? <Minimize2 size={8} className="text-green-900 opacity-0 group-hover:opacity-100" /> : <Maximize2 size={8} className="text-green-900 opacity-0 group-hover:opacity-100" />}</button>
+                      <button onClick={(e) => closeWindow(win.id, e)} className="w-4 h-4 sm:w-3.5 sm:h-3.5 rounded-full bg-[#ff5f57] border border-[#e0443e] hover:bg-[#ff5f57]/80 flex items-center justify-center transition-colors"><X size={8} className="text-red-900 opacity-0 group-hover:opacity-100" /></button>
+                      <button onClick={(e) => minimizeWindow(win.id, e)} className="w-4 h-4 sm:w-3.5 sm:h-3.5 rounded-full bg-[#febc2e] border border-[#d89e24] hover:bg-[#febc2e]/80 flex items-center justify-center transition-colors"><Minus size={10} className="text-yellow-900 opacity-0 group-hover:opacity-100" /></button>
+                      <button onClick={(e) => maximizeWindow(win.id, e)} className="w-4 h-4 sm:w-3.5 sm:h-3.5 rounded-full bg-[#28c840] border border-[#1aab29] hover:bg-[#28c840]/80 flex items-center justify-center transition-colors">{win.isMaximized ? <Minimize2 size={8} className="text-green-900 opacity-0 group-hover:opacity-100" /> : <Maximize2 size={8} className="text-green-900 opacity-0 group-hover:opacity-100" />}</button>
                     </div>
                     <div className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">{win.icon && <span className="text-gray-400">{win.icon}</span>} {win.title}</div>
                     <div className="w-14"></div>
@@ -2345,25 +2351,25 @@ const App = () => {
         </div>
 
         {/* Dock */}
-        <div className="fixed bottom-4 left-0 w-full flex justify-center z-[10000]">
-          <div className="flex items-end space-x-3 px-4 pb-3 pt-3 bg-white/10 dark:bg-[#0c1120]/75 backdrop-blur-xl rounded-2xl border border-white/[0.08] shadow-[0_8px_40px_rgba(0,0,0,0.5),0_0_0_1px_rgba(255,255,255,0.04)] transition-all duration-300">
+        <div className="fixed bottom-3 sm:bottom-4 left-0 w-full flex justify-center z-[10000] px-2">
+          <div className="flex items-end gap-2 sm:gap-3 px-3 sm:px-4 pb-2.5 sm:pb-3 pt-2.5 sm:pt-3 bg-white/10 dark:bg-[#0c1120]/75 backdrop-blur-xl rounded-2xl border border-white/[0.08] shadow-[0_8px_40px_rgba(0,0,0,0.5),0_0_0_1px_rgba(255,255,255,0.04)] transition-all duration-300 overflow-x-auto max-w-[calc(100vw-1rem)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {appIcons.map((app) => {
               const isOpen = windows.some(w => w.id === app.id && !w.isMinimized);
               const isRunning = windows.some(w => w.id === app.id);
               return (
-                <div key={app.id} className="group relative flex flex-col items-center">
-                  <div className="absolute -top-14 bg-gray-800/90 text-white text-xs font-medium px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm shadow-lg pointer-events-none mb-2 z-50">{app.name}</div>
+                <div key={app.id} className="group relative flex flex-col items-center shrink-0">
+                  <div className="absolute -top-12 sm:-top-14 bg-gray-800/90 text-white text-xs font-medium px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm shadow-lg pointer-events-none mb-2 z-50 whitespace-nowrap">{app.name}</div>
                   <motion.button
                     onClick={() => openApp(app.id)}
                     whileHover={{ scale: 1.2, y: -10 }}
                     whileTap={{ scale: 0.9 }}
                     animate={bouncingApp === app.id ? { y: [0, -30, 0, -15, 0, -5, 0] } : { y: 0 }}
                     transition={bouncingApp === app.id ? { duration: 1, times: [0, 0.25, 0.5, 0.7, 0.85, 0.95, 1], ease: "easeOut" } : {}}
-                    className={`${app.color} w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center shadow-lg transition-shadow duration-200 ease-out ring-1 ring-white/20 dark:ring-white/10 overflow-hidden relative ${isOpen ? 'after:content-[""] after:absolute after:inset-0 after:bg-white/10' : ''}`}
+                    className={`${app.color} w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-2xl flex items-center justify-center shadow-lg transition-shadow duration-200 ease-out ring-1 ring-white/20 dark:ring-white/10 overflow-hidden relative ${isOpen ? 'after:content-[""] after:absolute after:inset-0 after:bg-white/10' : ''}`}
                   >
-                    {renderAppIcon(app, 50)}
+                    {renderAppIcon(app, isMobile ? 36 : 50)}
                   </motion.button>
-                  <div className={`w-1 h-1 rounded-full bg-black dark:bg-white mt-2 transition-all duration-300 ${isRunning ? 'opacity-100 scale-100' : 'opacity-0 scale-0'}`}></div>
+                  <div className={`w-1 h-1 rounded-full bg-black dark:bg-white mt-1.5 sm:mt-2 transition-all duration-300 ${isRunning ? 'opacity-100 scale-100' : 'opacity-0 scale-0'}`}></div>
                 </div>
               );
             })}

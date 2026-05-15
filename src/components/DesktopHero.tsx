@@ -45,12 +45,12 @@ export default function DesktopHero({ onOpenAbout }: { onOpenAbout: () => void }
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-      className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center pointer-events-none z-[5]"
+      className="absolute inset-0 flex flex-col items-center justify-center px-4 sm:px-6 text-center pointer-events-none z-[5]"
     >
       <div className="pointer-events-auto max-w-2xl w-full flex flex-col items-center gap-0">
 
         {/* Status pill */}
-        <div className="mb-8 flex items-center gap-2 px-4 py-1.5 rounded-full text-xs text-slate-400 border border-white/[0.08] bg-white/[0.03] backdrop-blur-sm tracking-wide">
+        <div className="mb-6 sm:mb-8 flex items-center gap-2 px-4 py-1.5 rounded-full text-xs text-slate-400 border border-white/[0.08] bg-white/[0.03] backdrop-blur-sm tracking-wide">
           <span className="relative flex h-1.5 w-1.5">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
             <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400" />
@@ -59,7 +59,7 @@ export default function DesktopHero({ onOpenAbout }: { onOpenAbout: () => void }
         </div>
 
         {/* Name */}
-        <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight neon-gradient-text leading-[1.08] mb-5">
+        <h1 className="text-3xl sm:text-6xl md:text-7xl font-extrabold tracking-tight neon-gradient-text leading-[1.08] mb-4 sm:mb-5">
           Ashish Kumar Nanda
         </h1>
 
@@ -71,7 +71,7 @@ export default function DesktopHero({ onOpenAbout }: { onOpenAbout: () => void }
         </div>
 
         {/* Tagline */}
-        <p className="text-slate-400 text-sm sm:text-base leading-relaxed max-w-xl mb-10">
+        <p className="text-slate-400 text-sm sm:text-base leading-relaxed max-w-xl mb-7 sm:mb-10">
           I build full-stack apps, ship scalable backends, and integrate AI into production.
           Currently researching at{' '}
           <span className="text-slate-200 font-medium">IIT (BHU)</span> and studying CS at{' '}
@@ -79,24 +79,24 @@ export default function DesktopHero({ onOpenAbout }: { onOpenAbout: () => void }
         </p>
 
         {/* Stats strip */}
-        <div className="grid grid-cols-3 gap-4 sm:gap-8 mb-10 w-full max-w-sm">
+        <div className="grid grid-cols-3 gap-3 sm:gap-8 mb-7 sm:mb-10 w-full max-w-sm">
           {[
             { value: '400+', label: 'LeetCode problems' },
             { value: '1704', label: 'Peak contest rating' },
             { value: '15+', label: 'Projects shipped' },
           ].map((s) => (
             <div key={s.label} className="flex flex-col items-center gap-0.5">
-              <span className="text-xl sm:text-2xl font-bold text-slate-100 tabular-nums">{s.value}</span>
-              <span className="text-[11px] text-slate-500 leading-tight">{s.label}</span>
+              <span className="text-lg sm:text-2xl font-bold text-slate-100 tabular-nums">{s.value}</span>
+              <span className="text-[10px] sm:text-[11px] text-slate-500 leading-tight">{s.label}</span>
             </div>
           ))}
         </div>
 
         {/* Divider */}
-        <div className="w-24 h-px bg-gradient-to-r from-transparent via-indigo-500/40 to-transparent mb-10" />
+        <div className="w-24 h-px bg-gradient-to-r from-transparent via-indigo-500/40 to-transparent mb-7 sm:mb-10" />
 
         {/* CTAs */}
-        <div className="flex flex-wrap items-center justify-center gap-3 mb-8">
+        <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 mb-6 sm:mb-8">
           <button onClick={onOpenAbout} className="neon-btn group">
             Explore Portfolio
             <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
