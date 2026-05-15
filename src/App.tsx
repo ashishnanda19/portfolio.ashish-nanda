@@ -1733,7 +1733,6 @@ const TopBar = ({
     return () => clearInterval(timer);
   }, []);
 
-  type MenuItem = { label?: string; shortcut?: string; action?: () => void; type?: 'separator' };
   const menus: Record<string, MenuItem[]> = {
     '': [
       { label: 'About This Portfolio', action: () => alert("Ashish Kumar Nanda's Portfolio") },
