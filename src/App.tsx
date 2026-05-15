@@ -3,7 +3,8 @@ import {
   Terminal, User, Code, Gamepad2, Globe, X, Minus, Maximize2, Minimize2,
   Github, Linkedin, BookOpen, Search, Wifi, Battery, Play, RotateCcw,
   Aperture, Download, Mail, Music, UserPlus, Star, FolderDot,
-  GitBranch, XCircle, AlertTriangle, Bell, Send, Pause, Instagram, Twitter
+  GitBranch, XCircle, AlertTriangle, Bell, Send, Pause, Instagram, Twitter,
+  Laugh
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { gsap } from 'gsap';
@@ -12,6 +13,10 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 gsap.registerPlugin(ScrollTrigger);
 import InteractiveBackground from './InteractiveBackground';
+import NeonBoot from './components/NeonBoot';
+import EasterEggs from './components/EasterEggs';
+import FunZone from './components/FunZone';
+import DesktopHero from './components/DesktopHero';
 
 
 type Theme = 'light' | 'dark';
@@ -1273,64 +1278,41 @@ const SpotifyContent = () => {
 };
 
 const SystemPreferencesContent = () => {
-  const { theme, setTheme } = useTheme();
-
   return (
-    <div
-      className={
-        theme === 'dark'
-          ? 'h-full overflow-y-auto p-8 font-sans bg-(--card-bg) text-(--text-color)'
-          : 'h-full overflow-y-auto p-8 font-sans bg-white text-gray-900'
-      }
-    >
-      <h1 className="text-3xl font-extrabold tracking-tight mb-2">System Preferences</h1>
-      <p className="text-xs text-gray-500 mb-6">Customize how AshishOS looks and feels.</p>
-      <h2 className="text-sm font-semibold mb-3">Appearance</h2>
-      <p className="text-sm text-(--text-muted) mb-4">
-        Choose between light and dark appearance for AshishOS.
-      </p>
-      <div className="flex gap-4 sm:gap-6 flex-col sm:flex-row">
-        <button
-          type="button"
-          onClick={() => setTheme('light')}
-          className={`flex-1 min-w-0 rounded-2xl border p-4 text-left transition-all cursor-pointer ${theme === 'light'
-            ? 'border-blue-500 bg-slate-900 text-white shadow-md ring-2 ring-blue-500/60'
-            : 'border-(--card-border) bg-slate-900 text-white opacity-80 hover:opacity-100'
-            }`}
-        >
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-semibold">Light</span>
-            {theme === 'light' && (
-              <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-[10px] text-white">
-                ✓
-              </span>
-            )}
-          </div>
-          <p className="text-xs text-[var(--text-muted)]">
-            Default macOS-style light appearance. Current design is preserved.
-          </p>
-        </button>
+    <div className="h-full overflow-y-auto p-8 font-sans bg-[var(--bg-elevated)] text-[var(--text-color)]">
+      <h1 className="text-2xl font-bold tracking-tight mb-1">System Preferences</h1>
+      <p className="text-xs text-slate-500 mb-8">Customize how AshishOS looks and feels.</p>
 
-        <button
-          type="button"
-          onClick={() => setTheme('dark')}
-          className={`flex-1 min-w-0 rounded-2xl border p-4 text-left transition-all cursor-pointer ${theme === 'dark'
-            ? 'border-blue-500 bg-slate-900 text-white shadow-md ring-2 ring-blue-500/60'
-            : 'border-(--card-border) bg-slate-900 text-white opacity-80 hover:opacity-100'
-            }`}
-        >
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="rounded-2xl p-5 border border-white/[0.07] bg-white/[0.02] hover:border-indigo-400/25 transition-colors">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-semibold">Dark</span>
-            {theme === 'dark' && (
-              <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-[10px] text-white">
-                ✓
-              </span>
-            )}
+            <span className="text-sm font-semibold text-indigo-300">Appearance</span>
+            <span className="text-[10px] uppercase tracking-widest text-slate-600">dark</span>
           </div>
-          <p className="text-xs text-[var(--text-muted)]">
-            A macOS-like dark appearance with dimmed surfaces and light text.
+          <p className="text-xs text-slate-500">
+            AshishOS runs in <span className="text-slate-300 font-medium">professional dark</span> mode.
+            Light mode? Couldn&apos;t be us.
           </p>
-        </button>
+        </div>
+
+        <div className="rounded-2xl p-5 border border-white/[0.07] bg-white/[0.02] hover:border-indigo-400/25 transition-colors">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-semibold text-violet-300">Personality</span>
+            <span className="text-[10px] uppercase tracking-widest text-slate-600">maxed</span>
+          </div>
+          <p className="text-xs text-slate-500">
+            Sass level: <span className="text-slate-300 font-medium">11/10</span>. Cannot be reduced.
+          </p>
+        </div>
+
+        <div className="rounded-2xl p-5 border border-white/[0.07] bg-white/[0.02] sm:col-span-2">
+          <div className="text-sm font-semibold mb-3 text-slate-300">Easter Eggs</div>
+          <ul className="text-xs text-slate-500 space-y-1.5 list-disc pl-4">
+            <li>Type the Konami code anywhere. <span className="text-slate-600">(↑↑↓↓←→←→ B A)</span></li>
+            <li>Idle for 45 seconds and the system gets chatty.</li>
+            <li>The <span className="text-indigo-400">✨ Fun Zone</span> app in the dock is real and not a prank.</li>
+          </ul>
+        </div>
       </div>
     </div>
   );
@@ -1745,102 +1727,176 @@ const TopBar = ({
     return () => clearInterval(timer);
   }, []);
 
+  type MenuItem = { label?: string; shortcut?: string; action?: () => void; type?: 'separator' };
   const menus: Record<string, MenuItem[]> = {
-    "": [
-      { label: "About This Portfolio", action: () => alert("Ashish's Portfolio") },
-      { label: "System Preferences...", action: () => onOpenSystemPreferences() },
-      { type: "separator" },
-      { label: "Sleep", action: () => alert("Zzz...") },
-      { label: "Restart", action: () => window.location.reload() },
-      { label: "Shut Down", action: () => window.close() },
+    '': [
+      { label: 'About This Portfolio', action: () => alert("Ashish Kumar Nanda's Portfolio") },
+      { label: 'System Preferences...', action: () => onOpenSystemPreferences() },
+      { type: 'separator' },
+      { label: 'Sleep', action: () => alert('Zzz...') },
+      { label: 'Restart', action: () => window.location.reload() },
+      { label: 'Shut Down', action: () => window.close() },
     ],
-
     File: [
-      { label: "New Window", shortcut: "⌘N", action: () => onNewWindow() },
-      { label: "Close Window", shortcut: "⌘W", action: () => onCloseAllWindows() },
-      { type: "separator" },
-      { label: "Download Resume", action: () => window.open("https://drive.google.com/file/d/15WXrrq561L2D8in8baT1LVJNn3sdP-m6/view?usp=sharing", "_blank") },
+      { label: 'New Window', shortcut: '⌘N', action: () => onNewWindow() },
+      { label: 'Close Window', shortcut: '⌘W', action: () => onCloseAllWindows() },
+      { type: 'separator' },
+      { label: 'Download Resume', action: () => window.open('https://drive.google.com/file/d/15WXrrq561L2D8in8baT1LVJNn3sdP-m6/view?usp=sharing', '_blank') },
     ],
-
     Edit: [
-      { label: "Undo", shortcut: "⌘Z", action: () => onUndo() },
-      { label: "Redo", shortcut: "⇧⌘Z", action: () => onRedo() },
-      { type: "separator" },
-      { label: "Cut", shortcut: "⌘X" },
-      { label: "Copy", shortcut: "⌘C" },
-      { label: "Paste", shortcut: "⌘V" },
+      { label: 'Undo', shortcut: '⌘Z', action: () => onUndo() },
+      { label: 'Redo', shortcut: '⇧⌘Z', action: () => onRedo() },
+      { type: 'separator' },
+      { label: 'Cut', shortcut: '⌘X' },
+      { label: 'Copy', shortcut: '⌘C' },
+      { label: 'Paste', shortcut: '⌘V' },
     ],
-
     View: [
-      { label: "Enter Full Screen", shortcut: "^⌘F", action: () => onEnterFullScreen() },
-      { label: "Actual Size", shortcut: "⌘0", action: () => onActualSize() },
+      { label: 'Enter Full Screen', shortcut: '^⌘F', action: () => onEnterFullScreen() },
+      { label: 'Actual Size', shortcut: '⌘0', action: () => onActualSize() },
     ],
-
     Help: [
-      { label: "Portfolio Help", action: () => alert("Mail me at ashish.nanda1902@gmail.com if you find any bug!") },
-      { label: "View Source Code", action: () => window.open("https://github.com/ashishnanda19", "_blank") },
+      { label: 'Portfolio Help', action: () => alert('Mail me at ashish.nanda1902@gmail.com if you find any bug!') },
+      { label: 'View Source Code', action: () => window.open('https://github.com/ashishnanda19', '_blank') },
     ],
   };
 
   return (
     <div
-      className="h-8 w-full bg-black/20 backdrop-blur-xl flex items-center justify-between px-4 text-white text-sm fixed top-0 z-50 shadow-sm border-b border-white/5 select-none"
+      className="fixed top-2.5 left-1/2 -translate-x-1/2 z-50 h-10 bg-[#0a0f1e]/85 backdrop-blur-2xl flex items-center justify-between px-1.5 text-white rounded-2xl border border-white/[0.07] shadow-[0_4px_24px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.06)] select-none"
+      style={{ width: 'min(960px, calc(100vw - 1.5rem))' }}
       onClick={(e) => e.stopPropagation()}
     >
-      <div className="flex items-center space-x-4 h-full">
-        {Object.entries(menus).map(([key, items]) => (
-          <div key={key} className="relative h-full flex items-center">
-            <span
-              className={`cursor-default px-2.5 py-1 rounded transition-colors font-medium ${activeMenu === key ? "bg-white/20" : "hover:bg-white/10"
-                } ${key === "" ? "text-base font-bold pb-1.5" : "text-xs"}`}
+      {/* LEFT */}
+      <div className="flex items-center h-full">
+        <div className="relative flex items-center h-full">
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.92 }}
+            transition={{ type: 'spring', stiffness: 500, damping: 22 }}
+            onClick={() => setActiveMenu(activeMenu === '' ? null : '')}
+            className={`relative flex items-center justify-center w-9 h-8 rounded-xl mx-0.5 transition-colors ${activeMenu === '' ? 'bg-white/10' : 'hover:bg-white/[0.06]'}`}
+          >
+            {activeMenu === '' && (
+              <motion.span
+                layoutId="topbar-active"
+                transition={{ type: 'spring', stiffness: 500, damping: 32 }}
+                className="absolute inset-0 rounded-xl bg-indigo-500/20 border border-indigo-400/25"
+                style={{ zIndex: -1 }}
+              />
+            )}
+            <span className="relative text-[19px] leading-none text-slate-200 select-none" style={{ fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif" }}></span>
+          </motion.button>
+          {activeMenu === '' && (
+            <motion.div
+              initial={{ opacity: 0, y: -6, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ type: 'spring', stiffness: 420, damping: 28 }}
+              className="absolute top-[calc(100%+8px)] left-0 w-56 bg-[#0a0f1e]/96 backdrop-blur-2xl rounded-xl border border-white/[0.07] shadow-[0_16px_48px_rgba(0,0,0,0.7),inset_0_1px_0_rgba(255,255,255,0.06)] py-1.5 z-50"
+            >
+              {menus[''].map((item, idx) =>
+                item.type === 'separator' ? (
+                  <div key={idx} className="h-px bg-white/[0.06] my-1 mx-3" />
+                ) : (
+                  <div
+                    key={idx}
+                    className="mx-1.5 px-3 py-1.5 text-sm text-slate-300 hover:text-white hover:bg-indigo-500/15 flex items-center cursor-default rounded-lg transition-colors"
+                    onClick={() => { item.action?.(); setActiveMenu(null); }}
+                  >
+                    {item.label}
+                  </div>
+                )
+              )}
+            </motion.div>
+          )}
+        </div>
+        <div className="w-px h-4 bg-white/[0.08] mx-1" />
+        {Object.entries(menus).filter(([k]) => k !== '').map(([key, items]) => (
+          <div
+            key={key}
+            className="relative h-full flex items-center"
+            onMouseEnter={() => { if (activeMenu !== null && activeMenu !== key) setActiveMenu(key); }}
+          >
+            <motion.button
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.94 }}
+              transition={{ type: 'spring', stiffness: 500, damping: 24 }}
+              className={`relative flex items-center h-7 px-3 rounded-lg text-xs font-medium cursor-default transition-colors ${activeMenu === key ? 'text-white' : 'text-slate-400 hover:text-slate-200'}`}
               onClick={() => setActiveMenu(activeMenu === key ? null : key)}
             >
-              {key}
-            </span>
-
+              {activeMenu === key && (
+                <motion.span
+                  layoutId="topbar-active"
+                  transition={{ type: 'spring', stiffness: 500, damping: 32 }}
+                  className="absolute inset-0 rounded-lg bg-indigo-500/20 border border-indigo-400/25"
+                  style={{ zIndex: -1 }}
+                />
+              )}
+              <span className="relative">{key}</span>
+            </motion.button>
             {activeMenu === key && (
-              <div className="absolute top-full left-0 mt-1 w-56 bg-white/90 backdrop-blur-xl rounded-lg shadow-xl border border-white/20 py-1.5 z-50 text-black animate-in fade-in slide-in-from-top-1 duration-100">
+              <motion.div
+                initial={{ opacity: 0, y: -6, scale: 0.97 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ type: 'spring', stiffness: 420, damping: 28 }}
+                className="absolute top-[calc(100%+8px)] left-0 w-56 bg-[#0a0f1e]/96 backdrop-blur-2xl rounded-xl border border-white/[0.07] shadow-[0_16px_48px_rgba(0,0,0,0.7),inset_0_1px_0_rgba(255,255,255,0.06)] py-1.5 z-50"
+              >
                 {items.map((item, idx) =>
-                  item.type === "separator" ? (
-                    <div key={idx} className="h-[1px] bg-black/10 my-1 mx-2" />
+                  item.type === 'separator' ? (
+                    <div key={idx} className="h-px bg-white/[0.06] my-1 mx-3" />
                   ) : (
                     <div
                       key={idx}
-                      className="px-4 py-1.5 hover:bg-blue-500 hover:text-white flex justify-between items-center cursor-default group"
-                      onClick={() => {
-                        item.action?.();
-                        setActiveMenu(null);
-                      }}
+                      className="mx-1.5 px-3 py-1.5 text-sm text-slate-300 hover:text-white hover:bg-indigo-500/15 flex justify-between items-center cursor-default rounded-lg transition-colors group"
+                      onClick={() => { item.action?.(); setActiveMenu(null); }}
                     >
                       <span>{item.label}</span>
                       {item.shortcut && (
-                        <span className="text-gray-400 group-hover:text-white/80 text-xs">
-                          {item.shortcut}
-                        </span>
+                        <span className="text-slate-600 group-hover:text-slate-400 text-[11px] font-mono">{item.shortcut}</span>
                       )}
                     </div>
                   )
                 )}
-              </div>
+              </motion.div>
             )}
           </div>
         ))}
-        {title && <span className="font-bold text-xs ml-2 opacity-80 hidden sm:block">{title}</span>}
+        {title && (
+          <>
+            <div className="w-px h-4 bg-white/[0.08] mx-2" />
+            <span className="text-[11px] font-medium text-slate-500 max-w-[140px] truncate">{title}</span>
+          </>
+        )}
       </div>
-
-      <div className="flex items-center space-x-4 text-xs font-medium text-white/90">
-        <div className="hidden sm:flex items-center space-x-3 opacity-80">
-          <Battery size={16} /> <Wifi size={16} /> <Search size={16} />
+      {/* RIGHT */}
+      <div className="flex items-center gap-0.5 h-full pr-1">
+        <div className="hidden sm:flex items-center gap-0.5">
+          {([
+            { icon: Battery, label: 'Battery' },
+            { icon: Wifi, label: 'Network' },
+            { icon: Bell, label: 'Alerts' },
+          ] as { icon: React.FC<{ size?: number; className?: string }>; label: string }[]).map(({ icon: Icon, label }) => (
+            <motion.button
+              key={label}
+              title={label}
+              whileHover={{ scale: 1.15 }}
+              whileTap={{ scale: 0.9 }}
+              transition={{ type: 'spring', stiffness: 500, damping: 22 }}
+              className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-500 hover:text-slate-300 hover:bg-white/[0.06] transition-colors cursor-pointer"
+            >
+              <Icon size={14} />
+            </motion.button>
+          ))}
         </div>
-        <span>
-          {date.toLocaleString([], {
-            weekday: "short",
-            month: "short",
-            day: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-          })}
-        </span>
+        <div className="w-px h-4 bg-white/[0.08] mx-1" />
+        <div className="flex items-center gap-2 px-3 h-7 rounded-lg hover:bg-white/[0.05] transition-colors cursor-default">
+          <span className="text-[11px] text-slate-500 tabular-nums hidden sm:block">
+            {date.toLocaleString([], { weekday: 'short', month: 'short', day: 'numeric' })}
+          </span>
+          <span className="text-[11px] font-semibold text-slate-300 tabular-nums">
+            {date.toLocaleString([], { hour: '2-digit', minute: '2-digit' })}
+          </span>
+        </div>
       </div>
     </div>
   );
@@ -1884,97 +1940,6 @@ const MailIcon = ({ size = 28 }: { size?: number }) => (
   </svg>
 );
 
-// macOS-style System Settings Icon Component - Metallic gear with 3D effect
-const SettingsIcon = ({ size = 28 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 512 512" className="drop-shadow-md">
-    <defs>
-      {/* Metallic silver/gray gradient - light source from top-left */}
-      <linearGradient id="gearGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stopColor="#F8F8F8" />
-        <stop offset="20%" stopColor="#E8E8E8" />
-        <stop offset="40%" stopColor="#D0D0D0" />
-        <stop offset="60%" stopColor="#B8B8B8" />
-        <stop offset="80%" stopColor="#A0A0A0" />
-        <stop offset="100%" stopColor="#8E8E8E" />
-      </linearGradient>
-      {/* Top-left highlight for 3D metallic effect */}
-      <radialGradient id="gearHighlight" cx="25%" cy="25%">
-        <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.6" />
-        <stop offset="50%" stopColor="#FFFFFF" stopOpacity="0.3" />
-        <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0" />
-      </radialGradient>
-      {/* Shadow gradient */}
-      <radialGradient id="gearShadow" cx="60%" cy="70%">
-        <stop offset="0%" stopColor="#000000" stopOpacity="0.5" />
-        <stop offset="100%" stopColor="#000000" stopOpacity="0" />
-      </radialGradient>
-    </defs>
-
-    {/* Rounded square background - solid black */}
-    <rect width="512" height="512" rx="102" fill="#000000" />
-
-    {/* Gear with metallic 3D appearance */}
-    <g transform="translate(256, 256)">
-      {/* Outer gear with distinct sharp triangular teeth around circumference */}
-      <path
-        d="M 0 -195
-           L 8 -195 L 12 -215 L 16 -195 L 24 -195
-           L 22 -182 L 30 -178 L 24 -165 L 34 -152 L 22 -148
-           L 24 -135 L 16 -135 L 12 -115 L 8 -135 L 0 -135
-           L -8 -135 L -12 -115 L -16 -135 L -24 -135
-           L -22 -148 L -34 -152 L -24 -165 L -30 -178 L -22 -182
-           L -24 -195 L -16 -195 L -12 -215 L -8 -195 L 0 -195 Z"
-        fill="url(#gearGradient)"
-        stroke="#AAAAAA"
-        strokeWidth="1"
-      />
-
-      {/* Inner rings with smaller teeth */}
-      <circle cx="0" cy="0" r="152" fill="url(#gearGradient)" stroke="#AAAAAA" strokeWidth="2" />
-      <circle cx="0" cy="0" r="132" fill="url(#gearGradient)" stroke="#AAAAAA" strokeWidth="1.5" />
-      <circle cx="0" cy="0" r="112" fill="none" stroke="#AAAAAA" strokeWidth="1" opacity="0.6" />
-
-      {/* Three thick Y-shaped spokes connecting hub to outermost gear */}
-      {/* Top spoke */}
-      <path
-        d="M 0 -112 L 0 -152 
-           M -22 -112 L 22 -112"
-        stroke="#AAAAAA"
-        strokeWidth="18"
-        strokeLinecap="round"
-        fill="none"
-      />
-      {/* Bottom left spoke */}
-      <path
-        d="M -79 -79 L -108 -108
-           M -79 -58 L -58 -79"
-        stroke="#AAAAAA"
-        strokeWidth="18"
-        strokeLinecap="round"
-        fill="none"
-      />
-      {/* Bottom right spoke */}
-      <path
-        d="M 79 -79 L 108 -108
-           M 79 -58 L 58 -79"
-        stroke="#AAAAAA"
-        strokeWidth="18"
-        strokeLinecap="round"
-        fill="none"
-      />
-
-      {/* Solid smooth circular hub */}
-      <circle cx="0" cy="0" r="58" fill="url(#gearGradient)" stroke="#AAAAAA" strokeWidth="2" />
-      <circle cx="0" cy="0" r="42" fill="#D0D0D0" opacity="0.25" />
-
-      {/* 3D highlight from top-left light source */}
-      <ellipse cx="-40" cy="-40" rx="190" ry="190" fill="url(#gearHighlight)" opacity="0.7" />
-    </g>
-
-    {/* Soft shadow beneath gear for depth */}
-    <ellipse cx="280" cy="290" rx="175" ry="55" fill="url(#gearShadow)" opacity="0.35" />
-  </svg>
-);
 
 // --- Main App Component ---
 
@@ -1983,7 +1948,8 @@ const App = () => {
   const [zIndexCounter, setZIndexCounter] = useState(10);
   const [draggedWindow, setDraggedWindow] = useState<string | null>(null);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
-  const [theme, setTheme] = useState<Theme>('light');
+  const [theme, setTheme] = useState<Theme>('dark');
+  const [booted, setBooted] = useState(false);
   const [isMobile, setIsMobile] = useState(false); // Mobile state check
   const [closedWindowsHistory, setClosedWindowsHistory] = useState<WindowState[]>([]); // For undo/redo
   const [redoStack, setRedoStack] = useState<WindowState[]>([]); // For redo
@@ -2096,42 +2062,27 @@ const App = () => {
       color: 'bg-transparent'
     },
     {
-      id: 'settings',
-      name: 'System Preferences',
-      icon: <SettingsIcon size={28} />,
-      iconSrc: '/icons/system-preferences.png',
-      color: 'bg-transparent'
-    },
-    {
       id: 'spotify',
       name: 'Spotify',
       icon: <Music size={28} className="text-white drop-shadow-md" />,
       iconSrc: '/icons/spotify.png',
       color: 'bg-transparent'
     },
+    {
+      id: 'funzone',
+      name: 'Fun Zone',
+      icon: (
+        <div className="w-full h-full rounded-2xl flex items-center justify-center bg-gradient-to-br from-indigo-500 to-violet-600 shadow-[0_4px_16px_rgba(99,102,241,0.4)]">
+          <Laugh size={28} className="text-white drop-shadow-sm" />
+        </div>
+      ),
+      color: 'bg-transparent'
+    },
   ];
 
   const [windows, setWindows] = useState<WindowState[]>([]);
 
-  // Initialize first window after appIcons is defined
-  useEffect(() => {
-    const finderApp = appIcons.find(a => a.id === 'finder');
-    if (finderApp && windows.length === 0) {
-      setWindows([{
-        id: 'finder',
-        title: 'Ashish Kumar Nanda',
-        icon: renderAppIcon(finderApp, 18),
-        component: <AboutContent />,
-        isOpen: true,
-        isMinimized: false,
-        isMaximized: false,
-        zIndex: 1,
-        position: { x: 50, y: 50 },
-        size: { width: 800, height: 600 }
-      }]);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // Desktop hero shown when nothing is open; user opens apps from the dock.
 
   // Optimized Drag Logic
   useEffect(() => {
@@ -2181,6 +2132,7 @@ const App = () => {
         case 'arcade': content = <SnakeGame />; title = 'Arcade'; size = { width: 440, height: 520 }; break;
         case 'settings': content = <SystemPreferencesContent />; title = 'System Preferences'; size = { width: 700, height: 450 }; break;
         case 'spotify': content = <SpotifyContent />; title = 'Spotify'; size = { width: 1000, height: 750 }; break;
+        case 'funzone': content = <FunZone />; title = 'Fun Zone'; size = { width: 760, height: 620 }; break;
         default: content = <div>Content not found</div>;
       }
       setWindows(prev => [...prev, { id: appId, title, icon: appData ? renderAppIcon(appData, 18) : undefined, component: content, isOpen: true, isMinimized: false, isMaximized: false, zIndex: zIndexCounter + 1, position: { x: 80 + (windows.length * 30), y: 80 + (windows.length * 30) }, size }]);
@@ -2277,6 +2229,8 @@ const App = () => {
   // Mobile blocker removed.
   return (
     <ThemeContext.Provider value={{ theme, setTheme }}>
+      {!booted && <NeonBoot onBoot={() => setBooted(true)} />}
+      <EasterEggs />
       <div
         className="h-screen w-screen overflow-hidden font-sans select-none relative bg-[var(--bg-color)] text-[var(--text-color)] app-root"
         onClick={() => {
@@ -2307,6 +2261,11 @@ const App = () => {
           onEnterFullScreen={handleEnterFullScreen}
           onActualSize={handleActualSize}
         />
+
+        {/* Desktop Hero (shown when nothing is open) */}
+        {windows.filter(w => !w.isMinimized).length === 0 && (
+          <DesktopHero onOpenAbout={() => openApp('finder')} />
+        )}
 
         {/* Desktop Area */}
         <div className="relative w-full h-full pt-8 pb-24 z-10 pointer-events-none">
@@ -2357,7 +2316,7 @@ const App = () => {
                     damping: 25,
                     mass: 0.8
                   }}
-                  className={`absolute flex flex-col rounded-xl shadow-2xl overflow-hidden ring-1 ring-black/10 backdrop-blur-xl bg-white/95 dark:bg-[var(--bg-elevated)]/95 ${isDragging ? '' : 'transition-[top,left,width,height] duration-300 ease-[cubic-bezier(0.25,1,0.5,1)]'}`}
+                  className={`absolute flex flex-col rounded-xl overflow-hidden ring-1 ring-white/[0.07] shadow-[0_8px_40px_rgba(0,0,0,0.55)] backdrop-blur-xl bg-white/95 dark:bg-[var(--bg-elevated)]/95 ${isDragging ? '' : 'transition-[top,left,width,height] duration-300 ease-[cubic-bezier(0.25,1,0.5,1)]'}`}
                   style={{
                     width: (win.isMaximized || isMobile) ? '100vw' : win.size.width,
                     height: (win.isMaximized || isMobile) ? (isMobile ? 'calc(100vh - 110px)' : 'calc(100vh - 32px)') : win.size.height,
@@ -2387,7 +2346,7 @@ const App = () => {
 
         {/* Dock */}
         <div className="fixed bottom-4 left-0 w-full flex justify-center z-[10000]">
-          <div className="flex items-end space-x-3 px-4 pb-3 pt-3 bg-white/10 dark:bg-black/40 backdrop-blur-xl rounded-2xl border border-white/20 dark:border-white/10 shadow-2xl transition-all duration-300">
+          <div className="flex items-end space-x-3 px-4 pb-3 pt-3 bg-white/10 dark:bg-[#0c1120]/75 backdrop-blur-xl rounded-2xl border border-white/[0.08] shadow-[0_8px_40px_rgba(0,0,0,0.5),0_0_0_1px_rgba(255,255,255,0.04)] transition-all duration-300">
             {appIcons.map((app) => {
               const isOpen = windows.some(w => w.id === app.id && !w.isMinimized);
               const isRunning = windows.some(w => w.id === app.id);
