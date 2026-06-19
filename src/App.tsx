@@ -152,7 +152,7 @@ const AWARDS = [
   { text: 'Finalist – International Innovation Challenge (IIC)', badge: 'IIC', color: '#f59e0b' },
   { text: 'National Semifinalist – Flipkart GRiD 7.0', badge: 'GRID', color: '#a78bfa' },
   { text: "5× Dean's List of Excellence", badge: '5×', color: '#38bdf8' },
-  { text: 'LeetCode – 500+ solved · Peak 1,743 rating (Top 12.96%)', badge: 'LC', color: '#f97316' },
+  { text: 'LeetCode – 500+ solved · Peak 1,743 rating (Top 10.78%)', badge: 'LC', color: '#f97316' },
   { text: 'CodeChef – 2 Star · Max rating 1468', badge: 'CC', color: '#34d399' },
 ];
 
@@ -495,7 +495,7 @@ const Hero = () => {
             </motion.div>
 
             <motion.div variants={fadeUp}>
-              <p className="text-white/40 font-mono text-sm mb-3 tracking-widest">// CS @ MUJ '27 — Research Intern @ IIT(BHU)</p>
+              <p className="text-white/40 font-mono text-sm mb-3 tracking-widest">CS @ MUJ '27 — Research Intern @ IIT(BHU)</p>
               <h1 className="text-[3.2rem] sm:text-[4.5rem] lg:text-[5.2rem] font-black leading-[0.95] tracking-tight">
                 <MusicalName name="ASHISH" /><br />
                 <MusicalName name="KUMAR" /><br />
@@ -510,7 +510,6 @@ const Hero = () => {
 
             <motion.p variants={fadeUp} className="text-white/50 text-base leading-relaxed max-w-md">
               Building scalable systems, shipping fast, and writing code that doesn't wake you up at 3 AM.
-              CGPA <span className="text-white font-semibold">9.22/10</span>, 400+ LeetCode problems, 5× Dean's List.
             </motion.p>
 
             <motion.div variants={fadeUp} className="flex flex-wrap gap-3 pt-1">
@@ -564,7 +563,7 @@ const Hero = () => {
 
               <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.95 }}
                 className="absolute -left-4 sm:-left-12 bottom-12 bg-black/80 backdrop-blur-xl border border-white/[0.08] rounded-2xl px-5 py-3 shadow-2xl">
-                <div className="text-purple-400 text-2xl font-black leading-none">400+</div>
+                <div className="text-purple-400 text-2xl font-black leading-none">500+</div>
                 <div className="text-white/40 text-xs font-mono mt-0.5">LC Solved</div>
               </motion.div>
             </div>
@@ -712,7 +711,7 @@ const Education = () => (
         <motion.div variants={fadeIn}
           className="absolute -top-4 right-0 font-black text-[clamp(3rem,10vw,7rem)] leading-none
             tracking-tighter select-none pointer-events-none tabular-nums text-right"
-          style={{ color: 'rgba(255,255,255,0.03)' }}>
+          style={{ color: 'rgba(255,255,255,0.05)' }}>
           2023—2027
         </motion.div>
 
@@ -1048,6 +1047,294 @@ const ScrollTop = () => {
 // ─────────────────────────────────────────────────────────────
 // APP
 // ─────────────────────────────────────────────────────────────
+
+// ─────────────────────────────────────────────────────────────
+// CHATBOT — knowledge base
+// ─────────────────────────────────────────────────────────────
+const BOT_KB: [RegExp, string][] = [
+  [/hi|hello|hey|sup|yo|meow/i, "Hey there! 👋 I'm AshBot, Ashish's AI assistant.\nAsk me about his projects, skills, awards, or how to reach him!"],
+  [/about|who|yourself|intro|tell me/i, "Ashish is a Backend Engineer & third-year CSE student at Manipal University Jaipur, currently a Research Intern at IIT (BHU).\n\nHe ships distributed systems, AI-powered products, and production-grade infrastructure. 5× Dean's List · Open to SWE roles."],
+  [/skill|tech|stack|language|framework|tool|database|cloud|devops/i, "Here's Ashish's full stack ⚡\n\n▸ Languages   C++, Python, Java, JS, SQL\n▸ Frameworks  React, Node.js, Express, Flask\n▸ Databases   MongoDB, PostgreSQL, Redis\n▸ Cloud       AWS, Docker, Jenkins, CI/CD\n▸ Tools       Git, Socket.IO, BullMQ, REST APIs"],
+  [/project|built|build|made|created|shipped/i, "Ashish has shipped 5 production systems:\n\n01 Distributed Video Transcoder\n   AWS · Redis · Docker · ffmpeg\n\n02 InvoSync — AI invoice SaaS\n   98%+ OCR accuracy · Flask · React\n\n03 SafeTrail — SOS platform\n   Socket.IO · PostGIS · BullMQ\n\n04 HyperRAG-X — Enterprise RAG\n   LangGraph · Qdrant · Groq · FastAPI\n\n05 Music Mindscape — Spotify map\n   D3-Force · Gemini 2.5 · Supabase"],
+  [/award|achiev|honor|win|leetcode|codechef|grid|iic|dean/i, "Achievements 🏆\n\n▸ IIC Finalist (International Innovation Challenge)\n▸ Flipkart GRiD 7.0 National Semifinalist\n▸ 5× Dean's List of Excellence\n▸ LeetCode — 500+ solved · Peak 1,743 rating\n▸ CodeChef — 2 Star · Max 1468"],
+  [/educ|univer|college|muj|manipal|degree|cgpa|gpa/i, "Education 📚\n\nB.Tech CSE (IoT) — Manipal University Jaipur\n2023 – 2027 · CGPA 9.22/10\n5× Dean's List · GDG Technical Member"],
+  [/experi|intern|iit|bhu|gdg|google developer/i, "Experience 💼\n\n🔬 Research Intern @ IIT (BHU)\n   Dec 2025 – Present\n   Net-zero models for MSMEs\n\n👥 Technical Member @ GDG\n   Sept 2023 – Oct 2025\n   Workshops · Hackathons · Cloud"],
+  [/contact|reach|email|hire|connect|linkedin|github/i, "Reach Ashish here:\n\n📧 ashish.nanda1902@gmail.com\n🐙 github.com/ashishnanda19\n💼 linkedin.com/in/ashishnanda19\n🐦 x.com/ashish19n"],
+  [/help|what can|what do/i, "You can ask me about:\n\n• about     → Who is Ashish?\n• skills    → Tech stack\n• projects  → What he built\n• awards    → His wins\n• education → Academic background\n• experience → Work history\n• contact   → How to reach him"],
+];
+const getResponse = (q: string) => {
+  for (const [re, ans] of BOT_KB) if (re.test(q)) return ans;
+  return "I didn't catch that! Try asking about Ashish's projects, skills, awards, or type 'help' to see all topics. 🤖";
+};
+
+// ─────────────────────────────────────────────────────────────
+// BOT SVG ICON — cat-ears + robot face
+// ─────────────────────────────────────────────────────────────
+const BotIcon = ({ size = 24, className = '' }: { size?: number; className?: string }) => (
+  <svg width={size} height={size} viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+    {/* Cat ears */}
+    <path d="M8 14 L5 5 L14 11 Z" fill="currentColor" fillOpacity="0.9"/>
+    <path d="M28 14 L31 5 L22 11 Z" fill="currentColor" fillOpacity="0.9"/>
+    {/* Inner ear shine */}
+    <path d="M8.5 13 L6.5 7 L12 11 Z" fill="currentColor" fillOpacity="0.25"/>
+    <path d="M27.5 13 L29.5 7 L24 11 Z" fill="currentColor" fillOpacity="0.25"/>
+    {/* Head */}
+    <rect x="5" y="12" width="26" height="20" rx="5" fill="currentColor" fillOpacity="0.08" stroke="currentColor" strokeWidth="1.4"/>
+    {/* Eyes — glowing rectangles */}
+    <rect x="9" y="17" width="7" height="6" rx="1.5" fill="currentColor" fillOpacity="0.2"/>
+    <rect x="20" y="17" width="7" height="6" rx="1.5" fill="currentColor" fillOpacity="0.2"/>
+    <rect x="10" y="18" width="5" height="4" rx="1" fill="currentColor"/>
+    <rect x="21" y="18" width="5" height="4" rx="1" fill="currentColor"/>
+    {/* Mouth smile */}
+    <path d="M13 27 Q18 30.5 23 27" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" fill="none"/>
+    {/* Antenna */}
+    <line x1="18" y1="12" x2="18" y2="6" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+    <circle cx="18" cy="4.5" r="2" fill="currentColor"/>
+    <circle cx="18" cy="4.5" r="1" fill="currentColor" fillOpacity="0.3"/>
+    {/* Side bolts */}
+    <circle cx="8" cy="28" r="1.2" fill="currentColor" fillOpacity="0.35"/>
+    <circle cx="28" cy="28" r="1.2" fill="currentColor" fillOpacity="0.35"/>
+  </svg>
+);
+
+// ─────────────────────────────────────────────────────────────
+// CHATBOT COMPONENT
+// ─────────────────────────────────────────────────────────────
+type Msg = { role: 'bot' | 'user'; text: string; id: number };
+let _msgId = 0;
+
+const CatBot = () => {
+  const [open, setOpen]     = useState(false);
+  const [msgs, setMsgs]     = useState<Msg[]>([{
+    role: 'bot', id: _msgId++,
+    text: "Hi! I'm AshBot 🤖\nAshish's AI assistant. Ask me anything about him, or tap a chip below!",
+  }]);
+  const [input, setInput]   = useState('');
+  const [typing, setTyping] = useState(false);
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [msgs, typing]);
+
+  const send = (text?: string) => {
+    const q = (text ?? input).trim();
+    if (!q) return;
+    setInput('');
+    setMsgs(m => [...m, { role: 'user', text: q, id: _msgId++ }]);
+    setTyping(true);
+    setTimeout(() => {
+      setTyping(false);
+      setMsgs(m => [...m, { role: 'bot', text: getResponse(q), id: _msgId++ }]);
+    }, 650 + Math.random() * 400);
+  };
+
+  const chips = ['about', 'projects', 'skills', 'contact'];
+
+  return (
+    <>
+      {/* ── Toggle button ──────────────────────────────── */}
+      <div className="fixed bottom-6 left-6 z-50">
+        {/* Pulse ring */}
+        {!open && (
+          <motion.div
+            animate={{ scale: [1, 1.5, 1], opacity: [0.35, 0, 0.35] }}
+            transition={{ duration: 2.4, repeat: Infinity }}
+            className="absolute inset-0 rounded-2xl bg-[#4ade80]/40 pointer-events-none"
+          />
+        )}
+        <motion.button
+          onClick={() => { setOpen(o => !o); sfx.click(); }}
+          onMouseEnter={sfx.hover}
+          whileHover={{ scale: 1.08 }}
+          whileTap={{ scale: 0.91 }}
+          className="relative w-14 h-14 rounded-2xl flex items-center justify-center shadow-[0_0_28px_rgba(74,222,128,0.5)] overflow-hidden"
+          style={{ background: 'linear-gradient(135deg, #4ade80 0%, #22c55e 100%)' }}
+        >
+          {/* Inner shine */}
+          <div className="absolute top-0 left-0 right-0 h-1/2 bg-white/[0.12] rounded-t-2xl pointer-events-none" />
+          <AnimatePresence mode="wait">
+            {open
+              ? <motion.span key="x" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }} transition={{ duration: 0.18 }} className="text-black font-black text-lg relative z-10">✕</motion.span>
+              : <motion.div key="bot" initial={{ rotate: 15, opacity: 0, scale: 0.7 }} animate={{ rotate: 0, opacity: 1, scale: 1 }} exit={{ rotate: -15, opacity: 0, scale: 0.7 }} transition={{ duration: 0.2 }} className="relative z-10">
+                  <BotIcon size={28} className="text-black" />
+                </motion.div>
+            }
+          </AnimatePresence>
+        </motion.button>
+      </div>
+
+      {/* ── Chat window ────────────────────────────────── */}
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: 20, scale: 0.92 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.92 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+            className="fixed bottom-[92px] left-6 z-50 w-[320px] sm:w-[355px] flex flex-col rounded-2xl overflow-hidden"
+            style={{
+              maxHeight: '480px',
+              boxShadow: '0 24px 80px rgba(0,0,0,0.9), 0 0 0 1px rgba(74,222,128,0.15), inset 0 1px 0 rgba(255,255,255,0.06)',
+              background: '#0b0b0b',
+            }}
+          >
+            {/* Gradient top accent line */}
+            <div className="h-[2px] flex-shrink-0" style={{ background: 'linear-gradient(90deg, #4ade80, #86efac 40%, #a78bfa 70%, transparent)' }} />
+
+            {/* Header */}
+            <div className="flex items-center gap-3 px-4 py-3 flex-shrink-0 relative"
+              style={{ background: 'linear-gradient(135deg, rgba(74,222,128,0.06) 0%, transparent 60%)' }}>
+              {/* Avatar with scan line */}
+              <div className="relative w-10 h-10 rounded-xl flex-shrink-0 overflow-hidden"
+                style={{ background: 'linear-gradient(135deg, rgba(74,222,128,0.12), rgba(74,222,128,0.04))', border: '1px solid rgba(74,222,128,0.25)' }}>
+                <BotIcon size={22} className="text-[#4ade80] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                {/* Scan line */}
+                <motion.div
+                  animate={{ top: ['-10%', '110%'] }}
+                  transition={{ duration: 1.6, repeat: Infinity, repeatDelay: 2.5, ease: 'linear' }}
+                  className="absolute left-0 right-0 h-[2px] pointer-events-none"
+                  style={{ background: 'linear-gradient(90deg, transparent, rgba(74,222,128,0.6), transparent)' }}
+                />
+                {/* Online dot */}
+                <div className="absolute bottom-0.5 right-0.5 w-2 h-2 rounded-full bg-[#4ade80] border border-[#0b0b0b]" />
+              </div>
+
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-white font-bold text-sm tracking-tight">AshBot</span>
+                  <span className="text-[8px] font-mono px-1.5 py-0.5 rounded-md text-[#4ade80] border border-[#4ade80]/25"
+                    style={{ background: 'rgba(74,222,128,0.08)' }}>AI</span>
+                </div>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <motion.span
+                    animate={{ opacity: [1, 0.4, 1] }}
+                    transition={{ duration: 1.5, repeat: Infinity }}
+                    className="w-1.5 h-1.5 rounded-full bg-[#4ade80] block flex-shrink-0"
+                  />
+                  <span className="text-white/35 text-[10px] font-mono">Online · knows everything about Ashish</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Divider */}
+            <div className="h-px flex-shrink-0" style={{ background: 'linear-gradient(90deg, rgba(74,222,128,0.15), rgba(255,255,255,0.04), transparent)' }} />
+
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto px-3 py-3 space-y-2.5 min-h-0"
+              style={{ scrollbarWidth: 'none' }}>
+              {msgs.map((m) => (
+                <motion.div
+                  key={m.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.25 }}
+                  className={`flex gap-2 items-end ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                  {m.role === 'bot' && (
+                    <div className="w-6 h-6 rounded-lg flex-shrink-0 flex items-center justify-center mb-0.5"
+                      style={{ background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.2)' }}>
+                      <BotIcon size={13} className="text-[#4ade80]" />
+                    </div>
+                  )}
+                  <div
+                    className="max-w-[82%] text-[11px] leading-relaxed whitespace-pre-wrap"
+                    style={m.role === 'bot' ? {
+                      background: 'rgba(255,255,255,0.04)',
+                      border: '1px solid rgba(255,255,255,0.06)',
+                      borderRadius: '0 12px 12px 12px',
+                      padding: '8px 12px',
+                      color: 'rgba(255,255,255,0.72)',
+                    } : {
+                      background: 'linear-gradient(135deg, #4ade80, #22c55e)',
+                      borderRadius: '12px 0 12px 12px',
+                      padding: '8px 12px',
+                      color: '#000',
+                      fontWeight: 600,
+                      boxShadow: '0 4px 12px rgba(74,222,128,0.25)',
+                    }}
+                  >
+                    {m.text}
+                  </div>
+                </motion.div>
+              ))}
+
+              {/* Typing */}
+              {typing && (
+                <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                  className="flex gap-2 items-end">
+                  <div className="w-6 h-6 rounded-lg flex-shrink-0 flex items-center justify-center"
+                    style={{ background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.2)' }}>
+                    <BotIcon size={13} className="text-[#4ade80]" />
+                  </div>
+                  <div className="px-3 py-2.5 flex gap-1.5 items-center"
+                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '0 12px 12px 12px' }}>
+                    {[0,1,2].map(i => (
+                      <motion.span key={i}
+                        animate={{ y: [0,-5,0], opacity: [0.4,1,0.4] }}
+                        transition={{ duration: 0.55, repeat: Infinity, delay: i * 0.14 }}
+                        className="block w-1.5 h-1.5 rounded-full bg-[#4ade80]"
+                      />
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+              <div ref={bottomRef} />
+            </div>
+
+            {/* Chips */}
+            <div className="px-3 pt-2 pb-1.5 flex gap-1.5 flex-wrap flex-shrink-0">
+              {chips.map(c => (
+                <motion.button key={c}
+                  whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                  onClick={() => send(c)}
+                  className="text-[10px] font-mono px-2.5 py-1 rounded-lg capitalize transition-all"
+                  style={{ color: 'rgba(74,222,128,0.7)', border: '1px solid rgba(74,222,128,0.2)', background: 'rgba(74,222,128,0.05)' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(74,222,128,0.12)'; (e.currentTarget as HTMLElement).style.color = '#4ade80'; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(74,222,128,0.05)'; (e.currentTarget as HTMLElement).style.color = 'rgba(74,222,128,0.7)'; }}
+                >{c}</motion.button>
+              ))}
+            </div>
+
+            {/* Divider */}
+            <div className="h-px mx-3 flex-shrink-0" style={{ background: 'rgba(255,255,255,0.05)' }} />
+
+            {/* Input */}
+            <div className="flex gap-2 px-3 py-3 flex-shrink-0">
+              <input
+                type="text"
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && send()}
+                placeholder="Ask me anything…"
+                className="flex-1 text-[11px] text-white outline-none transition-all"
+                style={{
+                  background: 'rgba(255,255,255,0.04)',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  borderRadius: '10px',
+                  padding: '8px 12px',
+                  color: 'white',
+                }}
+                onFocus={e => (e.currentTarget.style.borderColor = 'rgba(74,222,128,0.4)')}
+                onBlur={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)')}
+              />
+              <motion.button
+                onClick={() => send()}
+                whileHover={{ scale: 1.08 }}
+                whileTap={{ scale: 0.9 }}
+                className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 font-black text-black relative overflow-hidden"
+                style={{ background: 'linear-gradient(135deg, #4ade80, #22c55e)', boxShadow: '0 4px 12px rgba(74,222,128,0.3)' }}
+              >
+                <ArrowUpRight size={16} />
+              </motion.button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
+  );
+};
+
 export default function App() {
   // Unlock audio context on first interaction
   useEffect(() => {
@@ -1091,6 +1378,7 @@ export default function App() {
       </main>
 
       <Footer />
+      <CatBot />
       <ScrollTop />
     </div>
   );
