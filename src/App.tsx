@@ -1,2382 +1,1097 @@
-import React, { useState, useEffect, useRef, useContext, useMemo } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence, useScroll, useTransform, useInView } from 'framer-motion';
+import type { Variants } from 'framer-motion';
 import {
-  Terminal, User, Code, Gamepad2, Globe, X, Minus, Maximize2, Minimize2,
-  Github, Linkedin, BookOpen, Search, Wifi, Battery, Play, RotateCcw,
-  Aperture, Download, Mail, Music, UserPlus, Star, FolderDot,
-  GitBranch, XCircle, AlertTriangle, Bell, Send, Pause, Instagram, Twitter,
-  Laugh
+  Github, Linkedin, Mail, Twitter, Instagram, Download,
+  Menu, X, ChevronDown, Terminal, Code2, Database, Cloud,
+  Layers, ArrowUpRight, Server,
+  FileText, Globe
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { gsap } from 'gsap';
-import { useGSAP } from '@gsap/react';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
-gsap.registerPlugin(ScrollTrigger);
-import InteractiveBackground from './InteractiveBackground';
-import NeonBoot from './components/NeonBoot';
-import EasterEggs from './components/EasterEggs';
-import FunZone from './components/FunZone';
-import DesktopHero from './components/DesktopHero';
-
-
-type Theme = 'light' | 'dark';
-
-interface ThemeContextValue {
-  theme: Theme;
-  setTheme: (theme: Theme) => void;
-}
-
-const ThemeContext = React.createContext<ThemeContextValue | undefined>(undefined);
-
-const useTheme = () => {
-  const ctx = useContext(ThemeContext);
-  if (!ctx) {
-    throw new Error('useTheme must be used within ThemeContext.Provider');
-  }
-  return ctx;
+// ─────────────────────────────────────────────────────────────
+// SOUND ENGINE  (Web Audio API — unlocked on first click)
+// ─────────────────────────────────────────────────────────────
+let _ctx: AudioContext | null = null;
+const getCtx = (): AudioContext | null => {
+  if (typeof window === 'undefined') return null;
+  if (!_ctx) _ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+  return _ctx;
+};
+const tone = (freq: number, gain: number, dur: number, type: OscillatorType = 'sine') => {
+  try {
+    const ctx = getCtx(); if (!ctx) return;
+    const osc = ctx.createOscillator();
+    const g   = ctx.createGain();
+    osc.connect(g); g.connect(ctx.destination);
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, ctx.currentTime);
+    g.gain.setValueAtTime(gain, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + dur);
+    osc.start(ctx.currentTime); osc.stop(ctx.currentTime + dur);
+  } catch { /* ignore */ }
+};
+const sfx = {
+  hover:  () => tone(700,  0.035, 0.06),
+  click:  () => tone(440,  0.06,  0.12, 'triangle'),
+  note:   (n: number) => tone(n, 0.05, 0.18, 'sine'),
+  whoosh: () => {
+    const ctx = getCtx(); if (!ctx) return;
+    try {
+      const osc = ctx.createOscillator(), g = ctx.createGain();
+      osc.connect(g); g.connect(ctx.destination); osc.type = 'sine';
+      osc.frequency.setValueAtTime(180, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(700, ctx.currentTime + 0.22);
+      g.gain.setValueAtTime(0.03, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.22);
+      osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.22);
+    } catch { /* ignore */ }
+  },
 };
 
-interface WindowState {
-  id: string;
-  title: string;
-  icon: React.ReactNode;
-  component: React.ReactNode;
-  isOpen: boolean;
-  isMinimized: boolean;
-  isMaximized: boolean;
-  zIndex: number;
-  position: { x: number; y: number };
-  size: { width: number; height: number };
-}
+// Pentatonic scale for musical name hover
+const PENTA = [261.6, 293.7, 329.6, 392.0, 440.0, 523.3, 587.3, 659.3, 783.9, 880.0];
 
-interface AppIcon {
-  id: string;
-  name: string;
-  icon: React.ReactNode;
-  iconSrc?: string; // Path to macOS icon image
-  color: string;
-}
+// ─────────────────────────────────────────────────────────────
+// DATA
+// ─────────────────────────────────────────────────────────────
+const NAV = ['About', 'Experience', 'Education', 'Skills', 'Projects', 'Awards', 'Contact'];
 
-// --- Content Components ---
+const SOCIALS = [
+  { name: 'GitHub',    icon: Github,    url: 'https://github.com/ashishnanda19' },
+  { name: 'LinkedIn',  icon: Linkedin,  url: 'https://www.linkedin.com/in/ashishnanda19/' },
+  { name: 'Twitter',   icon: Twitter,   url: 'https://x.com/ashish19n' },
+  { name: 'Instagram', icon: Instagram, url: 'https://www.instagram.com/ashish19nanda/' },
+  { name: 'Email',     icon: Mail,      url: 'mailto:ashish.nanda1902@gmail.com' },
+];
 
-const AboutContent = () => {
-  const [activeTab, setActiveTab] = useState('about');
-
-  const sidebarItems = [
-    { id: 'about', icon: User, label: 'About Me' },
-    { id: 'honors', icon: Star, label: 'Honors & Awards' },
-    { id: 'projects', icon: FolderDot, label: 'Projects' }
-  ];
-
-  return (
-    <div className="flex h-full w-full bg-[#fcfcfc] dark:bg-[#1c1c1e] text-gray-800 dark:text-gray-200 font-sans">
-      {/* Finder Sidebar */}
-      <div className="w-48 bg-[#f5f5f7] dark:bg-[#2c2c2e]/80 border-r border-gray-200 dark:border-white/10 flex flex-col pt-4 backdrop-blur-md z-10 shrink-0">
-        <div className="px-4 text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">Favorites</div>
-        <nav className="flex-1 px-2 space-y-0.5">
-          {sidebarItems.map(item => (
-            <button
-              key={item.id}
-              onClick={() => setActiveTab(item.id)}
-              className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-md text-sm transition-colors ${activeTab === item.id
-                ? 'bg-blue-500 text-white font-medium shadow-sm'
-                : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10'
-                }`}
-            >
-              <item.icon size={16} className={activeTab === item.id ? 'text-white' : 'text-blue-500'} />
-              {item.label}
-            </button>
-          ))}
-        </nav>
-      </div>
-
-      {/* Main Content Area */}
-      <div className="flex-1 relative overflow-y-auto">
-        {/* Finder Toolbar Header */}
-        <div className="sticky top-0 z-20 h-12 bg-[#fcfcfc]/90 dark:bg-[#1c1c1e]/90 backdrop-blur-md border-b border-gray-200 dark:border-white/10 flex items-center justify-between px-4">
-          <div className="flex items-center gap-4">
-            {/* Back / Forward Controls */}
-            <div className="flex items-center gap-1 opacity-50">
-              <button className="p-1 rounded hover:bg-black/5 dark:hover:bg-white/10 cursor-not-allowed">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
-              </button>
-              <button className="p-1 rounded hover:bg-black/5 dark:hover:bg-white/10 cursor-not-allowed">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6" /></svg>
-              </button>
-            </div>
-
-            {/* Breadcrumb Path */}
-            <div className="flex text-sm font-semibold items-center gap-1.5 text-gray-700 dark:text-gray-300">
-              <span>AshishOS</span>
-              <span className="text-gray-400 dark:text-gray-600">›</span>
-              <span>Home</span>
-              <span className="text-gray-400 dark:text-gray-600">›</span>
-              <span className="text-gray-900 dark:text-white flex items-center gap-1.5">
-                <span className="opacity-50 text-[10px]">
-                  {sidebarItems.find(i => i.id === activeTab)?.icon && React.createElement(sidebarItems.find(i => i.id === activeTab)!.icon, { size: 12 })}
-                </span>
-                {sidebarItems.find(i => i.id === activeTab)?.label}
-              </span>
-            </div>
-          </div>
-
-          {/* Dummy Search bar */}
-          <div className="w-48 h-7 bg-gray-100 dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-md flex items-center px-2 shadow-inner">
-            <Search size={12} className="text-gray-400 mr-2" />
-            <span className="text-xs text-gray-400">Search</span>
-          </div>
-        </div>
-
-        <div className="p-8">
-          <AnimatePresence mode="wait">
-            {activeTab === 'about' && (
-              <motion.div
-                key="about"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.98 }}
-                transition={{ duration: 0.2 }}
-                className="max-w-3xl mx-auto"
-              >
-                <div className="flex flex-col items-center text-center mb-12">
-                  <div className="w-32 h-32 md:w-40 md:h-40 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 mb-6 shadow-2xl flex items-center justify-center text-white text-4xl font-bold border-4 border-white dark:border-gray-800 overflow-hidden relative">
-                    <span className="z-10 w-full h-full">
-                      <img src="/portimage.png" alt="Ashish Kumar Nanda" className="w-full h-full object-cover" />
-                    </span>
-                  </div>
-
-                  <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold mb-2 md:mb-3 tracking-tight text-gray-900 dark:text-white">
-                    Ashish Kumar Nanda
-                  </h1>
-
-                  <p className="text-blue-500 font-semibold text-base md:text-lg lg:text-xl mt-1">
-                    Research Intern @ IIT(BHU) | CS @ MUJ ‘27
-                  </p>
-                </div>
-
-                <section className="bg-white dark:bg-[#2c2c2e] p-8 rounded-2xl shadow-sm border border-gray-100 dark:border-white/5">
-                  <h2 className="text-2xl font-bold border-b border-gray-100 dark:border-white/10 pb-4 mb-6 flex items-center gap-3">
-                    <span className="bg-blue-500/10 text-blue-500 p-2 rounded-lg">👋</span> About Me
-                  </h2>
-                  <p className="leading-relaxed text-gray-600 dark:text-gray-300 text-lg">
-                    I am a Computer Science graduate from Manipal University with a CGPA of 9.22/10.
-                    Currently working as a{' '}
-                    <span className="font-semibold text-green-600 dark:text-green-400">Research Intern at IIT (BHU)</span>.
-                    I specialize in building full-stack applications, scalable backend systems, and integrating
-                    AI models into production. If you need someone who can write code and hit high notes, I'm
-                    your person.
-                  </p>
-                </section>
-              </motion.div>
-            )}
-
-            {activeTab === 'honors' && (
-              <motion.div
-                key="honors"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.98 }}
-                transition={{ duration: 0.2 }}
-                className="max-w-3xl mx-auto"
-              >
-                <div className="grid grid-cols-1 gap-4">
-                  {[
-                    { title: "Finalist - International Innovation Challenge (IIC)", bg: "bg-blue-500/10", hover: "group-hover:bg-blue-500/20", text: "text-blue-500" },
-                    { title: "National Semifinalist - Flipkart GRiD 7.0", bg: "bg-purple-500/10", hover: "group-hover:bg-purple-500/20", text: "text-purple-500" },
-                    { title: "5x Dean’s List of Excellence", bg: "bg-green-500/10", hover: "group-hover:bg-green-500/20", text: "text-green-500" },
-                    { title: "LeetCode – Solved over 400 problems with a peak contest rating of 1,704 (Top 12.96%).", bg: "bg-orange-500/10", hover: "group-hover:bg-orange-500/20", text: "text-orange-500" },
-                    { title: "CodeChef – 2 star on CodeChef with a max contest rating of 1450.", bg: "bg-indigo-500/10", hover: "group-hover:bg-indigo-500/20", text: "text-indigo-500" }
-                  ].map((honor, i) => (
-                    <motion.div
-                      key={i}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.1 }}
-                      whileHover={{ scale: 1.01 }}
-                      className="flex items-center justify-between p-5 bg-white dark:bg-[#2c2c2e] rounded-xl border border-gray-100 dark:border-white/5 shadow-sm hover:shadow-md transition-shadow cursor-default group"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className={`p-3 rounded-lg ${honor.bg} ${honor.hover} transition-colors`}>
-                          <Star className={honor.text} size={20} />
-                        </div>
-                        <span className="font-medium text-lg">{honor.title}</span>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              </motion.div>
-            )}
-
-            {activeTab === 'projects' && (
-              <motion.div
-                key="projects"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.98 }}
-                transition={{ duration: 0.2 }}
-                className="max-w-3xl mx-auto text-center py-20"
-              >
-                <FolderDot size={64} className="mx-auto text-blue-500 opacity-50 mb-6" />
-                <h3 className="text-2xl font-bold mb-2">Projects Directory</h3>
-                <p className="text-gray-500">To view my full interactive portfolio of projects, please launch the Safari App from the Dock.</p>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const fileData: Record<string, string> = {
-  'developer.js':
-    `/// developer.js
-const developer = {
-  name: "Ashish Kumar Nanda",
-  role: "Full Stack Developer",
-  languages: ["C++", "Python", "Java", "JavaScript"],
-  frameworks: ["React", "Node.js", "Express.js", "TailwindCSS"],
-  tools: ["Docker", "Jenkins", "AWS", "Redis", "MongoDB"]
-};`,
-  'skills.js':
-    `/// skills.js
-const skills = [
-    "C++", "Python", "Java", "SQL", "JavaScript",
-    "React.js", "Node.js", "Express.js",
-    "MongoDB", "AWS", "Docker","Jenkins", "Redis",
-    "CI/CD", "Git", "GitHub", "Linux", "MySQL"
-];`,
-  'experience.js': `/// experience.js
-const experience = [
+const EXPERIENCE = [
   {
-    "company": "Indian Institute of Technology (BHU)",
-    "role": "Research Intern",
-    "duration": "Present",
-    "impact": "Mathematical Model for Integrating Net Zero Practices in MSMEs"
+    company: 'Indian Institute of Technology (BHU)',
+    role: 'Research Intern',
+    period: 'Dec 2025 – Present',
+    desc: 'Developing a Mathematical Model for Integrating Net Zero Practices in MSMEs to support sustainable development goals.',
+    tags: ['Research', 'Mathematical Modeling', 'Sustainability'],
+    accent: 'green',
   },
   {
-    "company": "Google Developer Groups",
-    "role": "Technical Member",
-    "duration": "Sept 2023 - Oct 2025",
-    "impact": "Organized technical workshops and coding sessions."
-  }
-];`,
-  'education.yaml': `[
-university: Manipal University Jaipur
-degree: B.Tech CSE (IoT)
-duration: 2023 - 2027
-cgpa: 9.22/10
-focus: Full Stack, Scalable Systems`
+    company: 'Google Developer Groups',
+    role: 'Technical Member',
+    period: 'Sept 2023 – Oct 2025',
+    desc: 'Organized technical workshops, hackathons, and coding sessions. Led hands-on sessions on web dev and cloud technologies.',
+    tags: ['Community', 'Mentoring', 'Workshops'],
+    accent: 'cyan',
+  },
+];
+
+const ALL_SKILLS = [
+  'C++', 'Python', 'Java', 'JavaScript', 'SQL', 'React.js', 'Node.js',
+  'Express.js', 'Flask', 'TailwindCSS', 'MongoDB', 'PostgreSQL', 'Redis',
+  'MySQL', 'AWS', 'Docker', 'Jenkins', 'CI/CD', 'Linux', 'Git',
+  'Socket.IO', 'REST APIs', 'BullMQ', 'Postman',
+];
+const ROW1 = ALL_SKILLS.slice(0, 12);
+const ROW2 = ALL_SKILLS.slice(12);
+
+const SKILL_GROUPS = [
+  { cat: 'Languages',      icon: Code2,    color: '#38bdf8', skills: ['C++', 'Python', 'Java', 'JavaScript', 'SQL', 'HTML', 'CSS'] },
+  { cat: 'Frameworks',     icon: Layers,   color: '#a78bfa', skills: ['React.js', 'Node.js', 'Express.js', 'Flask', 'TailwindCSS'] },
+  { cat: 'Databases',      icon: Database, color: '#34d399', skills: ['MongoDB', 'MySQL', 'PostgreSQL', 'Redis'] },
+  { cat: 'Cloud & DevOps', icon: Cloud,    color: '#fb923c', skills: ['AWS', 'Docker', 'Jenkins', 'CI/CD', 'Linux'] },
+  { cat: 'Tools',          icon: Terminal, color: '#f472b6', skills: ['Git', 'GitHub', 'Postman', 'REST APIs', 'Socket.IO', 'BullMQ'] },
+];
+
+const PROJECTS = [
+  {
+    num: '01',
+    name: 'Distributed Video Transcoder',
+    desc: 'Infinite-scale distributed video transcoding pipeline. AWS-based queuing with Redis, multi-resolution output, and secure streaming architecture.',
+    tech: ['Node.js', 'AWS', 'Redis', 'MongoDB', 'Docker', 'ffmpeg'],
+    github: 'https://github.com/ashishnanda19/video-transcoder',
+    color: '#38bdf8',
+    icon: Server,
+  },
+  {
+    num: '02',
+    name: 'InvoSync',
+    desc: 'AI-powered B2B SaaS automating invoice-to-receipt matching with 98%+ accuracy via OCR and fuzzy-matching reconciliation.',
+    tech: ['React.js', 'Flask', 'Python', 'Tesseract OCR', 'RapidFuzz', 'Pandas'],
+    github: 'https://github.com/ashishnanda19/InvoSync',
+    color: '#34d399',
+    icon: FileText,
+  },
+  {
+    num: '03',
+    name: 'SafeTrail',
+    desc: 'Cross-platform SOS platform with real-time location tracking, ML-based threat analysis, and instant emergency response for personal safety.',
+    tech: ['Node.js', 'Socket.IO', 'PostgreSQL', 'PostGIS', 'Redis', 'BullMQ'],
+    github: 'https://github.com/ashishnanda19/Safe_Trail',
+    color: '#a78bfa',
+    icon: Globe,
+  },
+  {
+    num: '04',
+    name: 'HyperRAG-X',
+    desc: 'Enterprise-grade hybrid RAG platform with multi-agent orchestration and a tripartite storage architecture, Vector (Qdrant), Graph (NetworkX), and Memory cache, powered by Groq + LLaMA for near-instant verifiable knowledge synthesis.',
+    tech: ['Python', 'FastAPI', 'LangGraph', 'LangChain', 'Qdrant', 'NetworkX', 'Groq', 'Supabase', 'React', 'Playwright'],
+    github: 'https://github.com/ashishnanda19/HyperRAG-X',
+    color: '#f59e0b',
+    icon: Server,
+  },
+  {
+    num: '05',
+    name: 'Music Mindscape',
+    desc: 'Spotify listening habits visualized as an interactive force-directed mind map. Tracks auto-cluster into nine musical zones by audio features, with an AI mode powered by Gemini 2.5 Flash that re-clusters using musical knowledge rather than raw numbers.',
+    tech: ['React', 'TypeScript', 'D3-Force', 'Spotify OAuth', 'Gemini 2.5', 'Supabase', 'PostgreSQL', 'Vite'],
+    github: 'https://github.com/ashishnanda19/music-mindscape',
+    color: '#f472b6',
+    icon: Globe,
+  },
+];
+
+const AWARDS = [
+  { text: 'Finalist – International Innovation Challenge (IIC)', badge: 'IIC', color: '#f59e0b' },
+  { text: 'National Semifinalist – Flipkart GRiD 7.0', badge: 'GRID', color: '#a78bfa' },
+  { text: "5× Dean's List of Excellence", badge: '5×', color: '#38bdf8' },
+  { text: 'LeetCode – 500+ solved · Peak 1,743 rating (Top 12.96%)', badge: 'LC', color: '#f97316' },
+  { text: 'CodeChef – 2 Star · Max rating 1468', badge: 'CC', color: '#34d399' },
+];
+
+// ─────────────────────────────────────────────────────────────
+// ANIMATION VARIANTS
+// ─────────────────────────────────────────────────────────────
+const fadeUp: Variants = {
+  hidden: { opacity: 0, y: 40 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6 } },
+};
+const stagger: Variants = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.09, delayChildren: 0.04 } },
+};
+const fadeIn: Variants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { duration: 0.5 } },
 };
 
-const SkillsExperienceContent = () => {
-  const [activeFile, setActiveFile] = useState('skills.js');
-  const [displayedContent, setDisplayedContent] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
+// ─────────────────────────────────────────────────────────────
+// CUSTOM CURSOR  (desktop only)
+// ─────────────────────────────────────────────────────────────
+const Cursor = () => {
+  const [pos, setPos]       = useState({ x: -200, y: -200 });
+  const [big, setBig]       = useState(false);
+  const [clicked, setClicked] = useState(false);
+  const touch = useRef(false);
 
   useEffect(() => {
-    setIsTyping(true);
-    setDisplayedContent('');
-    const fullText = fileData[activeFile];
-    let index = 0;
+    touch.current = window.matchMedia('(pointer: coarse)').matches;
+    if (touch.current) return;
+    const mv  = (e: MouseEvent) => setPos({ x: e.clientX, y: e.clientY });
+    const over = (e: MouseEvent) => setBig(!!(e.target as HTMLElement).closest('a,button,[data-cursor]'));
+    const dn  = () => { setClicked(true); sfx.click(); };
+    const up  = () => setClicked(false);
+    window.addEventListener('mousemove', mv);
+    window.addEventListener('mouseover', over);
+    window.addEventListener('mousedown', dn);
+    window.addEventListener('mouseup', up);
+    return () => {
+      window.removeEventListener('mousemove', mv);
+      window.removeEventListener('mouseover', over);
+      window.removeEventListener('mousedown', dn);
+      window.removeEventListener('mouseup', up);
+    };
+  }, []);
 
-    // Smooth typing effect
-    const interval = setInterval(() => {
-      setDisplayedContent(prev => prev + fullText.charAt(index));
-      index++;
-      if (index >= fullText.length) {
-        clearInterval(interval);
-        setIsTyping(false);
-      }
-    }, 15); // Adjust typing speed here
-
-    return () => clearInterval(interval);
-  }, [activeFile]);
+  if (typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches) return null;
 
   return (
-    <div className="flex h-full w-full bg-[#1e1e1e] text-[#cccccc] font-sans selection:bg-[#264f78]">
+    <>
+      <motion.div
+        animate={{ x: pos.x - 18, y: pos.y - 18, scale: clicked ? 0.7 : big ? 1.6 : 1 }}
+        transition={{ type: 'spring', stiffness: 280, damping: 28 }}
+        className="fixed top-0 left-0 z-[9999] w-9 h-9 rounded-full border border-[#4ade80]/60 pointer-events-none mix-blend-difference"
+      />
+      <motion.div
+        animate={{ x: pos.x - 3, y: pos.y - 3 }}
+        transition={{ type: 'spring', stiffness: 900, damping: 50 }}
+        className="fixed top-0 left-0 z-[9999] w-1.5 h-1.5 rounded-full bg-[#4ade80] pointer-events-none"
+      />
+    </>
+  );
+};
 
-      {/* VS Code Activity Bar (Far Left) */}
-      <div className="w-12 bg-[#333333] flex flex-col items-center py-4 space-y-6 border-r border-[#252526] shrink-0">
-        <div className="opacity-100 cursor-pointer border-l-2 border-blue-500 pl-[-2px]"><Code size={24} className="text-white" /></div>
-        <div className="opacity-40 hover:opacity-100 cursor-pointer transition-opacity"><Search size={22} /></div>
-        <div className="opacity-40 hover:opacity-100 cursor-pointer transition-opacity"><Github size={22} /></div>
-      </div>
+// ─────────────────────────────────────────────────────────────
+// MUSICAL NAME  — each letter plays a pentatonic note on hover
+// ─────────────────────────────────────────────────────────────
+const MusicalName = ({ name }: { name: string }) => {
+  const [lit, setLit] = useState<number | null>(null);
+  return (
+    <span className="select-none">
+      {name.split('').map((ch, i) => (
+        <motion.span
+          key={i}
+          style={{ display: ch === ' ' ? 'inline' : 'inline-block', cursor: 'default' }}
+          onHoverStart={() => { if (ch !== ' ') { setLit(i); sfx.note(PENTA[i % PENTA.length]); } }}
+          onHoverEnd={() => setLit(null)}
+          animate={{ color: lit === i ? '#4ade80' : '#ffffff', y: lit === i ? -6 : 0 }}
+          transition={{ type: 'spring', stiffness: 600, damping: 30 }}
+        >
+          {ch}
+        </motion.span>
+      ))}
+    </span>
+  );
+};
 
-      {/* VS Code Explorer Sidebar */}
-      <div className="w-60 bg-[#252526] border-r border-black/20 flex flex-col shrink-0 flex-shrink-0">
-        <div className="px-4 py-3 text-xs font-semibold tracking-wider text-[#cccccc] uppercase flex items-center justify-between">
-          Explorer
-          <span className="cursor-pointer opacity-50 hover:opacity-100">...</span>
-        </div>
+// ─────────────────────────────────────────────────────────────
+// TYPEWRITER
+// ─────────────────────────────────────────────────────────────
+const Typewriter = ({ words }: { words: string[] }) => {
+  const [idx, setIdx]   = useState(0);
+  const [text, setText] = useState('');
+  const [del, setDel]   = useState(false);
+  const [paused, setPaused] = useState(false);
 
-        <div className="flex flex-col mt-2">
-          <div className="px-2 py-1 flex items-center text-sm font-bold tracking-wide text-[#cccccc] cursor-pointer hover:bg-[#2a2d2e]">
-            <span className="mr-1">∨</span> PORTFOLIO
-          </div>
-          <div className="flex flex-col mt-1">
-            {Object.keys(fileData).map(file => (
-              <div
-                key={file}
-                onClick={() => setActiveFile(file)}
-                className={`flex items-center gap-2 pl-6 pr-4 py-1.5 text-sm cursor-pointer border-l-2 transition-colors ${activeFile === file
-                  ? 'bg-[#37373d] text-white border-[#007acc]'
-                  : 'text-[#cccccc] hover:bg-[#2a2d2e] border-transparent hover:text-white'
-                  }`}
-              >
-                {file.endsWith('.js') && <div className="w-3 h-3 rounded-full bg-yellow-400 shrink-0 select-none text-[8px] flex items-center justify-center text-black font-bold">JS</div>}
-                {file.endsWith('.json') && <div className="w-3 h-3 rounded-full bg-green-500 shrink-0 select-none text-[8px] flex items-center justify-center text-white font-bold">{`{}`}</div>}
-                {file.endsWith('.yaml') && <div className="w-3 h-3 rounded-full bg-purple-500 shrink-0 select-none text-[8px] flex items-center justify-center text-white font-bold">Y</div>}
-                {file}
-              </div>
+  useEffect(() => {
+    const cur = words[idx % words.length];
+    if (paused) { const t = setTimeout(() => { setPaused(false); setDel(true); }, 2600); return () => clearTimeout(t); }
+    if (!del) {
+      if (text.length < cur.length) { const t = setTimeout(() => setText(cur.slice(0, text.length + 1)), 75); return () => clearTimeout(t); }
+      else setPaused(true);
+    } else {
+      if (text.length > 0) { const t = setTimeout(() => setText(t => t.slice(0, -1)), 35); return () => clearTimeout(t); }
+      else { setDel(false); setIdx(i => i + 1); }
+    }
+  }, [text, del, paused, idx, words]);
+
+  return (
+    <span className="font-mono text-[#4ade80]">
+      {text}
+      <span className="inline-block w-[2px] h-[1em] bg-[#4ade80] ml-[2px] align-middle animate-pulse" />
+    </span>
+  );
+};
+
+// ─────────────────────────────────────────────────────────────
+// PARTICLE CANVAS BACKGROUND
+// ─────────────────────────────────────────────────────────────
+const Particles = () => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    const canvas = canvasRef.current; if (!canvas) return;
+    const ctx = canvas.getContext('2d'); if (!ctx) return;
+    const resize = () => { canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight; };
+    resize();
+    const ro = new ResizeObserver(resize);
+    ro.observe(canvas);
+    const pts = Array.from({ length: 60 }, () => ({
+      x: Math.random() * canvas.width, y: Math.random() * canvas.height,
+      vx: (Math.random() - .5) * .25, vy: (Math.random() - .5) * .25,
+    }));
+    let id: number;
+    const draw = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      pts.forEach((a, i) => {
+        pts.slice(i + 1).forEach(b => {
+          const d = Math.hypot(a.x - b.x, a.y - b.y);
+          if (d < 130) {
+            ctx.beginPath();
+            ctx.strokeStyle = `rgba(74,222,128,${0.07 * (1 - d / 130)})`;
+            ctx.lineWidth = .8;
+            ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+          }
+        });
+        a.x += a.vx; a.y += a.vy;
+        if (a.x < 0 || a.x > canvas.width) a.vx *= -1;
+        if (a.y < 0 || a.y > canvas.height) a.vy *= -1;
+        ctx.beginPath();
+        ctx.arc(a.x, a.y, 1.5, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(74,222,128,0.18)';
+        ctx.fill();
+      });
+      id = requestAnimationFrame(draw);
+    };
+    draw();
+    return () => { cancelAnimationFrame(id); ro.disconnect(); };
+  }, []);
+  return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full opacity-70" />;
+};
+
+// ─────────────────────────────────────────────────────────────
+// MARQUEE STRIP
+// ─────────────────────────────────────────────────────────────
+const Marquee = ({ items, reverse }: { items: string[]; reverse?: boolean }) => {
+  const doubled = [...items, ...items];
+  return (
+    <div className="overflow-hidden py-2 group">
+      <motion.div
+        animate={{ x: reverse ? ['-50%', '0%'] : ['0%', '-50%'] }}
+        transition={{ duration: 28, repeat: Infinity, ease: 'linear' }}
+        className="flex gap-3 whitespace-nowrap group-hover:[animation-play-state:paused]"
+      >
+        {doubled.map((s, i) => (
+          <span
+            key={i}
+            data-cursor
+            onMouseEnter={() => { sfx.note(PENTA[i % PENTA.length]); }}
+            className="px-4 py-1.5 border border-white/10 rounded-full text-sm text-white/60 hover:text-white hover:border-[#4ade80]/40 hover:bg-[#4ade80]/5 transition-all cursor-default select-none"
+          >
+            {s}
+          </span>
+        ))}
+      </motion.div>
+    </div>
+  );
+};
+
+// ─────────────────────────────────────────────────────────────
+// (TiltCard removed — editorial layout no longer uses 3D tilt)
+
+// ─────────────────────────────────────────────────────────────
+// COUNT-UP NUMBER
+// ─────────────────────────────────────────────────────────────
+const CountUp = ({ to, suffix = '' }: { to: string; suffix?: string }) => {
+  const ref  = useRef<HTMLSpanElement>(null);
+  const seen = useInView(ref, { once: true });
+  const num  = parseFloat(to.replace(/[^0-9.]/g, ''));
+  const isFloat = to.includes('.');
+  const [val, setVal] = useState(0);
+
+  useEffect(() => {
+    if (!seen) return;
+    const dur = 1400;
+    const start = performance.now();
+    const tick = (now: number) => {
+      const p = Math.min((now - start) / dur, 1);
+      const eased = 1 - (1 - p) ** 3;
+      setVal(eased * num);
+      if (p < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }, [seen, num]);
+
+  const display = isFloat ? val.toFixed(2) : Math.round(val).toString();
+  return <span ref={ref}>{display}{suffix}</span>;
+};
+
+// ─────────────────────────────────────────────────────────────
+// SECTION WRAPPER
+// ─────────────────────────────────────────────────────────────
+const Section = ({ id, children, className = '' }: { id?: string; children: React.ReactNode; className?: string }) => (
+  <section id={id} className={`py-24 px-4 sm:px-6 lg:px-8 ${className}`}>
+    <div className="max-w-7xl mx-auto">{children}</div>
+  </section>
+);
+
+
+// ─────────────────────────────────────────────────────────────
+// NAVBAR
+// ─────────────────────────────────────────────────────────────
+const Navbar = () => {
+  const [scrolled, setScrolled] = useState(false);
+  const [open, setOpen]         = useState(false);
+  useEffect(() => {
+    const h = () => setScrolled(window.scrollY > 40);
+    window.addEventListener('scroll', h, { passive: true });
+    return () => window.removeEventListener('scroll', h);
+  }, []);
+  const go = (id: string) => { document.getElementById(id.toLowerCase())?.scrollIntoView({ behavior: 'smooth' }); setOpen(false); sfx.click(); };
+
+  return (
+    <>
+      <motion.nav
+        initial={{ y: -70, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.5 }}
+        className={`fixed top-0 inset-x-0 z-50 h-14 flex items-center transition-all duration-300 ${scrolled ? 'bg-black/80 backdrop-blur-xl border-b border-white/[0.06]' : 'bg-transparent'}`}
+      >
+        <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+          <button onClick={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); sfx.click(); }}
+            className="flex items-center gap-2.5 group">
+            <span className="w-8 h-8 rounded-lg bg-[#4ade80] flex items-center justify-center font-black text-black text-sm shadow-[0_0_16px_rgba(74,222,128,0.5)] group-hover:shadow-[0_0_24px_rgba(74,222,128,0.7)] transition-shadow">AN</span>
+            <span className="hidden sm:block text-white font-semibold text-sm tracking-wide">Ashish Nanda</span>
+          </button>
+
+          <div className="hidden md:flex items-center gap-1">
+            {NAV.map(l => (
+              <button key={l} onClick={() => go(l)} onMouseEnter={sfx.hover}
+                className="px-3.5 py-1.5 text-sm text-white/50 hover:text-white transition-colors rounded-lg hover:bg-white/[0.05] font-mono tracking-wide">
+                {l}
+              </button>
             ))}
           </div>
-        </div>
-      </div>
 
-      {/* Editor Area */}
-      <div className="flex-1 flex flex-col bg-[#1e1e1e] min-w-0">
-
-        {/* Editor Tabs */}
-        <div className="flex bg-[#252526] overflow-x-auto scrollbar-hide border-b border-[#1e1e1e]">
-          {Object.keys(fileData).map(file => (
-            <div
-              key={file}
-              onClick={() => setActiveFile(file)}
-              className={`flex items-center gap-2 px-4 py-2 text-sm cursor-pointer min-w-max border-r border-[#1e1e1e] ${activeFile === file
-                ? 'bg-[#1e1e1e] text-white border-t-2 border-t-blue-500'
-                : 'bg-[#2d2d2d] text-gray-400 border-t-2 border-t-transparent hover:bg-[#2b2b2b]'
-                }`}
-            >
-              {file.endsWith('.js') && <span className="text-yellow-400 text-xs font-bold">JS</span>}
-              {file.endsWith('.json') && <span className="text-green-500 text-xs font-bold">{`{}`}</span>}
-              {file.endsWith('.yaml') && <span className="text-purple-500 text-xs font-bold">Y!</span>}
-              {file}
-              {activeFile === file && <X size={14} className="ml-2 opacity-50 hover:opacity-100 rounded hover:bg-white/10" />}
-            </div>
-          ))}
-        </div>
-
-        {/* Code Content */}
-        <div className="flex-1 overflow-auto relative font-mono text-sm leading-relaxed p-4">
-
-          <div className="flex">
-            {/* Line Numbers */}
-            <div className="flex flex-col text-right pr-4 text-[#858585] select-none border-r border-white/5 mr-4 opacity-50">
-              {displayedContent.split('\n').map((_, i) => (
-                <span key={i} className="min-w-[1.5rem]">{i + 1}</span>
-              ))}
-            </div>
-
-            {/* Code */}
-            <div className="flex-1 relative pb-20">
-              <pre className="m-0 bg-transparent p-0 text-left whitespace-pre">
-                <code dangerouslySetInnerHTML={{
-                  __html: displayedContent
-                    // 1. Strings (we match quotes and inner content)
-                    .replace(/"([^"\\]*(\\.[^"\\]*)*)"/g, '<span class="text-[#ce9178]">"$&"</span>')
-                    .replace(/'([^'\\]*(\\.[^'\\]*)*)'/g, '<span class="text-[#ce9178]">' + "'$&'" + '</span>')
-                    // 2. Keywords (only match if not inside a span tag)
-                    .replace(/\b(const|let|var|function|return|import|export)\b(?![^<]*>|[^<>]*<\/span>)/g, '<span class="text-[#c586c0]">$&</span>')
-                    // 3. Booleans/Null
-                    .replace(/\b(true|false|null|undefined)\b(?![^<]*>|[^<>]*<\/span>)/g, '<span class="text-[#569cd6]">$&</span>')
-                    // 4. Object Keys
-                    .replace(/([a-zA-Z_]\w*):(?![^<]*>|[^<>]*<\/span>)/g, '<span class="text-[#9cdcfe]">$1</span>:')
-                    // Clean up double quotes generated by regex token replacement
-                    .replace(/>""/g, '>"')
-                    .replace(/""</g, '"<')
-                    .replace(/>''/g, ">'")
-                    .replace(/''</g, "'<")
-                }} />
-                {isTyping && <motion.span
-                  animate={{ opacity: [1, 0] }}
-                  transition={{ repeat: Infinity, duration: 0.8 }}
-                  className="inline-block w-2.5 h-4 bg-gray-400 ml-1 translate-y-1"
-                />}
-              </pre>
-            </div>
+          <div className="flex items-center gap-2">
+            <a href="https://drive.google.com/file/d/15WXrrq561L2D8in8baT1LVJNn3sdP-m6/view?usp=sharing" target="_blank" rel="noreferrer"
+               onMouseEnter={sfx.hover} onClick={sfx.click}
+               className="hidden sm:flex items-center gap-1.5 px-4 py-1.5 bg-[#4ade80] hover:bg-[#86efac] text-black text-sm font-bold rounded-lg transition-colors shadow-[0_0_16px_rgba(74,222,128,0.35)]">
+              <Download size={13} /> Resume
+            </a>
+            <button onClick={() => setOpen(true)} onMouseEnter={sfx.hover}
+              className="md:hidden p-2 text-white/60 hover:text-white"><Menu size={20} /></button>
           </div>
         </div>
+      </motion.nav>
 
-        {/* VS Code Status Bar */}
-        <div className="bg-[#007acc] text-white h-6 flex items-center px-4 py-1 text-xs justify-between select-none">
-          <div className="flex items-center gap-4">
-            <span className="flex items-center gap-1"><GitBranch size={12} /> main*</span>
-            <span className="flex items-center gap-1"><XCircle size={12} /> 0 <AlertTriangle size={12} className="ml-1" /> 0</span>
-          </div>
-          <div className="flex items-center gap-4 opacity-90">
-            <span>Ln {displayedContent.split('\n').length}, Col {displayedContent.length % 50}</span>
-            <span>Spaces: 2</span>
-            <span>UTF-8</span>
-            <span>{activeFile.endsWith('.js') ? 'JavaScript' : activeFile.endsWith('.json') ? 'JSON' : 'YAML'}</span>
-            <span className="flex items-center gap-1"><Bell size={12} /></span>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const BrowserContent = () => {
-  const [activeTab, setActiveTab] = useState('overview');
-  const [isLoading, setIsLoading] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  const tabs = [
-    { id: 'overview', title: 'Profile', url: 'portfolio.ashish-nanda.dev' },
-    { id: 'transcoder', title: 'Video Transcoder', url: 'github.com/ashishnanda19/video-transcoder' },
-    { id: 'invosync', title: 'InvoSync', url: 'github.com/ashishnanda19/InvoSync' },
-    { id: 'safetrail', title: 'SafeTrail', url: 'github.com/ashishnanda19/Safe_Trail' }
-  ];
-
-  const handleTabChange = (tabId: string) => {
-    setIsLoading(true);
-    setActiveTab(tabId);
-    setTimeout(() => setIsLoading(false), 800);
-  };
-
-  useGSAP(() => {
-    if (activeTab === 'overview' && !isLoading) {
-      const cards = gsap.utils.toArray('.gsap-card');
-      cards.forEach((card: any) => {
-        gsap.fromTo(card,
-          { y: 30, opacity: 0 },
-          {
-            y: 0,
-            opacity: 1,
-            duration: 0.6,
-            ease: 'power3.out',
-            scrollTrigger: {
-              trigger: card,
-              start: 'top bottom-=50',
-              scroller: containerRef.current
-            }
-          }
-        );
-      });
-    }
-  }, { scope: containerRef, dependencies: [activeTab, isLoading] });
-
-  const activeUrl = tabs.find(t => t.id === activeTab)?.url || '';
-
-  return (
-    <div className="flex flex-col h-full bg-[var(--bg-elevated)] text-[var(--text-color)] font-sans relative">
-      {/* Safari Top Bar */}
-      <div className="bg-[#f5f5f7] dark:bg-[#2c2c2e] border-b border-gray-300 dark:border-black/50 flex flex-col pt-2 select-none z-20">
-
-        {/* Top Controls & Address Bar */}
-        <div className="flex items-center px-4 pb-2 gap-4">
-          <div className="flex items-center gap-2 opacity-40">
-            <button className="p-1 hover:bg-black/10 dark:hover:bg-white/10 rounded cursor-not-allowed">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m15 18-6-6 6-6" /></svg>
-            </button>
-            <button className="p-1 hover:bg-black/10 dark:hover:bg-white/10 rounded cursor-not-allowed">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m9 18 6-6-6-6" /></svg>
-            </button>
-          </div>
-
-          <div className="flex-1 max-w-2xl mx-auto flex items-center justify-center relative">
-            <div className="w-full bg-black/5 dark:bg-black/30 border border-black/10 dark:border-white/5 rounded-md px-3 py-1.5 flex items-center shadow-inner group">
-              <Globe size={14} className="text-gray-500 mr-2" />
-              <span className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{activeUrl}</span>
-              <RotateCcw size={12} className="text-gray-400 absolute right-3 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer hover:text-gray-600 dark:hover:text-white" onClick={() => handleTabChange(activeTab)} />
-            </div>
-          </div>
-
-          <div className="w-[52px]" /> {/* Spacer for centering */}
-        </div>
-
-        {/* Safari Tabs */}
-        <div className="flex items-end px-2 gap-0.5 overflow-x-auto scrollbar-hide">
-          {tabs.map((tab) => (
-            <div
-              key={tab.id}
-              onClick={() => handleTabChange(tab.id)}
-              className={`px-4 py-1.5 min-w-[120px] max-w-[200px] border border-b-0 rounded-t-lg text-xs flex items-center gap-2 cursor-pointer transition-colors relative ${activeTab === tab.id
-                ? 'bg-white dark:bg-[#1c1c1e] text-black dark:text-white border-gray-300 dark:border-black/50 z-10 before:content-[""] before:absolute before:-bottom-[1px] before:left-0 before:right-0 before:h-[2px] before:bg-white dark:before:bg-[#1c1c1e]'
-                : 'bg-transparent text-gray-500 hover:bg-black/5 dark:hover:bg-white/5 border-transparent'
-                }`}
-            >
-              <div className="w-3 h-3 rounded-sm bg-gray-200 dark:bg-gray-700 flex items-center justify-center shrink-0">
-                {tab.id === 'overview' ? <Globe size={8} className="text-gray-500" /> : <Code size={8} className="text-gray-500" />}
-              </div>
-              <span className="truncate">{tab.title}</span>
-              {activeTab === tab.id && (
-                <button className="ml-auto p-0.5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-sm opacity-50 hover:opacity-100">
-                  <X size={10} />
-                </button>
-              )}
-            </div>
-          ))}
-          <button className="ml-1 mb-1 p-1 hover:bg-black/10 dark:hover:bg-white/10 rounded text-gray-500"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5v14" /></svg></button>
-        </div>
-
-        {/* Loading Progress Bar */}
-        <div className="absolute bottom-0 left-0 w-full h-[2px] bg-transparent z-30">
-          <AnimatePresence>
-            {isLoading && (
-              <motion.div
-                initial={{ width: "0%", opacity: 1 }}
-                animate={{ width: "80%", opacity: 1 }}
-                exit={{ width: "100%", opacity: 0 }}
-                transition={{ duration: 0.5 }}
-                className="h-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.8)]"
-              />
-            )}
-          </AnimatePresence>
-        </div>
-      </div>
-
-      {/* Safari Page Content */}
-      <div className="flex-1 overflow-auto bg-white dark:bg-[#1c1c1e]" ref={containerRef}>
-        <AnimatePresence mode="wait">
-          {!isLoading ? (
-            <motion.div
-              key={activeTab}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="p-8 h-full"
-            >
-              {activeTab === 'overview' ? (
-                <div className="max-w-4xl mx-auto space-y-8">
-                  <div className="text-center pt-8 pb-4">
-                    <img src="/portimage.png" alt="Profile" className="w-20 h-20 rounded-full mx-auto mb-4 shadow-lg border-2 border-white dark:border-gray-800" />
-                    <h1 className="text-4xl font-extrabold tracking-tight text-gray-900 dark:text-white">My Profile</h1>
-                  </div>
-
-                  {/* Research & Socials (gsap-card class for staggered scroll anim) */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="gsap-card bg-gray-50 dark:bg-[#2c2c2e] p-6 rounded-2xl border border-gray-100 dark:border-white/5 hover:border-blue-500/30 transition-colors shadow-sm">
-                      <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                        <BookOpen className="text-blue-500" size={20} /> Research Intern
-                      </h2>
-                      <h3 className="font-bold text-gray-800 dark:text-gray-200">Indian Institute of Technology (BHU)</h3>
-                      <p className="text-xs font-semibold text-blue-500 uppercase tracking-wide mt-1">Dec 2025 • Present</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-3 leading-relaxed">Mathematical Model for Integrating Net Zero Practices in MSMEs.</p>
-                    </div>
-
-                    <div className="gsap-card bg-gray-50 dark:bg-[#2c2c2e] p-6 rounded-2xl border border-gray-100 dark:border-white/5 hover:border-purple-500/30 transition-colors shadow-sm">
-                      <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                        <Globe className="text-purple-500" size={20} /> Social Links
-                      </h2>
-                      <div className="grid grid-cols-2 gap-3">
-                        <a href="https://www.linkedin.com/in/ashishnanda19/" target="_blank" rel="noreferrer" className="flex items-center p-3 bg-white dark:bg-[#1c1c1e] rounded-xl border border-gray-100 dark:border-white/5 hover:border-blue-500 transition-colors gap-3"><Linkedin size={18} className="text-blue-700" /> <span className="text-sm font-medium">LinkedIn</span></a>
-                        <a href="https://github.com/ashishnanda19" target="_blank" rel="noreferrer" className="flex items-center p-3 bg-white dark:bg-[#1c1c1e] rounded-xl border border-gray-100 dark:border-white/5 hover:border-gray-500 transition-colors gap-3"><Github size={18} className="text-gray-900 dark:text-gray-100" /> <span className="text-sm font-medium">GitHub</span></a>
-                        <a href="https://www.instagram.com/ashish19nanda/" target="_blank" rel="noreferrer" className="flex items-center p-3 bg-white dark:bg-[#1c1c1e] rounded-xl border border-gray-100 dark:border-white/5 hover:border-pink-500 transition-colors gap-3"><Instagram size={18} className="text-pink-600" /> <span className="text-sm font-medium">Instagram</span></a>
-                        <a href="https://x.com/ashish19n" target="_blank" rel="noreferrer" className="flex items-center p-3 bg-white dark:bg-[#1c1c1e] rounded-xl border border-gray-100 dark:border-white/5 hover:border-blue-400 transition-colors gap-3"><Twitter size={18} className="text-blue-400" /> <span className="text-sm font-medium">X (Twitter)</span></a>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Projects Grid */}
-                  <div className="gsap-card">
-                    <h2 className="text-2xl font-bold mb-6 mt-4">Featured Projects</h2>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                      {tabs.filter(t => t.id !== 'overview').map((project) => (
-                        <motion.div
-                          key={project.id}
-                          onClick={() => handleTabChange(project.id)}
-                          whileHover={{ scale: 1.03, y: -5 }}
-                          whileTap={{ scale: 0.98 }}
-                          transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                          className="bg-gray-50 dark:bg-[#2c2c2e] border border-gray-200 dark:border-white/5 rounded-xl p-5 cursor-pointer hover:border-blue-500 hover:shadow-[0_8px_30px_rgba(59,130,246,0.2)] transition-colors duration-300 group relative overflow-hidden"
-                        >
-                          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                          <FolderDot className="text-blue-500 mb-3" size={24} />
-                          <h3 className="font-bold text-lg mb-1 group-hover:text-blue-500 transition-colors">{project.title}</h3>
-                          <p className="text-xs text-gray-500 truncate">{project.url}</p>
-                        </motion.div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="max-w-3xl mx-auto py-12 text-center h-full flex flex-col items-center justify-center">
-                  <motion.div
-                    initial={{ scale: 0.9, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ type: "spring" }}
-                    className="w-full bg-gray-50 dark:bg-[#2c2c2e] rounded-2xl border border-gray-200 dark:border-white/10 shadow-2xl overflow-hidden"
-                  >
-                    <div className="bg-gray-200 dark:bg-black/40 px-4 py-2 border-b border-gray-300 dark:border-white/10 flex justify-between items-center text-xs text-gray-500 font-mono">
-                      <span>README.md</span>
-                      <a href={`https://${activeUrl}`} target="_blank" rel="noreferrer" className="hover:text-blue-500 transition-colors flex items-center gap-1">Open in GitHub <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3" /></svg></a>
-                    </div>
-                    <div className="p-8 text-left prose dark:prose-invert max-w-none">
-                      <h1 className="text-4xl font-extrabold tracking-tight mb-4">{tabs.find(t => t.id === activeTab)?.title}</h1>
-                      <div className="flex flex-wrap gap-2 mb-6">
-                        {activeTab === 'transcoder' && ['Node.js', 'Express.js', 'AWS', 'Redis', 'MongoDB', 'Docker', 'ffmpeg'].map(t => <span key={t} className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xs font-bold rounded">{t}</span>)}
-                        {activeTab === 'invosync' && ['React.js', 'Vite', 'Flask', 'Python', 'Tesseract OCR', 'RapidFuzz', 'Pandas', 'TailwindCSS'].map(t => <span key={t} className="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 text-xs font-bold rounded">{t}</span>)}
-                        {activeTab === 'safetrail' && ['Node.js', 'Express.js', 'Socket.IO', 'PostgreSQL (PostGIS)', 'Redis', 'BullMQ'].map(t => <span key={t} className="px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 text-xs font-bold rounded">{t}</span>)}
-                      </div>
-                      <p className="text-gray-700 dark:text-gray-300 text-lg leading-relaxed dark:mix-blend-plus-lighter">
-                        {activeTab === 'transcoder' && "An infinite-scale distributed video transcoder that processes video content and streams securely."}
-                        {activeTab === 'invosync' && "An AI-powered B2B SaaS that automates invoice-to-receipt matching with 98% accuracy."}
-                        {activeTab === 'safetrail' && "A cross-platform mobile SOS application explicitly designed to enhance safety for women and girls."}
-                      </p>
-                      <div className="mt-8 p-4 bg-gray-100 dark:bg-black/30 rounded-lg font-mono text-sm border border-gray-200 dark:border-white/5">
-                        <span className="text-gray-400">$</span> git clone https://{activeUrl}.git<br />
-                        <span className="text-gray-400">$</span> cd {activeTab}<br />
-                        <span className="text-gray-400">$</span> npm install
-                      </div>
-                    </div>
-                  </motion.div>
-                </div>
-              )}
-            </motion.div>
-          ) : (
-            <div className="w-full h-full bg-white dark:bg-[#1c1c1e]" key="loading" />
-          )}
-        </AnimatePresence>
-      </div>
-    </div>
-  );
-};
-
-const MailContent = () => {
-  const { theme } = useTheme();
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [subject, setSubject] = useState('');
-  const [message, setMessage] = useState('');
-  const [sent, setSent] = useState(false);
-  const [isSending, setIsSending] = useState(false);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    setIsSending(true);
-
-    setTimeout(() => {
-      setIsSending(false);
-      setSent(true);
-
-      const to = 'ashish.nanda1902@gmail.com';
-      const mailSubject = subject || 'Message from AshishOS Mail';
-      const bodyLines = [
-        `From: ${name || 'Anonymous'}`,
-        `Email: ${email || 'not provided'}`,
-        '',
-        message || '',
-      ];
-      const mailto = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(
-        mailSubject
-      )}&body=${encodeURIComponent(bodyLines.join('\n'))}`;
-
-      window.location.href = mailto;
-    }, 1500);
-  };
-
-  return (
-    <div className="flex flex-col h-full bg-[var(--bg-elevated)] text-[var(--text-color)] relative overflow-hidden">
-
-      {/* Success Animation Overlay */}
       <AnimatePresence>
-        {isSending && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="absolute inset-0 z-50 bg-[var(--bg-elevated)]/60 backdrop-blur-md flex items-center justify-center pointer-events-none"
-          >
-            <motion.div
-              initial={{ x: -200, y: 200, scale: 0.5, rotate: -45 }}
-              animate={{
-                x: [-200, 0, 400],
-                y: [200, -50, -400],
-                scale: [0.5, 1.2, 0.5],
-                rotate: [-45, 0, 45]
-              }}
-              transition={{ duration: 1.2, ease: "easeInOut" }}
-              className="text-blue-500 drop-shadow-[0_10px_20px_rgba(59,130,246,0.5)]"
-            >
-              <Send size={100} strokeWidth={1.5} />
-            </motion.div>
+        {open && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-black/97 backdrop-blur-xl flex flex-col">
+            <div className="flex justify-between items-center px-6 h-14">
+              <span className="w-8 h-8 rounded-lg bg-[#4ade80] flex items-center justify-center font-black text-black text-sm">AN</span>
+              <button onClick={() => setOpen(false)} className="text-white/60 hover:text-white"><X size={22} /></button>
+            </div>
+            <div className="flex-1 flex flex-col items-center justify-center gap-8">
+              {NAV.map((l, i) => (
+                <motion.button key={l} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.06 }} onClick={() => go(l)}
+                  className="text-3xl font-bold text-white/60 hover:text-white transition-colors font-mono">
+                  <span className="text-[#4ade80] text-lg mr-3 font-mono">0{i + 1}.</span>{l}
+                </motion.button>
+              ))}
+              <a href="https://drive.google.com/file/d/15WXrrq561L2D8in8baT1LVJNn3sdP-m6/view?usp=sharing"
+                 target="_blank" rel="noreferrer" className="mt-4 flex items-center gap-2 px-6 py-3 bg-[#4ade80] text-black font-bold rounded-xl">
+                <Download size={16} /> Download Resume
+              </a>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Mail chrome */}
-      <div className="bg-[var(--chrome-bg)] border-b border-[var(--border-subtle)] px-4 py-2 flex items-center gap-3 text-sm relative z-10">
-        <div className="flex space-x-2">
-          <div className="w-3 h-3 rounded-full bg-red-400" />
-          <div className="w-3 h-3 rounded-full bg-yellow-400" />
-          <div className="w-3 h-3 rounded-full bg-green-400" />
-        </div>
-        <span className="ml-3 font-semibold">Inbox</span>
-        <div className="ml-auto flex items-center gap-2">
-          <button className="px-3 py-1 rounded-md bg-blue-500 text-white text-xs font-medium hover:bg-blue-600 transition-colors flex items-center gap-1">
-            <Mail size={14} /> New Message
-          </button>
-          <div className="flex items-center bg-[var(--bg-input)] border border-[var(--border-strong)] rounded-lg px-2 py-1 text-xs text-[var(--text-muted)]">
-            <Search size={12} className="mr-1 text-[var(--icon-muted)]" />
-            Search
-          </div>
-        </div>
-      </div>
-
-      <div className="flex flex-1 overflow-hidden relative z-10">
-        {/* Sidebar */}
-        <aside className="w-56 border-r border-[var(--card-border)] bg-[var(--card-bg)] px-3 py-3 text-xs">
-          <div className="mb-4">
-            <p className="uppercase text-[10px] tracking-wide text-[var(--text-muted)] mb-1">FAVOURITES</p>
-            <button className="w-full flex items-center justify-between px-2 py-1.5 rounded-md bg-blue-500/10 text-blue-400 text-xs font-medium">
-              <span>Inbox</span>
-              <span className="text-[10px] bg-blue-500 text-white rounded-full px-1.5">1</span>
-            </button>
-            <button className="w-full flex items-center justify-between px-2 py-1.5 rounded-md hover:bg-[var(--bg-subtle)] mt-1">
-              <span>Sent</span>
-            </button>
-            <button className="w-full flex items-center justify-between px-2 py-1.5 rounded-md hover:bg-[var(--bg-subtle)] mt-1">
-              <span>Archive</span>
-            </button>
-          </div>
-          <div>
-            <p className="uppercase text-[10px] tracking-wide text-[var(--text-muted)] mb-1">MAILBOXES</p>
-            <p className="px-2 py-1.5 rounded-md hover:bg-[var(--bg-subtle)]">All Inboxes</p>
-            <p className="px-2 py-1.5 rounded-md hover:bg-[var(--bg-subtle)]">AshishOS</p>
-          </div>
-        </aside>
-
-        {/* Message list */}
-        <section className="w-72 border-r border-[var(--card-border)] bg-[var(--bg-subtle)] overflow-auto text-sm">
-          <div className="px-3 py-2 border-b border-[var(--card-border)] text-[11px] uppercase tracking-wide text-[var(--text-muted)]">
-            Today
-          </div>
-          <div className="px-3 py-3 space-y-3">
-            <div className="bg-[var(--card-bg)] rounded-xl border border-[var(--card-border)] px-3 py-2 shadow-sm">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold">AshishOS</span>
-                <span className="text-[10px] text-[var(--text-muted)]">Now</span>
-              </div>
-              <p className="text-xs font-medium mt-1">New message for Ashish</p>
-              <p className="text-[11px] text-[var(--text-muted)] truncate">
-                Use the composer on the right to send me a message for roles, collaborations, or questions.
-              </p>
-            </div>
-          </div>
-        </section>
-
-        {/* Message / composer */}
-        <main className="flex-1 bg-[var(--bg-elevated)] p-6 overflow-auto">
-          <div className="max-w-2xl mx-auto bg-[var(--card-bg)] border border-[var(--card-border)] rounded-2xl shadow-sm">
-            <div className="border-b border-[var(--card-border)] px-5 py-3 flex items-center justify-between text-sm">
-              <div>
-                <p className="font-semibold">New Message</p>
-                <p className="text-[11px] text-[var(--text-muted)]">
-                  This will open your default mail app with the details you fill in.
-                </p>
-              </div>
-              {sent && (
-                <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/40">
-                  Ready to send
-                </span>
-              )}
-            </div>
-
-            <form className="px-5 py-4 space-y-3 text-sm" onSubmit={handleSubmit}>
-              <div className="flex items-center gap-3">
-                <label className="w-16 text-[11px] text-[var(--text-muted)] uppercase tracking-wide">
-                  To
-                </label>
-                <div className="flex-1 text-[13px]">
-                  <span className="inline-flex items-center gap-2 rounded-full bg-blue-500/10 px-3 py-1 text-blue-400 border border-blue-500/30">
-                    {theme === 'dark' ? 'ashish.nanda1902@gmail.com' : 'Ashish Kumar Nanda'}
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <label className="w-16 text-[11px] text-[var(--text-muted)] uppercase tracking-wide">
-                  Your Name
-                </label>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="flex-1 text-sm rounded-md bg-[var(--bg-input)] border border-[var(--border-strong)] px-2 py-1.5 outline-none focus:ring-2 focus:ring-blue-500/60"
-                  placeholder="Who is reaching out?"
-                  disabled={isSending}
-                />
-              </div>
-
-              <div className="flex items-center gap-3">
-                <label className="w-16 text-[11px] text-[var(--text-muted)] uppercase tracking-wide">
-                  Your Email
-                </label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="flex-1 text-sm rounded-md bg-[var(--bg-input)] border border-[var(--border-strong)] px-2 py-1.5 outline-none focus:ring-2 focus:ring-blue-500/60"
-                  placeholder="For follow-ups"
-                  disabled={isSending}
-                />
-              </div>
-
-              <div className="flex items-center gap-3">
-                <label className="w-16 text-[11px] text-[var(--text-muted)] uppercase tracking-wide">
-                  Subject
-                </label>
-                <input
-                  type="text"
-                  value={subject}
-                  onChange={(e) => setSubject(e.target.value)}
-                  className="flex-1 text-sm rounded-md bg-[var(--bg-input)] border border-[var(--border-strong)] px-2 py-1.5 outline-none focus:ring-2 focus:ring-blue-500/60"
-                  placeholder="Role, collaboration, question..."
-                  disabled={isSending}
-                />
-              </div>
-
-              <div className="flex items-start gap-3">
-                <label className="w-16 text-[11px] text-[var(--text-muted)] uppercase tracking-wide mt-1">
-                  Message
-                </label>
-                <textarea
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  rows={6}
-                  className="flex-1 text-sm rounded-md bg-[var(--bg-input)] border border-[var(--border-strong)] px-2 py-1.5 outline-none resize-none focus:ring-2 focus:ring-blue-500/60"
-                  placeholder="Write your message as if you were emailing me directly."
-                  disabled={isSending}
-                />
-              </div>
-
-              <div className="flex items-center justify-between pt-2">
-                <p className="text-[11px] text-[var(--text-muted)]">
-                  Clicking **Send** opens your mail client with everything pre‑filled.
-                </p>
-                <button
-                  type="submit"
-                  disabled={isSending}
-                  className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500 text-white text-sm font-medium shadow-sm hover:bg-blue-600 transition-colors disabled:opacity-50"
-                >
-                  <Mail size={14} />
-                  {isSending ? 'Sending...' : 'Send'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </main>
-      </div>
-    </div>
+    </>
   );
 };
 
-const PhotoBooth = () => {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [photos, setPhotos] = useState<string[]>([]);
-  const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
-  const [error, setError] = useState<string>('');
-  const [isFlashing, setIsFlashing] = useState(false);
-
-  useEffect(() => {
-    let stream: MediaStream | null = null;
-
-    const startCamera = async () => {
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-        }
-        setError('');
-      } catch (err) {
-        setError('Camera access denied or unavailable.');
-      }
-    };
-
-    startCamera();
-
-    return () => {
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-      }
-    };
-  }, []);
-
-  const takePhoto = () => {
-    if (videoRef.current) {
-      // Trigger flash animation
-      setIsFlashing(true);
-      setTimeout(() => setIsFlashing(false), 300);
-
-      const canvas = document.createElement('canvas');
-      canvas.width = videoRef.current.videoWidth;
-      canvas.height = videoRef.current.videoHeight;
-      const ctx = canvas.getContext('2d');
-      ctx?.drawImage(videoRef.current, 0, 0);
-      const newPhoto = canvas.toDataURL('image/png');
-      setPhotos(prev => [newPhoto, ...prev]);
-    }
-  };
+// ─────────────────────────────────────────────────────────────
+// HERO
+// ─────────────────────────────────────────────────────────────
+const Hero = () => {
+  const ref = useRef<HTMLElement>(null);
+  const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] });
+  const yText    = useTransform(scrollYProgress, [0, 1], [0, -60]);
+  const opText   = useTransform(scrollYProgress, [0, 0.6], [1, 0]);
 
   return (
-    <div className="h-full bg-[#1c1c1e] flex flex-col items-center p-6 overflow-y-auto relative">
-      {/* Light Flash Overlay */}
-      <AnimatePresence>
-        {isFlashing && (
-          <motion.div
-            initial={{ opacity: 1 }}
-            animate={{ opacity: 0 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="absolute inset-0 bg-white z-50 pointer-events-none"
-          />
-        )}
-      </AnimatePresence>
-
-      {error ? (
-        <div className="text-red-400 text-center flex-1 flex flex-col justify-center">
-          <p>{error}</p>
-          <p className="text-sm text-gray-500 mt-2">Please allow camera permissions.</p>
-        </div>
-      ) : (
-        <div className="w-full max-w-2xl flex flex-col items-center">
-          {/* Main Viewfinder */}
-          <div className="relative w-full aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl border-4 border-gray-800">
-            <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover transform scale-x-[-1]" />
-
-            <div className="absolute inset-0 border border-white/10 rounded-2xl pointer-events-none" />
-
-            {/* Viewfinder crosshairs */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 pointer-events-none">
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1px] h-3 bg-white/50" />
-              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[1px] h-3 bg-white/50" />
-              <div className="absolute left-0 top-1/2 -translate-y-1/2 w-3 h-[1px] bg-white/50" />
-              <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-[1px] bg-white/50" />
-            </div>
-          </div>
-
-          {/* Shutter Button */}
-          <div className="mt-8 mb-10 flex justify-center">
-            <button
-              onClick={takePhoto}
-              className="w-16 h-16 rounded-full bg-white border-4 border-gray-300 shadow-[0_0_20px_rgba(255,255,255,0.3)] hover:scale-105 transition-transform flex items-center justify-center active:scale-95 group"
-            >
-              <div className="w-12 h-12 rounded-full border-2 border-black/10 group-active:bg-gray-200 transition-colors"></div>
-            </button>
-          </div>
-
-          {/* Film Roll Gallery */}
-          {photos.length > 0 && (
-            <div className="w-full">
-              <h3 className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-4 px-2">Recent Captures ({photos.length})</h3>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                <AnimatePresence>
-                  {photos.map((p, index) => (
-                    <motion.div
-                      initial={{ opacity: 0, y: 20, scale: 0.9 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                      drag
-                      dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
-                      dragElastic={0.4}
-                      whileDrag={{ scale: 1.1, zIndex: 10, rotate: index % 2 === 0 ? 5 : -5, cursor: 'grabbing' }}
-                      whileHover={{ scale: 1.05 }}
-                      key={index}
-                      className="group relative aspect-[3/4] rounded-lg overflow-hidden bg-white p-2 shadow-md hover:shadow-xl transition-all cursor-grab"
-                      onClick={() => setSelectedPhoto(p)}
-                    >
-                      <img src={p} alt={`Capture ${index}`} className="w-full h-full object-cover transform scale-x-[-1] transition-transform group-hover:scale-110" />
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Enlarged Photo Modal */}
-      <AnimatePresence>
-        {selectedPhoto && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-black/90 z-50 flex items-center justify-center p-8 backdrop-blur-sm"
-            onClick={() => setSelectedPhoto(null)}
-          >
-            <motion.div
-              initial={{ scale: 0.9 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0.9 }}
-              className="relative max-w-4xl max-h-full"
-              onClick={e => e.stopPropagation()}
-            >
-              <img src={selectedPhoto} alt="Enlarged" className="w-full h-auto max-h-[80vh] rounded-lg shadow-2xl transform scale-x-[-1]" />
-              <div className="mt-6 flex justify-center gap-4">
-                <button
-                  onClick={() => setSelectedPhoto(null)}
-                  className="px-6 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-full transition-colors flex items-center gap-2"
-                >
-                  <X size={16} /> Close
-                </button>
-                <a
-                  href={selectedPhoto}
-                  download="ashishos-photobooth.png"
-                  className="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-full transition-colors flex items-center gap-2 shadow-lg shadow-blue-500/30"
-                >
-                  <Download size={16} /> Save Image
-                </a>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-};
-
-const SpotifyContent = () => {
-  const [selectedPlaylist, setSelectedPlaylist] = useState<string | null>(null);
-  const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
-
-  // Helper function to extract playlist ID from URL
-  const extractPlaylistId = (url: string): string => {
-    // Try to match playlist ID in URL
-    const match = url.match(/playlist\/([a-zA-Z0-9]{22})/);
-    if (match && match[1]) {
-      return match[1];
-    }
-    // If URL format is different, try alternative patterns
-    const altMatch = url.match(/\/([a-zA-Z0-9]{22})(?:\?|$)/);
-    if (altMatch && altMatch[1]) {
-      return altMatch[1];
-    }
-    // If it's already just an ID (22 characters), return as is
-    if (url.length === 22 && /^[a-zA-Z0-9]+$/.test(url)) {
-      return url;
-    }
-    // Fallback: return empty string to show error
-    console.error('Could not extract playlist ID from:', url);
-    return '';
-  };
-
-  // Playlists with Spotify URLs - IDs will be extracted automatically
-  const playlists = [
-    {
-      id: 'coding-focus',
-      name: 'Chandani & Chai',
-      description: 'Chandani & Chai',
-      spotifyUrl: 'https://open.spotify.com/playlist/59jMJYSo97Dy5JTXuaAQrK?si=rsrKZ4SpSWSjT-Zse-3n6A&pi=4_pUzpe5SsO-6',
-      image: 'https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=400&h=400&fit=crop'
-    },
-    {
-      id: 'chill-vibes',
-      name: 'Clouded Coffeehouse',
-      description: 'Clouded Coffeehouse',
-      spotifyUrl: 'https://open.spotify.com/playlist/5Q59GgXHjOzY5vjeUBStbb?si=_sTg0OsuTCmoczXybYs4aQ',
-      image: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=400&fit=crop'
-    },
-    {
-      id: 'workout',
-      name: 'Drip & Drop',
-      description: 'Drip & Drop',
-      spotifyUrl: 'https://open.spotify.com/playlist/477IgA9QgtRaxQ7s6LiFLR?si=QGMogWbpShWIzhEp-F-38w&pi=XnaY64pRTKq0V',
-      image: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400&h=400&fit=crop'
-    },
-  ];
-
-  return (
-    <div className="flex flex-col h-full bg-black text-white">
-      {/* Spotify chrome */}
-      <div className="bg-[#121212] border-b border-gray-800 p-3 flex items-center space-x-3 shadow-sm z-10">
-        <div className="flex space-x-2">
-          <div className="w-3 h-3 rounded-full bg-red-400"></div>
-          <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
-          <div className="w-3 h-3 rounded-full bg-green-400"></div>
-        </div>
-        <div className="flex-1 bg-[#242424] rounded-lg border border-gray-700 px-4 py-2 text-sm text-gray-400 flex items-center">
-          <Music size={14} className="mr-3 text-gray-500" />
-          open.spotify.com/user/ashishnanda19
-        </div>
-      </div>
-
-      <div className="flex-1 overflow-auto bg-gradient-to-b from-[#1e1e1e] to-black">
-        <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
-
-          {/* Profile Section - Spotify Style */}
-          <div className="flex flex-col sm:flex-row items-center sm:items-end gap-6 pb-8">
-            <div className="w-48 h-48 rounded-full overflow-hidden shadow-2xl flex-shrink-0 ring-4 ring-black/50">
-              <img
-                src="/portimage.png"
-                alt="Ashish Kumar Nanda"
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <div className="flex-1 w-full sm:w-auto text-center sm:text-left">
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Profile</p>
-              <h1 className="text-5xl sm:text-6xl font-extrabold mb-4 leading-none tracking-tight">Ashish Kumar Nanda</h1>
-              <p className="text-gray-400 mb-6 text-sm">@ashishnanda19</p>
-              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3">
-                <a
-                  href="https://open.spotify.com/user/31l75eh4gpxsbgm4w4ocm23mtqem"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 px-6 py-3 bg-[#1DB954] text-white rounded-full text-sm font-bold hover:bg-[#1ed760] hover:scale-105 transition-all shadow-lg"
-                >
-                  <UserPlus size={18} />
-                  Send Friend Request
-                </a>
-                <a
-                  href="https://open.spotify.com/user/31l75eh4gpxsbgm4w4ocm23mtqem"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 px-6 py-3 bg-transparent border-2 border-white/30 text-white rounded-full text-sm font-bold hover:border-white hover:scale-105 transition-all"
-                >
-                  View on Spotify
-                </a>
-              </div>
-            </div>
-          </div>
-
-          {/* Playlists Section - Spotify Style */}
-          <div>
-            <h2 className="text-2xl font-bold mb-6 text-white">Public Playlists</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-              {playlists.map((playlist) => (
-                <div
-                  key={playlist.id}
-                  className={`bg-[#181818] hover:bg-[#282828] rounded-lg p-4 transition-all duration-200 cursor-pointer group ${selectedPlaylist === playlist.id ? 'bg-[#282828] ring-1 ring-white/10' : ''}`}
-                  onClick={() => setSelectedPlaylist(playlist.id === selectedPlaylist ? null : playlist.id)}
-                >
-                  <div className="relative aspect-square mb-4 rounded-lg overflow-hidden shadow-lg group-hover:shadow-xl transition-shadow">
-                    {imageErrors[playlist.id] ? (
-                      <div className="w-full h-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center">
-                        <span className="text-white text-5xl font-bold">{playlist.name.charAt(0)}</span>
-                      </div>
-                    ) : (
-                      <img
-                        src={playlist.image}
-                        alt={playlist.name}
-                        className={`w-full h-full object-cover transition-transform duration-500 ${selectedPlaylist === playlist.id ? 'scale-110 blur-[2px] brightness-75' : 'group-hover:scale-105'}`}
-                        onError={() => setImageErrors(prev => ({ ...prev, [playlist.id]: true }))}
-                      />
-                    )}
-
-                    {/* Animated Mock Equalizer when playing */}
-                    {selectedPlaylist === playlist.id && (
-                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-                        <div className="flex items-end justify-center gap-1 h-12 w-16">
-                          <motion.div animate={{ height: [8, 24, 12, 32, 16] }} transition={{ repeat: Infinity, duration: 0.8, ease: "linear" }} className="w-2 bg-[#1DB954] rounded-t-sm" />
-                          <motion.div animate={{ height: [16, 40, 20, 24, 12] }} transition={{ repeat: Infinity, duration: 1.1, ease: "linear" }} className="w-2 bg-[#1DB954] rounded-t-sm" />
-                          <motion.div animate={{ height: [24, 12, 32, 16, 28] }} transition={{ repeat: Infinity, duration: 0.9, ease: "linear" }} className="w-2 bg-[#1DB954] rounded-t-sm" />
-                          <motion.div animate={{ height: [12, 32, 16, 40, 20] }} transition={{ repeat: Infinity, duration: 1.0, ease: "linear" }} className="w-2 bg-[#1DB954] rounded-t-sm" />
-                        </div>
-                        <span className="text-white text-xs font-bold tracking-widest uppercase drop-shadow-md">Playing</span>
-                      </div>
-                    )}
-
-                    <div className={`absolute bottom-2 right-2 transition-opacity duration-300 ${selectedPlaylist === playlist.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-                      <div className="w-12 h-12 bg-[#1DB954] rounded-full flex items-center justify-center shadow-xl hover:scale-110 transition-transform">
-                        {selectedPlaylist === playlist.id ? (
-                          <Pause size={24} className="text-black" fill="black" />
-                        ) : (
-                          <Play size={24} className="text-black ml-0.5" fill="black" />
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  <h3 className={`font-bold mb-1 truncate transition-colors ${selectedPlaylist === playlist.id ? 'text-[#1DB954]' : 'text-white'}`}>{playlist.name}</h3>
-                  <p className="text-sm text-gray-400 line-clamp-2">{playlist.description}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Spotify Player - Spotify Style */}
-          {selectedPlaylist && (() => {
-            const playlist = playlists.find(p => p.id === selectedPlaylist);
-            if (!playlist) return null;
-
-            const playlistId = extractPlaylistId(playlist.spotifyUrl);
-
-            if (!playlistId) {
-              return (
-                <div className="bg-[#181818] rounded-lg p-8">
-                  <div className="text-center py-8">
-                    <p className="text-gray-400 mb-6">Unable to load playlist. Please check the playlist URL.</p>
-                    <a
-                      href={playlist.spotifyUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-6 py-3 bg-[#1DB954] text-white rounded-full text-sm font-bold hover:bg-[#1ed760] transition-colors"
-                    >
-                      Open in Spotify
-                    </a>
-                  </div>
-                </div>
-              );
-            }
-
-            return (
-              <div className="bg-[#181818] rounded-lg p-6 lg:p-8">
-                <div className="flex items-center gap-4 mb-6">
-                  <h2 className="text-2xl font-bold text-white">
-                    {playlist.name}
-                  </h2>
-                </div>
-                <div className="bg-[#000000] rounded-lg p-4 shadow-2xl">
-                  <iframe
-                    style={{ borderRadius: '12px', minHeight: '352px' }}
-                    src={`https://open.spotify.com/embed/playlist/${playlistId}?utm_source=generator&theme=0`}
-                    width="100%"
-                    height="352"
-                    frameBorder="0"
-                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                    loading="lazy"
-                    title={`Spotify playlist: ${playlist.name}`}
-                    className="w-full"
-                  ></iframe>
-                </div>
-                <p className="text-xs text-gray-400 mt-4 text-center">
-                  Click "Open in Spotify" in the player to add me as a friend and follow my playlists!
-                </p>
-              </div>
-            );
-          })()}
-
-          {/* Instructions - Spotify Style */}
-          {!selectedPlaylist && (
-            <div className="bg-[#181818] rounded-lg p-6 lg:p-8">
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-full bg-[#1DB954]/20 flex items-center justify-center flex-shrink-0">
-                  <Music size={24} className="text-[#1DB954]" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-bold text-white mb-3 text-lg">How to Connect</h3>
-                  <ol className="text-sm text-gray-400 space-y-3">
-                    <li className="flex items-start gap-3">
-                      <span className="flex-shrink-0 w-6 h-6 rounded-full bg-[#1DB954]/20 text-[#1DB954] flex items-center justify-center text-xs font-bold">1</span>
-                      <span>Click on any playlist above to start listening</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <span className="flex-shrink-0 w-6 h-6 rounded-full bg-[#1DB954]/20 text-[#1DB954] flex items-center justify-center text-xs font-bold">2</span>
-                      <span>Click "Open in Spotify" in the player to view on Spotify</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <span className="flex-shrink-0 w-6 h-6 rounded-full bg-[#1DB954]/20 text-[#1DB954] flex items-center justify-center text-xs font-bold">3</span>
-                      <span>Send me a friend request using the button above</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <span className="flex-shrink-0 w-6 h-6 rounded-full bg-[#1DB954]/20 text-[#1DB954] flex items-center justify-center text-xs font-bold">4</span>
-                      <span>Follow my playlists to stay updated with my music taste!</span>
-                    </li>
-                  </ol>
-                </div>
-              </div>
-            </div>
-          )}
-
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const SystemPreferencesContent = () => {
-  return (
-    <div className="h-full overflow-y-auto p-8 font-sans bg-[var(--bg-elevated)] text-[var(--text-color)]">
-      <h1 className="text-2xl font-bold tracking-tight mb-1">System Preferences</h1>
-      <p className="text-xs text-slate-500 mb-8">Customize how AshishOS looks and feels.</p>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div className="rounded-2xl p-5 border border-white/[0.07] bg-white/[0.02] hover:border-indigo-400/25 transition-colors">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-semibold text-indigo-300">Appearance</span>
-            <span className="text-[10px] uppercase tracking-widest text-slate-600">dark</span>
-          </div>
-          <p className="text-xs text-slate-500">
-            AshishOS runs in <span className="text-slate-300 font-medium">professional dark</span> mode.
-            Light mode? Couldn&apos;t be us.
-          </p>
-        </div>
-
-        <div className="rounded-2xl p-5 border border-white/[0.07] bg-white/[0.02] hover:border-indigo-400/25 transition-colors">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-semibold text-violet-300">Personality</span>
-            <span className="text-[10px] uppercase tracking-widest text-slate-600">maxed</span>
-          </div>
-          <p className="text-xs text-slate-500">
-            Sass level: <span className="text-slate-300 font-medium">11/10</span>. Cannot be reduced.
-          </p>
-        </div>
-
-        <div className="rounded-2xl p-5 border border-white/[0.07] bg-white/[0.02] sm:col-span-2">
-          <div className="text-sm font-semibold mb-3 text-slate-300">Easter Eggs</div>
-          <ul className="text-xs text-slate-500 space-y-1.5 list-disc pl-4">
-            <li>Type the Konami code anywhere. <span className="text-slate-600">(↑↑↓↓←→←→ B A)</span></li>
-            <li>Idle for 45 seconds and the system gets chatty.</li>
-            <li>The <span className="text-indigo-400">✨ Fun Zone</span> app in the dock is real and not a prank.</li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const TerminalContent = () => {
-  const [history, setHistory] = useState<{ text: string, type: 'input' | 'output' | 'system' }[]>([]);
-  const [input, setInput] = useState("");
-  const [isBooting, setIsBooting] = useState(true);
-  const bottomRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  // Boot sequence commands to simulate via typing
-  const bootSequence = useMemo(() => [
-    { cmd: 'whoami', output: 'ashish_nanda' },
-    { cmd: 'date', output: new Date().toString() },
-    { cmd: './welcome.sh', output: 'Welcome to AshishOS v1.0.0\nType "help" to see available commands.' }
-  ], []);
-
-  useEffect(() => {
-    let isMounted = true;
-    let cancelTyping = false;
-
-    const boot = async () => {
-      if (!isMounted) return;
-      setIsBooting(true);
-
-      // Add initial system message
-      setHistory([{ text: 'AshishOS [Version 1.0.0]\n(c) Ashish Kumar Nanda. All rights reserved.', type: 'system' }]);
-
-      await new Promise(r => setTimeout(r, 800)); // Initial delay
-
-      for (const step of bootSequence) {
-        if (cancelTyping) break;
-
-        // Simulate typing the command
-        let currentCmd = '';
-        for (const char of step.cmd) {
-          if (cancelTyping) break;
-          currentCmd += char;
-          setHistory(prev => {
-            const newHist = [...prev];
-            // Update or add the current typing line
-            if (newHist.length > 0 && newHist[newHist.length - 1].type === 'input' && !newHist[newHist.length - 1].text.includes('\n')) {
-              newHist[newHist.length - 1] = { text: `ashish@macbook ~ % ${currentCmd}`, type: 'input' };
-            } else {
-              newHist.push({ text: `ashish@macbook ~ % ${currentCmd}`, type: 'input' });
-            }
-            return newHist;
-          });
-          await new Promise(r => setTimeout(r, 50)); // Typing speed
-        }
-
-        await new Promise(r => setTimeout(r, 300)); // Delay between typing and output
-
-        if (cancelTyping) break;
-
-        // Add the output
-        setHistory(prev => [...prev, { text: step.output, type: 'output' }]);
-        await new Promise(r => setTimeout(r, 600)); // Delay before next command
-      }
-
-      if (isMounted) {
-        setIsBooting(false);
-        inputRef.current?.focus();
-      }
-    };
-
-    boot();
-
-    return () => {
-      isMounted = false;
-      cancelTyping = true;
-    };
-  }, [bootSequence]);
-
-
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [history, input]);
-
-  // Handle clicking anywhere to focus input
-  const handleContainerClick = () => {
-    if (!isBooting) {
-      inputRef.current?.focus();
-    }
-  };
-
-  const handleCommand = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !isBooting) {
-      const cmd = input.trim().toLowerCase();
-
-      if (cmd === 'clear') {
-        setHistory([]);
-        setInput("");
-        return;
-      }
-
-      const newHistory = [...history, { text: `ashish@macbook ~ % ${input}`, type: 'input' as const }];
-
-      let output = '';
-
-      switch (cmd) {
-        case 'help':
-          output = `  about     - Ashish's Biography\n  skills    - Technology Stack & Skills\n  projects  - Featured Development Work\n  leetcode  - View LeetCode Stats\n  github    - View GitHub Profile\n  contact   - Get in Touch\n  clear     - Clear terminal history`;
-          break;
-        case 'about':
-          output = `Ashish Kumar Nanda | CS Undergrad | Full Stack Developer\n\nThird year CS student at Manipal University Jaipur who codes by day and plays guitar by night.\nI build full-stack web apps, grind LeetCode for fun, and occasionally debug with emotional support from my music.`;
-          break;
-        case 'projects':
-          output = `1. [Distributed Video Transcoding Platform]\n   Engineered an AWS-based pipeline with Redis queues and multi-resolution generation.\n\n2. [InvoSync]\n   Automated invoice-PO reconciliation platform with OCR data extraction (98%+ accuracy).\n\n3. [SafeTrail]\n   Scalable backend safety platform with real-time tracking and ML-based threat analysis.`;
-          break;
-        case 'skills':
-          output = `> Languages: C++, Python, Java, C, SQL, HTML, CSS, JavaScript\n> Frameworks: React, Node.js, Express.js, Tailwind CSS\n> Cloud/Sys: AWS, Redis, Docker, CI/CD\n> Tools: Git, GitHub, Postman, Vite, MongoDB, REST APIs`;
-          break;
-        case 'github':
-          output = `GitHub Profile exploring open-source contributions & systems programming.\n Link: https://github.com/ashishnanda19`;
-          break;
-        case 'leetcode':
-          output = `LeetCode Stats:\n- Over 400 problems solved\n- Peak contest rating: 1704 (Top 12.96%)\n Link: https://www.leetcode.com/ashishnanda19`;
-          break;
-        case 'codechef':
-          output = `2 star on CodeChef with a max contest rating of 1450.\n Link: https://www.codechef.com/users/ashishnanda19`;
-          break;
-        case 'contact':
-          output = `Let's connect or collaborate!\n Email: ashish.nanda1902@gmail.com\n LinkedIn: https://www.linkedin.com/in/ashishnanda19/\n Twitter: https://x.com/ashish19n\n(Or open the Mail app to send me a fast, direct message!)`;
-          break;
-        case 'socials':
-          output = `GitHub: https://github.com/ashishnanda19\n LinkedIn:  https://www.linkedin.com/in/ashishnanda19/\n LeetCode:  https://www.leetcode.com/ashishnanda19\n 
-          CodeChef:  https://www.codechef.com/users/ashishnanda19\n
-          Instagram: https://www.instagram.com/ashish19nanda`;
-          break;
-        case '':
-          break; // Empty enter just prints prompt
-        default:
-          output = `zsh: command not found: ${cmd}`;
-      }
-
-      if (output) {
-        newHistory.push({ text: output, type: 'output' });
-      }
-
-      setHistory(newHistory);
-      setInput("");
-    }
-  };
-
-  // Helper to render text with very basic link highlighting for socials
-  const renderTerminalText = (text: string, type: string) => {
-    if (type === 'system') {
-      return <div className="text-gray-400 mb-4">{text}</div>;
-    }
-
-    // Linkify basic URLs
-    const parts = text.split(/(https?:\/\/[^\s]+)/g);
-
-    return (
-      <div className={`mb-1 ${type === 'input' ? 'text-gray-200 font-bold' : 'text-[#33ff33]'} whitespace-pre-wrap leading-relaxed`}>
-        {parts.map((part, i) =>
-          part.startsWith('http') ?
-            <a key={i} href={part} target="_blank" rel="noreferrer" className="text-blue-400 hover:text-blue-300 underline underline-offset-2">{part}</a> :
-            part
-        )}
-      </div>
-    );
-  };
-
-  return (
-    <div
-      className="bg-[#1e1e1e] text-[#33ff33] font-mono p-4 pb-12 h-full overflow-auto text-[13px] tracking-wide cursor-text shadow-inner"
-      onClick={handleContainerClick}
-    >
-      <div className="max-w-4xl opacity-90">
-        {history.map((item, i) => (
-          <React.Fragment key={i}>
-            {renderTerminalText(item.text, item.type)}
-          </React.Fragment>
-        ))}
-
-        {!isBooting && (
-          <div className="flex items-center mt-1">
-            <span className="mr-2 text-gray-200 font-bold">ashish@macbook ~ %</span>
-            <div className="relative flex-1 flex items-center">
-              <input
-                ref={inputRef}
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleCommand}
-                className="bg-transparent outline-none flex-1 text-[#33ff33] font-bold caret-transparent"
-                autoFocus
-                spellCheck={false}
-                autoComplete="off"
-              />
-              {/* Custom block cursor mirroring the input length to always stay at the end */}
-              <div
-                className="absolute top-0 bottom-0 left-0 pointer-events-none flex items-center"
-              >
-                <span className="text-transparent whitespace-pre">{input}</span>
-                <span className="w-2 h-4 bg-gray-400 opacity-80 animate-pulse ml-[1px]"></span>
-              </div>
-            </div>
-          </div>
-        )}
-        <div ref={bottomRef} className="h-4" />
-      </div>
-    </div>
-  );
-};
-
-const SnakeGame = () => {
-  const GRID_SIZE = 20;
-  const SPEED = 100;
-
-  const [snake, setSnake] = useState([{ x: 10, y: 10 }]);
-  const [food, setFood] = useState({ x: 15, y: 5 });
-  const [dir, setDir] = useState({ x: 0, y: -1 });
-  const [gameOver, setGameOver] = useState(false);
-  const [score, setScore] = useState(0);
-  const [highScore, setHighScore] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(false);
-
-  useEffect(() => {
-    if (!isPlaying || gameOver) return;
-    const moveSnake = setInterval(() => {
-      setSnake(prev => {
-        const newHead = { x: prev[0].x + dir.x, y: prev[0].y + dir.y };
-        if (newHead.x < 0 || newHead.x >= GRID_SIZE || newHead.y < 0 || newHead.y >= GRID_SIZE || prev.some(s => s.x === newHead.x && s.y === newHead.y)) {
-          setGameOver(true);
-          if (score > highScore) setHighScore(score);
-          return prev;
-        }
-        const newSnake = [newHead, ...prev];
-        if (newHead.x === food.x && newHead.y === food.y) {
-          setScore(s => s + 10);
-          setFood({ x: Math.floor(Math.random() * GRID_SIZE), y: Math.floor(Math.random() * GRID_SIZE) });
-        } else {
-          newSnake.pop();
-        }
-        return newSnake;
-      });
-    }, SPEED);
-    return () => clearInterval(moveSnake);
-  }, [isPlaying, gameOver, dir, food, score, highScore]);
-
-  useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => {
-      // Prevent default scrolling for arrow keys
-      if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
-        e.preventDefault();
-      }
-
-      if (!isPlaying && e.key === 'Enter') {
-        startGame();
-        return;
-      }
-
-      switch (e.key) {
-        case 'ArrowUp': if (dir.y !== 1) setDir({ x: 0, y: -1 }); break;
-        case 'ArrowDown': if (dir.y !== -1) setDir({ x: 0, y: 1 }); break;
-        case 'ArrowLeft': if (dir.x !== 1) setDir({ x: -1, y: 0 }); break;
-        case 'ArrowRight': if (dir.x !== -1) setDir({ x: 1, y: 0 }); break;
-      }
-    };
-    window.addEventListener('keydown', handleKey);
-    return () => window.removeEventListener('keydown', handleKey);
-  }, [dir, isPlaying]);
-
-  const startGame = () => {
-    setSnake([{ x: 10, y: 10 }]);
-    setScore(0);
-    setGameOver(false);
-    setIsPlaying(true);
-    setDir({ x: 0, y: -1 });
-  };
-
-  return (
-    <div className="flex flex-col items-center justify-center h-full bg-[#0a0a0c] text-white p-4 relative overflow-hidden font-mono selection:bg-transparent">
-      {/* Ambient background glow */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-green-900/20 via-black to-black pointer-events-none" />
-
-      {/* CRT Scanline Effect Overlay */}
-      <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_4px,3px_100%] z-20 opacity-40 mix-blend-overlay"></div>
-
-      {/* Header HUD */}
-      <div className="w-full max-w-[400px] flex justify-between items-end mb-4 px-2 z-10">
-        <div className="flex flex-col">
-          <span className="text-[10px] text-green-500/70 uppercase tracking-widest mb-1">P1 Score</span>
-          <span className="text-2xl text-green-400 font-bold drop-shadow-[0_0_8px_rgba(74,222,128,0.8)] leading-none">{score.toString().padStart(4, '0')}</span>
-        </div>
-        <div className="flex flex-col items-end">
-          <span className="text-[10px] text-pink-500/70 uppercase tracking-widest mb-1">Hi-Score</span>
-          <span className="text-xl text-pink-500 font-bold drop-shadow-[0_0_8px_rgba(236,72,153,0.8)] leading-none">{highScore.toString().padStart(4, '0')}</span>
-        </div>
-      </div>
-
-      {/* Game Board container */}
-      <div className="relative bg-[#050505] border-2 border-green-500/30 rounded-lg p-1 shadow-[0_0_30px_rgba(74,222,128,0.15)] z-10 w-full max-w-[400px] aspect-square">
-        {/* Grid background lines */}
-        <div className="absolute inset-1 bg-[linear-gradient(to_right,#0f2e14_1px,transparent_1px),linear-gradient(to_bottom,#0f2e14_1px,transparent_1px)] bg-[size:5%_5%] opacity-30 pointer-events-none" />
-
-        <div className="relative w-full h-full"
-          style={{ display: 'grid', gridTemplateColumns: `repeat(${GRID_SIZE}, 1fr)` }}>
-          {Array.from({ length: GRID_SIZE * GRID_SIZE }).map((_, i) => {
-            const x = i % GRID_SIZE;
-            const y = Math.floor(i / GRID_SIZE);
-            const isHead = snake[0].x === x && snake[0].y === y;
-            const isBody = snake.some((s, idx) => idx !== 0 && s.x === x && s.y === y);
-            const isFood = food.x === x && food.y === y;
-
-            return (
-              <div key={i} className="relative w-full h-full flex items-center justify-center p-[1px]">
-                {isHead && (
-                  <div className="w-full h-full bg-green-400 rounded-sm shadow-[0_0_10px_rgba(74,222,128,0.8)] z-10" />
-                )}
-                {isBody && (
-                  <div className="w-full h-full bg-green-600/80 rounded-sm shadow-[0_0_5px_rgba(34,197,94,0.5)]" />
-                )}
-                {isFood && (
-                  <div className="w-full h-full bg-pink-500 rounded-full shadow-[0_0_12px_rgba(236,72,153,0.9)] animate-pulse" />
-                )}
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Overlay Screens */}
-        {(!isPlaying || gameOver) && (
-          <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center z-30 backdrop-blur-[2px] rounded-lg border border-white/10">
-            <h2 className="text-4xl md:text-5xl font-black mb-2 text-transparent bg-clip-text bg-gradient-to-b from-green-300 to-green-600 tracking-tighter drop-shadow-[0_0_15px_rgba(74,222,128,0.4)]">
-              {gameOver ? 'GAME OVER' : 'NEON SNAKE'}
-            </h2>
-            {gameOver && (
-              <p className="text-pink-500 mb-8 font-bold animate-pulse drop-shadow-[0_0_5px_rgba(236,72,153,0.8)]">FINAL SCORE: {score}</p>
-            )}
-            {!gameOver && (
-              <p className="text-green-500/60 mb-8 text-xs tracking-widest uppercase">Insert Coin to Play</p>
-            )}
-
-            <button
-              onClick={startGame}
-              className="group relative px-6 py-3 font-bold text-black uppercase tracking-widest bg-green-500 hover:bg-green-400 transition-all rounded hover:scale-105 active:scale-95 overflow-hidden"
-            >
-              <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform" />
-              <span className="flex items-center gap-2 relative z-10">
-                {gameOver ? <RotateCcw size={16} strokeWidth={3} /> : <Gamepad2 size={16} />}
-                {gameOver ? 'Try Again [ENTER]' : 'Start Game'}
+    <section ref={ref} id="hero" className="relative min-h-screen flex items-center overflow-hidden">
+      {/* Particle bg */}
+      <div className="absolute inset-0 z-0"><Particles /></div>
+
+      {/* Glow orbs */}
+      <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-[#4ade80]/5 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-1/4 left-1/4 w-64 h-64 bg-purple-500/5 rounded-full blur-[100px] pointer-events-none" />
+
+      {/* Grid overlay */}
+      <div className="absolute inset-0 pointer-events-none z-0"
+        style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.02) 1px,transparent 1px)', backgroundSize: '48px 48px' }} />
+
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+        <motion.div style={{ y: yText, opacity: opText }}
+          className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center min-h-[calc(100vh-56px)] py-20">
+
+          {/* ── LEFT TEXT ── */}
+          <motion.div variants={stagger} initial="hidden" animate="visible" className="space-y-7 order-2 lg:order-1">
+
+            <motion.div variants={fadeUp} className="flex items-center gap-3">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute h-full w-full rounded-full bg-[#4ade80] opacity-60" />
+                <span className="relative rounded-full h-2.5 w-2.5 bg-[#4ade80]" />
               </span>
-            </button>
-          </div>
-        )}
+              <span className="text-[#4ade80] text-xs font-mono tracking-widest uppercase">Open to opportunities</span>
+            </motion.div>
+
+            <motion.div variants={fadeUp}>
+              <p className="text-white/40 font-mono text-sm mb-3 tracking-widest">// CS @ MUJ '27 — Research Intern @ IIT(BHU)</p>
+              <h1 className="text-[3.2rem] sm:text-[4.5rem] lg:text-[5.2rem] font-black leading-[0.95] tracking-tight">
+                <MusicalName name="ASHISH" /><br />
+                <MusicalName name="KUMAR" /><br />
+                <MusicalName name="NANDA" />
+              </h1>
+              <p className="text-white/25 text-xs font-mono mt-2 tracking-widest">↑ hover letters to play music</p>
+            </motion.div>
+
+            <motion.div variants={fadeUp} className="text-lg sm:text-xl font-semibold text-white/80 h-8">
+              <Typewriter words={['Full Stack Developer', 'Backend Engineer', 'Problem Solver', 'Research Intern @ IIT(BHU)']} />
+            </motion.div>
+
+            <motion.p variants={fadeUp} className="text-white/50 text-base leading-relaxed max-w-md">
+              Building scalable systems, shipping fast, and writing code that doesn't wake you up at 3 AM.
+              CGPA <span className="text-white font-semibold">9.22/10</span>, 400+ LeetCode problems, 5× Dean's List.
+            </motion.p>
+
+            <motion.div variants={fadeUp} className="flex flex-wrap gap-3 pt-1">
+              <a href="https://drive.google.com/file/d/15WXrrq561L2D8in8baT1LVJNn3sdP-m6/view?usp=sharing"
+                 target="_blank" rel="noreferrer" onMouseEnter={sfx.hover} onClick={sfx.click}
+                 className="group inline-flex items-center gap-2 px-5 py-2.5 bg-[#4ade80] hover:bg-[#86efac] text-black font-bold text-sm rounded-xl transition-all shadow-[0_0_24px_rgba(74,222,128,0.35)] hover:shadow-[0_0_40px_rgba(74,222,128,0.5)]">
+                <Download size={14} /> Download Resume
+              </a>
+              <button onClick={() => { document.getElementById('projects')?.scrollIntoView({ behavior: 'smooth' }); sfx.click(); }}
+                onMouseEnter={sfx.hover}
+                className="inline-flex items-center gap-2 px-5 py-2.5 border border-white/15 hover:border-white/30 text-white font-semibold text-sm rounded-xl transition-all hover:bg-white/[0.04]">
+                View Work <ArrowUpRight size={14} />
+              </button>
+            </motion.div>
+
+            <motion.div variants={fadeUp} className="flex gap-1.5 pt-1">
+              {SOCIALS.map(s => (
+                <motion.a key={s.name} href={s.url} target="_blank" rel="noreferrer" title={s.name}
+                  whileHover={{ scale: 1.2, y: -3 }} whileTap={{ scale: 0.9 }}
+                  onHoverStart={sfx.hover}
+                  className="p-2.5 text-white/30 hover:text-[#4ade80] transition-colors rounded-lg hover:bg-[#4ade80]/[0.06]">
+                  <s.icon size={18} />
+                </motion.a>
+              ))}
+            </motion.div>
+          </motion.div>
+
+          {/* ── RIGHT IMAGE ── */}
+          <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            className="flex justify-center lg:justify-end order-1 lg:order-2">
+            <div className="relative">
+              {/* Rotating ring */}
+              <motion.div animate={{ rotate: 360 }} transition={{ duration: 14, repeat: Infinity, ease: 'linear' }}
+                className="absolute inset-[-10px] rounded-full border-[2px] border-dashed border-[#4ade80]/25" />
+              <motion.div animate={{ rotate: -360 }} transition={{ duration: 22, repeat: Infinity, ease: 'linear' }}
+                className="absolute inset-[-22px] rounded-full border border-purple-500/15" />
+
+              {/* Image */}
+              <div className="relative w-56 h-56 sm:w-72 sm:h-72 lg:w-[320px] lg:h-[320px] rounded-full overflow-hidden ring-2 ring-[#4ade80]/20 shadow-[0_0_80px_rgba(74,222,128,0.12)]">
+                <img src="/portimage.png" alt="Ashish Kumar Nanda" className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+              </div>
+
+              {/* Floating stat cards */}
+              <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.8 }}
+                className="absolute -right-4 sm:-right-12 top-8 bg-black/80 backdrop-blur-xl border border-white/[0.08] rounded-2xl px-5 py-3 shadow-2xl">
+                <div className="text-[#4ade80] text-2xl font-black leading-none"><CountUp to="9.22" /></div>
+                <div className="text-white/40 text-xs font-mono mt-0.5">CGPA /10</div>
+              </motion.div>
+
+              <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.95 }}
+                className="absolute -left-4 sm:-left-12 bottom-12 bg-black/80 backdrop-blur-xl border border-white/[0.08] rounded-2xl px-5 py-3 shadow-2xl">
+                <div className="text-purple-400 text-2xl font-black leading-none">400+</div>
+                <div className="text-white/40 text-xs font-mono mt-0.5">LC Solved</div>
+              </motion.div>
+            </div>
+          </motion.div>
+        </motion.div>
       </div>
 
-      {/* Arcade Cabinet Instructions / Decor */}
-      <div className="mt-8 flex gap-6 text-[10px] text-green-500/50 uppercase tracking-widest z-10">
-        <div className="flex items-center gap-2">
-          <span className="w-4 h-4 border border-green-500/30 rounded flex items-center justify-center">↑</span>
-          <span className="w-4 h-4 border border-green-500/30 rounded flex items-center justify-center">↓</span>
-          <span className="w-4 h-4 border border-green-500/30 rounded flex items-center justify-center">←</span>
-          <span className="w-4 h-4 border border-green-500/30 rounded flex items-center justify-center">→</span>
-          <span className="ml-1">MOVE</span>
-        </div>
-      </div>
-    </div>
+      {/* Scroll cue */}
+      <motion.button initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.8 }}
+        onClick={() => { document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' }); sfx.click(); }}
+        className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-white/25 hover:text-white/50 transition-colors">
+        <span className="text-[9px] font-mono uppercase tracking-[0.25em]">scroll</span>
+        <motion.div animate={{ y: [0, 8, 0] }} transition={{ repeat: Infinity, duration: 1.8 }}>
+          <ChevronDown size={16} />
+        </motion.div>
+      </motion.button>
+    </section>
   );
 };
 
-// --- Menu Bar Component ---
+// ─────────────────────────────────────────────────────────────
+// ABOUT  — Editorial magazine layout
+// ─────────────────────────────────────────────────────────────
+const About = () => (
+  <Section id="about">
+    <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.15 }}>
 
-type MenuSeparator = {
-  type: "separator";
-};
+      {/* Section label */}
+      <motion.p variants={fadeUp} className="text-[#4ade80] font-mono text-xs tracking-[0.25em] uppercase mb-16">
+        01 — About
+      </motion.p>
 
-type MenuActionItem = {
-  type?: undefined;
-  label: string;
-  action?: () => void;
-  shortcut?: string;
-};
+      {/* Pull-quote headline */}
+      <motion.h2 variants={fadeUp}
+        className="text-5xl sm:text-6xl lg:text-7xl font-black text-white leading-[1.05] tracking-tight mb-16 max-w-5xl">
+        I build systems that<br />
+        <span className="text-white/20">scale, ship, and</span>{' '}
+        <span className="italic text-[#4ade80]">matter.</span>
+      </motion.h2>
 
-type MenuItem = MenuSeparator | MenuActionItem;
+      {/* Two-column bio */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.15fr] gap-12 lg:gap-20 mb-16">
+        <motion.div variants={fadeUp} className="border-l-2 border-[#4ade80]/30 pl-7">
+          <p className="text-white/65 text-base leading-[1.9]">
+            Final-year CSE student at <span className="text-white font-medium">Manipal University Jaipur</span>{' '}
+            and Research Intern at <span className="text-white font-medium">IIT (BHU)</span>, building
+            mathematical models for net-zero integration in MSMEs.
+          </p>
+          <p className="text-white/40 text-sm leading-[1.9] mt-5">
+            My work spans distributed systems architecture, AI-powered automation, and production-grade
+            backend infrastructure — shipped across three products with real users. Backend-first, comfortable
+            across the entire stack. When not building: guitarist and Google Developer Groups Technical Member.
+          </p>
+        </motion.div>
 
-const AppleLogoSVG = ({ size = 16 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-    <path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701" />
-  </svg>
+        {/* Bare stat numbers — SWE-role specific */}
+        <motion.div variants={fadeUp} className="grid grid-cols-2 gap-px bg-white/[0.05]">
+          {[
+            { val: '10+', label: 'Systems in production', color: '#4ade80' },
+            { val: '5×', label: "Dean's List", color: '#a78bfa' },
+            { val: 'IIT', label: 'BHU Research Intern', color: '#fb923c' },
+            { val: "'27", label: 'B.Tech CSE · MUJ', color: '#38bdf8' },
+          ].map(s => (
+            <div key={s.label} className="bg-[#030303] p-7 flex flex-col justify-between">
+              <div className="text-4xl font-black tracking-tight" style={{ color: s.color }}>{s.val}</div>
+              <div className="text-white/30 text-xs font-mono uppercase tracking-widest mt-3">{s.label}</div>
+            </div>
+          ))}
+        </motion.div>
+      </div>
+
+      {/* Currently bar */}
+      <motion.div variants={fadeUp}
+        className="flex flex-wrap items-center gap-4 pt-8 border-t border-white/[0.06]">
+        <span className="flex items-center gap-2 text-xs font-mono text-white/30 uppercase tracking-widest">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#4ade80] shadow-[0_0_6px_#4ade80] animate-pulse" />
+          Currently
+        </span>
+        <span className="text-sm text-white/55">Research Intern · IIT (BHU)</span>
+        <span className="text-white/15">·</span>
+        <span className="text-sm text-white/55">Technical Member · Google Developer Groups</span>
+        <span className="text-white/15">·</span>
+        <span className="text-sm text-white/55">Open to SWE roles</span>
+      </motion.div>
+
+    </motion.div>
+  </Section>
 );
 
-type TopBarProps = {
-  title: string;
-  activeMenu: string | null;
-  setActiveMenu: (m: string | null) => void;
-  onOpenSystemPreferences: () => void;
-  onNewWindow: () => void;
-  onCloseAllWindows: () => void;
-  onUndo: () => void;
-  onRedo: () => void;
-  onEnterFullScreen: () => void;
-  onActualSize: () => void;
-};
+// ─────────────────────────────────────────────────────────────
+// EXPERIENCE  — Editorial horizontal strips
+// ─────────────────────────────────────────────────────────────
+const Experience = () => (
+  <Section id="experience">
+    <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.15 }}>
 
-const TopBar = ({
-  title,
-  activeMenu,
-  setActiveMenu,
-  onOpenSystemPreferences,
-  onNewWindow,
-  onCloseAllWindows,
-  onUndo,
-  onRedo,
-  onEnterFullScreen,
-  onActualSize
-}: TopBarProps) => {
-  const [date, setDate] = useState(new Date());
+      <motion.p variants={fadeUp} className="text-[#4ade80] font-mono text-xs tracking-[0.25em] uppercase mb-16">
+        02 — Experience
+      </motion.p>
 
-  useEffect(() => {
-    const timer = setInterval(() => setDate(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
+      {/* Experience strips */}
+      {EXPERIENCE.map((e, i) => (
+        <motion.div key={i} variants={fadeUp}
+          className="group grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-6 sm:gap-12 py-10 border-t border-white/[0.06] hover:border-white/[0.12] transition-colors">
+          {/* Left: period + company */}
+          <div className="flex sm:flex-col justify-between sm:justify-start gap-2 sm:gap-0">
+            <span className="text-white/25 text-xs font-mono tabular-nums leading-relaxed">{e.period}</span>
+            <span className="text-white/50 text-sm font-mono sm:mt-2 text-right sm:text-left">{e.company}</span>
+          </div>
+          {/* Right: role + desc + tags */}
+          <div>
+            <h3 className="text-white font-black text-2xl sm:text-3xl tracking-tight mb-4
+              group-hover:text-[#4ade80] transition-colors duration-300">{e.role}</h3>
+            <p className="text-white/45 text-sm leading-[1.8] mb-5 max-w-xl">{e.desc}</p>
+            <div className="flex flex-wrap gap-x-5 gap-y-1">
+              {e.tags.map(t => (
+                <span key={t} className="text-xs font-mono text-white/30 uppercase tracking-wider">{t}</span>
+              ))}
+            </div>
+          </div>
+        </motion.div>
+      ))}
 
-  const menus: Record<string, MenuItem[]> = {
-    '': [
-      { label: 'About This Portfolio', action: () => alert("Ashish Kumar Nanda's Portfolio") },
-      { label: 'System Preferences...', action: () => onOpenSystemPreferences() },
-      { type: 'separator' },
-      { label: 'Sleep', action: () => alert('Zzz...') },
-      { label: 'Restart', action: () => window.location.reload() },
-      { label: 'Shut Down', action: () => window.close() },
-    ],
-    File: [
-      { label: 'New Window', shortcut: '⌘N', action: () => onNewWindow() },
-      { label: 'Close Window', shortcut: '⌘W', action: () => onCloseAllWindows() },
-      { type: 'separator' },
-      { label: 'Download Resume', action: () => window.open('https://drive.google.com/file/d/15WXrrq561L2D8in8baT1LVJNn3sdP-m6/view?usp=sharing', '_blank') },
-    ],
-    Edit: [
-      { label: 'Undo', shortcut: '⌘Z', action: () => onUndo() },
-      { label: 'Redo', shortcut: '⇧⌘Z', action: () => onRedo() },
-      { type: 'separator' },
-      { label: 'Cut', shortcut: '⌘X' },
-      { label: 'Copy', shortcut: '⌘C' },
-      { label: 'Paste', shortcut: '⌘V' },
-    ],
-    View: [
-      { label: 'Enter Full Screen', shortcut: '^⌘F', action: () => onEnterFullScreen() },
-      { label: 'Actual Size', shortcut: '⌘0', action: () => onActualSize() },
-    ],
-    Help: [
-      { label: 'Portfolio Help', action: () => alert('Mail me at ashish.nanda1902@gmail.com if you find any bug!') },
-      { label: 'View Source Code', action: () => window.open('https://github.com/ashishnanda19', '_blank') },
-    ],
-  };
+      {/* Closing border */}
+      <div className="border-t border-white/[0.06]" />
 
-  return (
-    <div
-      className="fixed top-2.5 left-1/2 -translate-x-1/2 z-50 h-10 bg-[#0a0f1e]/85 backdrop-blur-2xl flex items-center justify-between px-1.5 text-white rounded-2xl border border-white/[0.07] shadow-[0_4px_24px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.06)] select-none"
-      style={{ width: 'min(960px, calc(100vw - 1.5rem))' }}
-      onClick={(e) => e.stopPropagation()}
-    >
-      {/* LEFT */}
-      <div className="flex items-center h-full">
-        <div className="relative flex items-center h-full">
-          <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.92 }}
-            transition={{ type: 'spring', stiffness: 500, damping: 22 }}
-            onClick={() => setActiveMenu(activeMenu === '' ? null : '')}
-            className={`relative flex items-center justify-center w-9 h-8 rounded-xl mx-0.5 transition-colors ${activeMenu === '' ? 'bg-white/10' : 'hover:bg-white/[0.06]'}`}
-          >
-            {activeMenu === '' && (
-              <motion.span
-                layoutId="topbar-active"
-                transition={{ type: 'spring', stiffness: 500, damping: 32 }}
-                className="absolute inset-0 rounded-xl bg-indigo-500/20 border border-indigo-400/25"
-                style={{ zIndex: -1 }}
-              />
-            )}
-            <AppleLogoSVG size={17} />
-          </motion.button>
-          {activeMenu === '' && (
-            <motion.div
-              initial={{ opacity: 0, y: -6, scale: 0.97 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              transition={{ type: 'spring', stiffness: 420, damping: 28 }}
-              className="absolute top-[calc(100%+8px)] left-0 w-56 bg-[#0a0f1e]/96 backdrop-blur-2xl rounded-xl border border-white/[0.07] shadow-[0_16px_48px_rgba(0,0,0,0.7),inset_0_1px_0_rgba(255,255,255,0.06)] py-1.5 z-50"
-            >
-              {menus[''].map((item, idx) =>
-                item.type === 'separator' ? (
-                  <div key={idx} className="h-px bg-white/[0.06] my-1 mx-3" />
-                ) : (
-                  <div
-                    key={idx}
-                    className="mx-1.5 px-3 py-1.5 text-sm text-slate-300 hover:text-white hover:bg-indigo-500/15 flex items-center cursor-default rounded-lg transition-colors"
-                    onClick={() => { item.action?.(); setActiveMenu(null); }}
-                  >
-                    {item.label}
-                  </div>
-                )
-              )}
-            </motion.div>
-          )}
+    </motion.div>
+  </Section>
+);
+
+// ─────────────────────────────────────────────────────────────
+// EDUCATION  — Standalone typographic feature section
+// ─────────────────────────────────────────────────────────────
+const Education = () => (
+  <Section id="education">
+    <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.15 }}>
+
+      <motion.p variants={fadeUp} className="text-[#4ade80] font-mono text-xs tracking-[0.25em] uppercase mb-16">
+        03 — Education
+      </motion.p>
+
+      {/* Year watermark + institution name */}
+      <div className="relative mb-16">
+        {/* Ghost year range as background element */}
+        <motion.div variants={fadeIn}
+          className="absolute -top-4 right-0 font-black text-[clamp(3rem,10vw,7rem)] leading-none
+            tracking-tighter select-none pointer-events-none tabular-nums text-right"
+          style={{ color: 'rgba(255,255,255,0.03)' }}>
+          2023—2027
+        </motion.div>
+
+        <motion.h2 variants={fadeUp}
+          className="relative text-5xl sm:text-6xl lg:text-7xl font-black text-white tracking-tight leading-[1.04] mb-4">
+          Manipal<br />
+          <span className="text-white/30">University</span>
+        </motion.h2>
+        <motion.p variants={fadeUp} className="text-white/30 text-sm font-mono tracking-widest uppercase">
+          Jaipur, Rajasthan · India
+        </motion.p>
+      </div>
+
+      {/* Degree + metrics row */}
+      <motion.div variants={fadeUp}
+        className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-8 sm:gap-20 items-end
+          pb-10 border-b border-white/[0.08]">
+        <div>
+          <p className="text-white/50 text-base leading-relaxed mb-1">
+            Bachelor of Technology
+          </p>
+          <p className="text-white font-semibold text-xl">
+            Computer Science &amp; Engineering <span className="text-white/30 font-normal">(IoT)</span>
+          </p>
         </div>
-        <div className="hidden sm:block w-px h-4 bg-white/[0.08] mx-1" />
-        {Object.entries(menus).filter(([k]) => k !== '').map(([key, items]) => (
-          <div
-            key={key}
-            className="relative h-full hidden sm:flex items-center"
-            onMouseEnter={() => { if (activeMenu !== null && activeMenu !== key) setActiveMenu(key); }}
-          >
-            <motion.button
-              whileHover={{ scale: 1.04 }}
-              whileTap={{ scale: 0.94 }}
-              transition={{ type: 'spring', stiffness: 500, damping: 24 }}
-              className={`relative flex items-center h-7 px-3 rounded-lg text-xs font-medium cursor-default transition-colors ${activeMenu === key ? 'text-white' : 'text-slate-400 hover:text-slate-200'}`}
-              onClick={() => setActiveMenu(activeMenu === key ? null : key)}
-            >
-              {activeMenu === key && (
-                <motion.span
-                  layoutId="topbar-active"
-                  transition={{ type: 'spring', stiffness: 500, damping: 32 }}
-                  className="absolute inset-0 rounded-lg bg-indigo-500/20 border border-indigo-400/25"
-                  style={{ zIndex: -1 }}
-                />
-              )}
-              <span className="relative">{key}</span>
-            </motion.button>
-            {activeMenu === key && (
-              <motion.div
-                initial={{ opacity: 0, y: -6, scale: 0.97 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{ type: 'spring', stiffness: 420, damping: 28 }}
-                className="absolute top-[calc(100%+8px)] left-0 w-56 bg-[#0a0f1e]/96 backdrop-blur-2xl rounded-xl border border-white/[0.07] shadow-[0_16px_48px_rgba(0,0,0,0.7),inset_0_1px_0_rgba(255,255,255,0.06)] py-1.5 z-50"
-              >
-                {items.map((item, idx) =>
-                  item.type === 'separator' ? (
-                    <div key={idx} className="h-px bg-white/[0.06] my-1 mx-3" />
-                  ) : (
-                    <div
-                      key={idx}
-                      className="mx-1.5 px-3 py-1.5 text-sm text-slate-300 hover:text-white hover:bg-indigo-500/15 flex justify-between items-center cursor-default rounded-lg transition-colors group"
-                      onClick={() => { item.action?.(); setActiveMenu(null); }}
-                    >
-                      <span>{item.label}</span>
-                      {item.shortcut && (
-                        <span className="text-slate-600 group-hover:text-slate-400 text-[11px] font-mono">{item.shortcut}</span>
-                      )}
-                    </div>
-                  )
-                )}
-              </motion.div>
-            )}
+        <div className="flex items-baseline gap-3">
+          <span className="text-[#4ade80] font-black text-5xl tracking-tight">9.22</span>
+          <span className="text-white/30 text-base font-mono">/ 10 CGPA</span>
+        </div>
+      </motion.div>
+
+      {/* Highlights strip */}
+      <motion.div variants={fadeIn}
+        className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-white/[0.04] mt-px">
+        {[
+          { label: 'Duration', val: '2023 – 2027' },
+          { label: 'Distinction', val: "5× Dean's List" },
+          { label: 'Community', val: 'GDG Technical' },
+          { label: 'Standing', val: 'Top of class' },
+        ].map(item => (
+          <div key={item.label} className="bg-[#030303] px-6 py-5">
+            <div className="text-white/20 text-[10px] font-mono uppercase tracking-[0.2em] mb-2">{item.label}</div>
+            <div className="text-white/70 text-sm font-medium">{item.val}</div>
           </div>
         ))}
-        {title && (
-          <>
-            <div className="hidden sm:block w-px h-4 bg-white/[0.08] mx-2" />
-            <span className="hidden sm:block text-[11px] font-medium text-slate-500 max-w-[140px] truncate">{title}</span>
-          </>
-        )}
-      </div>
-      {/* RIGHT */}
-      <div className="flex items-center gap-0.5 h-full pr-1">
-        <div className="hidden sm:flex items-center gap-0.5">
-          {([
-            { icon: Battery, label: 'Battery' },
-            { icon: Wifi, label: 'Network' },
-            { icon: Bell, label: 'Alerts' },
-          ] as { icon: React.FC<{ size?: number; className?: string }>; label: string }[]).map(({ icon: Icon, label }) => (
-            <motion.button
-              key={label}
-              title={label}
-              whileHover={{ scale: 1.15 }}
-              whileTap={{ scale: 0.9 }}
-              transition={{ type: 'spring', stiffness: 500, damping: 22 }}
-              className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-500 hover:text-slate-300 hover:bg-white/[0.06] transition-colors cursor-pointer"
-            >
-              <Icon size={14} />
-            </motion.button>
-          ))}
-        </div>
-        <div className="w-px h-4 bg-white/[0.08] mx-1" />
-        <div className="flex items-center gap-2 px-3 h-7 rounded-lg hover:bg-white/[0.05] transition-colors cursor-default">
-          <span className="hidden sm:block text-[11px] text-slate-500 tabular-nums">
-            {date.toLocaleString([], { weekday: 'short', month: 'short', day: 'numeric' })}
-          </span>
-          <span className="text-[11px] font-semibold text-slate-300 tabular-nums">
-            {date.toLocaleString([], { hour: '2-digit', minute: '2-digit' })}
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-};
+      </motion.div>
 
-// macOS-style Mail Icon Component - Blue gradient with white envelope
-const MailIcon = ({ size = 28 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 512 512" className="drop-shadow-md">
-    <defs>
-      <linearGradient id="mailGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-        <stop offset="0%" stopColor="#007AFF" />
-        <stop offset="50%" stopColor="#00B8FF" />
-        <stop offset="100%" stopColor="#00D4FF" />
-      </linearGradient>
-    </defs>
-    {/* Rounded square background with blue-to-cyan vertical gradient */}
-    <rect width="512" height="512" rx="102" fill="url(#mailGradient)" />
-
-    {/* White envelope - clean minimalist design, horizontal orientation */}
-    <g transform="translate(256, 256)">
-      {/* Main envelope body - horizontal rectangle */}
-      <rect x="-170" y="-60" width="340" height="150" fill="#FFFFFF" rx="8" />
-
-      {/* Envelope flap - V shape formed by two diagonal lines meeting at bottom center */}
-      <path
-        d="M -170 -60 L 0 60 L 170 -60"
-        fill="#FFFFFF"
-        stroke="none"
-      />
-
-      {/* Subtle curved line running horizontally across lower half */}
-      <path
-        d="M -150 50 Q 0 40 150 50"
-        stroke="#FFFFFF"
-        strokeWidth="10"
-        strokeLinecap="round"
-        fill="none"
-        opacity="0.85"
-      />
-    </g>
-  </svg>
+    </motion.div>
+  </Section>
 );
 
-
-// --- Main App Component ---
-
-const App = () => {
-  const [activeWindow, setActiveWindow] = useState<string | null>(null);
-  const [zIndexCounter, setZIndexCounter] = useState(10);
-  const [draggedWindow, setDraggedWindow] = useState<string | null>(null);
-  const [activeMenu, setActiveMenu] = useState<string | null>(null);
-  const [theme, setTheme] = useState<Theme>('dark');
-  const [booted, setBooted] = useState(false);
-  const [isMobile, setIsMobile] = useState(false); // Mobile state check
-  const [closedWindowsHistory, setClosedWindowsHistory] = useState<WindowState[]>([]); // For undo/redo
-  const [redoStack, setRedoStack] = useState<WindowState[]>([]); // For redo
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [bouncingApp, setBouncingApp] = useState<string | null>(null);
-  const dragRef = useRef<{ id: string; startX: number; startY: number; initialLeft: number; initialTop: number } | null>(null);
-
-  useEffect(() => {
-    // Apply theme class to body for global styling
-    document.body.classList.remove('theme-light', 'theme-dark');
-    document.body.classList.add(theme === 'dark' ? 'theme-dark' : 'theme-light');
-  }, [theme]);
-
-  useEffect(() => {
-    // Check screen size on mount and resize
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768); // 768px is a common tablet/mobile breakpoint
-    };
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
-
-  // Icon component with error handling
-  const IconWithFallback = ({ app, size }: { app: AppIcon; size: number }) => {
-    const [imageError, setImageError] = useState(false);
-
-    if (app.iconSrc && !imageError) {
-      return (
-        <img
-          src={app.iconSrc}
-          alt={app.name}
-          className="object-contain drop-shadow-md"
-          style={{
-            width: size,
-            height: size,
-            maxWidth: '100%',
-            maxHeight: '100%',
-            display: 'block',
-            flexShrink: 0,
-            objectFit: 'contain'
-          }}
-          loading="eager"
-          draggable={false}
-          onError={() => {
-            setImageError(true);
-          }}
-          onLoad={() => {
-            console.log(`Icon loaded: ${app.iconSrc}`);
-          }}
-        />
-      );
-    }
-    return <>{app.icon}</>;
-  };
-
-  // Helper function to render app icon (image or fallback React icon)
-  const renderAppIcon = (app: AppIcon, size: number = 28) => {
-    return <IconWithFallback app={app} size={size} />;
-  };
-
-  const appIcons: AppIcon[] = [
-    {
-      id: 'finder',
-      name: 'Finder',
-      icon: <User size={28} className="text-white drop-shadow-md" />,
-      iconSrc: '/icons/finder.png',
-      color: 'bg-transparent'
-    },
-    {
-      id: 'safari',
-      name: 'Safari',
-      icon: <Globe size={28} className="text-white drop-shadow-md" />,
-      iconSrc: '/icons/safari.png',
-      color: 'bg-transparent'
-    },
-    {
-      id: 'vscode',
-      name: 'Code',
-      icon: <Code size={28} className="text-white drop-shadow-md" />,
-      iconSrc: '/icons/vscode.png',
-      color: 'bg-transparent'
-    },
-    {
-      id: 'terminal',
-      name: 'Terminal',
-      icon: <Terminal size={28} className="text-white drop-shadow-md" />,
-      iconSrc: '/icons/terminal.png',
-      color: 'bg-transparent'
-    },
-    {
-      id: 'camera',
-      name: 'Camera',
-      icon: <Aperture size={28} className="text-white drop-shadow-md" />,
-      iconSrc: '/icons/photobooth.png',
-      color: 'bg-transparent'
-    },
-    {
-      id: 'arcade',
-      name: 'Arcade',
-      icon: <Gamepad2 size={28} className="text-white drop-shadow-md" />,
-      iconSrc: '/icons/game-center.png',
-      color: 'bg-transparent'
-    },
-    {
-      id: 'mail',
-      name: 'Mail',
-      icon: <MailIcon size={28} />,
-      iconSrc: '/icons/mail.png',
-      color: 'bg-transparent'
-    },
-    {
-      id: 'spotify',
-      name: 'Spotify',
-      icon: <Music size={28} className="text-white drop-shadow-md" />,
-      iconSrc: '/icons/spotify.png',
-      color: 'bg-transparent'
-    },
-    {
-      id: 'funzone',
-      name: 'Fun Zone',
-      icon: (
-        <div className="w-full h-full rounded-2xl flex items-center justify-center bg-gradient-to-br from-indigo-500 to-violet-600 shadow-[0_4px_16px_rgba(99,102,241,0.4)]">
-          <Laugh size={28} className="text-white drop-shadow-sm" />
-        </div>
-      ),
-      color: 'bg-transparent'
-    },
-  ];
-
-  const [windows, setWindows] = useState<WindowState[]>([]);
-
-  // Desktop hero shown when nothing is open; user opens apps from the dock.
-
-  // Optimized Drag Logic
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!dragRef.current) return;
-      e.preventDefault();
-      const { id, startX, startY, initialLeft, initialTop } = dragRef.current;
-      setWindows(prev => prev.map(w => w.id === id ? { ...w, position: { x: initialLeft + (e.clientX - startX), y: Math.max(32, initialTop + (e.clientY - startY)) } } : w));
-    };
-    const handleMouseUp = () => {
-      dragRef.current = null;
-      setDraggedWindow(null);
-    };
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-    return () => { document.removeEventListener('mousemove', handleMouseMove); document.removeEventListener('mouseup', handleMouseUp); };
-  }, []);
-
-  const openApp = (appId: string) => {
-    const existingWindow = windows.find(w => w.id === appId);
-    if (existingWindow) {
-      if (existingWindow.isMinimized) {
-        setWindows(prev => prev.map(w => w.id === appId ? { ...w, isMinimized: false, zIndex: zIndexCounter + 1 } : w));
-        setActiveWindow(appId);
-        setZIndexCounter(prev => prev + 1);
-      } else if (activeWindow === appId) {
-        setWindows(prev => prev.map(w => w.id === appId ? { ...w, isMinimized: true } : w));
-        setActiveWindow(null);
-      } else {
-        setActiveWindow(appId);
-        setZIndexCounter(prev => prev + 1);
-        setWindows(prev => prev.map(w => w.id === appId ? { ...w, zIndex: zIndexCounter + 1 } : w));
-      }
-    } else {
-      setBouncingApp(appId);
-      setTimeout(() => setBouncingApp(null), 1200);
-
-      const appData = appIcons.find(a => a.id === appId);
-      let content, title = appData?.name || 'App', size = { width: 800, height: 600 };
-      switch (appId) {
-        case 'finder': content = <AboutContent />; title = 'Ashish Kumar Nanda'; break;
-        case 'safari': content = <BrowserContent />; title = 'Safari'; size = { width: 950, height: 680 }; break;
-        case 'mail': content = <MailContent />; title = 'Mail'; size = { width: 980, height: 640 }; break;
-        case 'vscode': content = <SkillsExperienceContent />; title = 'VS Code'; break;
-        case 'terminal': content = <TerminalContent />; title = 'Terminal'; size = { width: 600, height: 400 }; break;
-        case 'camera': content = <PhotoBooth />; title = 'Photo Booth'; size = { width: 500, height: 600 }; break;
-        case 'arcade': content = <SnakeGame />; title = 'Arcade'; size = { width: 440, height: 520 }; break;
-        case 'settings': content = <SystemPreferencesContent />; title = 'System Preferences'; size = { width: 700, height: 450 }; break;
-        case 'spotify': content = <SpotifyContent />; title = 'Spotify'; size = { width: 1000, height: 750 }; break;
-        case 'funzone': content = <FunZone />; title = 'Fun Zone'; size = { width: 760, height: 620 }; break;
-        default: content = <div>Content not found</div>;
-      }
-      setWindows(prev => [...prev, { id: appId, title, icon: appData ? renderAppIcon(appData, 18) : undefined, component: content, isOpen: true, isMinimized: false, isMaximized: false, zIndex: zIndexCounter + 1, position: { x: 80 + (windows.length * 30), y: 80 + (windows.length * 30) }, size }]);
-      setZIndexCounter(prev => prev + 1);
-      setActiveWindow(appId);
-    }
-  };
-
-  const closeWindow = (id: string, e?: React.MouseEvent) => {
-    e?.stopPropagation();
-    const windowToClose = windows.find(w => w.id === id);
-    if (windowToClose) {
-      // Add to closed windows history for undo
-      setClosedWindowsHistory(prev => [windowToClose, ...prev]);
-      // Clear redo stack when a new action is performed
-      setRedoStack([]);
-    }
-    setWindows(prev => prev.filter(w => w.id !== id));
-    if (activeWindow === id) setActiveWindow(null);
-  };
-  const minimizeWindow = (id: string, e?: React.MouseEvent) => { e?.stopPropagation(); setWindows(prev => prev.map(w => w.id === id ? { ...w, isMinimized: true } : w)); setActiveWindow(null); };
-  const maximizeWindow = (id: string, e?: React.MouseEvent) => { e?.stopPropagation(); setWindows(prev => prev.map(w => w.id === id ? { ...w, isMaximized: !w.isMaximized } : w)); };
-  const focusWindow = (id: string) => { if (activeWindow !== id) { setZIndexCounter(prev => prev + 1); setWindows(prev => prev.map(w => w.id === id ? { ...w, zIndex: zIndexCounter + 1 } : w)); setActiveWindow(id); } };
-  const startDrag = (e: React.MouseEvent, id: string) => { if (isMobile || windows.find(w => w.id === id)?.isMaximized) return; focusWindow(id); setDraggedWindow(id); const wObj = windows.find(w => w.id === id); if (wObj) dragRef.current = { id, startX: e.clientX, startY: e.clientY, initialLeft: wObj.position.x, initialTop: wObj.position.y }; };
-
-  const getDockIconPos = (appId: string) => {
-    const index = appIcons.findIndex(a => a.id === appId);
-    if (index === -1) return '50%';
-    const total = appIcons.length;
-    return `calc(50vw + ${(index - (total - 1) / 2) * 76}px)`;
-  };
-
-  // Menu action handlers
-  const handleNewWindow = () => {
-    openApp('finder');
-  };
-
-  const handleCloseAllWindows = () => {
-    // Save all windows to history for undo
-    setClosedWindowsHistory(prev => [...windows, ...prev]);
-    setRedoStack([]);
-    setWindows([]);
-    setActiveWindow(null);
-  };
-
-  const handleUndo = () => {
-    if (closedWindowsHistory.length > 0) {
-      const windowToRestore = closedWindowsHistory[0];
-      // Remove from history
-      setClosedWindowsHistory(prev => prev.slice(1));
-      // Add to redo stack
-      setRedoStack(prev => [windowToRestore, ...prev]);
-      // Restore the window with updated z-index
-      setZIndexCounter(prev => prev + 1);
-      const restoredWindow = { ...windowToRestore, zIndex: zIndexCounter + 1 };
-      setWindows(prev => [...prev, restoredWindow]);
-      setActiveWindow(windowToRestore.id);
-    }
-  };
-
-  const handleRedo = () => {
-    if (redoStack.length > 0) {
-      const windowToClose = redoStack[0];
-      // Remove from redo stack
-      setRedoStack(prev => prev.slice(1));
-      // Add back to closed history
-      setClosedWindowsHistory(prev => [windowToClose, ...prev]);
-      // Close the window
-      setWindows(prev => prev.filter(w => w.id !== windowToClose.id));
-      if (activeWindow === windowToClose.id) setActiveWindow(null);
-    }
-  };
-
-  const handleEnterFullScreen = () => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().then(() => {
-        setIsFullscreen(true);
-      }).catch(err => {
-        console.error('Error attempting to enable fullscreen:', err);
-      });
-    }
-  };
-
-  const handleActualSize = () => {
-    if (document.fullscreenElement) {
-      document.exitFullscreen().then(() => {
-        setIsFullscreen(false);
-      }).catch(err => {
-        console.error('Error attempting to exit fullscreen:', err);
-      });
-    }
-  };
-
-  // Mobile blocker removed.
+// ─────────────────────────────────────────────────────────────
+// SKILLS  — Typographic column layout
+// ─────────────────────────────────────────────────────────────
+const SkillItem = ({ skill, color, idx }: { skill: string; color: string; idx: number }) => {
+  const [hovered, setHovered] = useState(false);
   return (
-    <ThemeContext.Provider value={{ theme, setTheme }}>
-      {!booted && <NeonBoot onBoot={() => setBooted(true)} />}
-      <EasterEggs />
-      <div
-        className="h-screen w-screen overflow-hidden font-sans select-none relative bg-[var(--bg-color)] text-[var(--text-color)] app-root"
-        onClick={() => {
-          setActiveWindow(null);
-          setActiveMenu(null);
-        }}
-      >
-        {isFullscreen && (
-          <div className="absolute top-10 right-6 z-50 bg-black/70 text-white px-3 py-1 rounded text-xs">
-            Fullscreen mode
-          </div>
-        )}
-
-        {/* Interactive Background */}
-        <InteractiveBackground theme={theme} />
-
-
-        {/* Top Menu Bar */}
-        <TopBar
-          title={activeWindow ? windows.find(w => w.id === activeWindow)?.title || '' : 'Finder'}
-          activeMenu={activeMenu}
-          setActiveMenu={setActiveMenu}
-          onOpenSystemPreferences={() => openApp('settings')}
-          onNewWindow={handleNewWindow}
-          onCloseAllWindows={handleCloseAllWindows}
-          onUndo={handleUndo}
-          onRedo={handleRedo}
-          onEnterFullScreen={handleEnterFullScreen}
-          onActualSize={handleActualSize}
-        />
-
-        {/* Desktop Hero (shown when nothing is open) */}
-        {windows.filter(w => !w.isMinimized).length === 0 && (
-          <DesktopHero onOpenAbout={() => openApp('finder')} />
-        )}
-
-        {/* Desktop Area */}
-        <div className="relative w-full h-full pt-8 pb-24 z-10 pointer-events-none">
-
-          {/* Desktop Icons — hidden on mobile */}
-          <div className="absolute right-4 top-12 hidden sm:flex flex-col items-end gap-6 p-2 z-0 pointer-events-auto">
-            <div className="group flex flex-col items-center cursor-pointer w-20" onDoubleClick={() => openApp('safari')}>
-              <div className="w-16 h-16 rounded-xl shadow-lg group-hover:scale-105 transition-transform flex items-center justify-center overflow-hidden bg-white/10 backdrop-blur-sm border border-white/20">
-                {(() => {
-                  const safariApp = appIcons.find(a => a.id === 'safari');
-                  return safariApp ? renderAppIcon(safariApp, 56) : <Globe className="text-white/90 w-6 h-6" />;
-                })()}
-              </div>
-              <span className="text-white text-xs mt-1 font-medium bg-black/20 px-2 py-0.5 rounded-md shadow-sm backdrop-blur-sm">Projects</span>
-            </div>
-            <div className="group flex flex-col items-center cursor-pointer w-20" onDoubleClick={() => window.open("https://drive.google.com/file/d/15WXrrq561L2D8in8baT1LVJNn3sdP-m6/view?usp=sharing", "_blank")}>
-              <div className="w-16 h-16 rounded-xl shadow-lg group-hover:scale-105 transition-transform flex items-center justify-center overflow-hidden bg-white/10 backdrop-blur-sm border border-white/20">
-                {(() => {
-                  const vscodeApp = appIcons.find(a => a.id === 'vscode');
-                  return vscodeApp ? renderAppIcon(vscodeApp, 56) : <Code className="text-white/90 w-6 h-6" />;
-                })()}
-              </div>
-              <span className="text-white text-xs mt-1 font-medium bg-black/20 px-2 py-0.5 rounded-md shadow-sm backdrop-blur-sm">Resume</span>
-            </div>
-          </div>
-
-          {/* Windows */}
-          <AnimatePresence>
-            {windows.map((win) => {
-              const isDragging = draggedWindow === win.id;
-
-              // We don't render minimized windows via AnimatePresence to keep them technically "open" in the DOM for state preservation, 
-              // but we'll handle their visual scale down to the dock via the inline style transform
-
-              return (
-                <motion.div
-                  key={win.id}
-                  initial={{ opacity: 0, scale: 0.8, y: 50 }}
-                  animate={{
-                    opacity: win.isMinimized ? 0 : 1,
-                    scale: win.isMinimized ? 0.2 : 1,
-                    y: win.isMinimized ? window.innerHeight : 0
-                  }}
-                  exit={{ opacity: 0, scale: 0.2, y: window.innerHeight / 2 }}
-                  transition={{
-                    type: "spring",
-                    stiffness: 300,
-                    damping: 25,
-                    mass: 0.8
-                  }}
-                  className={`absolute flex flex-col rounded-xl overflow-hidden ring-1 ring-white/[0.07] shadow-[0_8px_40px_rgba(0,0,0,0.55)] backdrop-blur-xl bg-white/95 dark:bg-[var(--bg-elevated)]/95 ${isDragging ? '' : 'transition-[top,left,width,height] duration-300 ease-[cubic-bezier(0.25,1,0.5,1)]'}`}
-                  style={{
-                    width: (win.isMaximized || isMobile) ? '100vw' : win.size.width,
-                    height: (win.isMaximized || isMobile) ? (isMobile ? 'calc(100vh - 110px)' : 'calc(100vh - 32px)') : win.size.height,
-                    transformOrigin: `${getDockIconPos(win.id)} bottom`,
-                    top: (win.isMaximized || isMobile) ? 32 : win.position.y,
-                    left: (win.isMaximized || isMobile) ? 0 : win.position.x,
-                    zIndex: win.zIndex,
-                    pointerEvents: win.isMinimized ? 'none' : 'auto'
-                  }}
-                  onMouseDown={() => focusWindow(win.id)}
-                >
-                  <div className="h-10 bg-white/40 dark:bg-black/40 border-b border-black/5 dark:border-white/5 flex items-center px-4 justify-between select-none backdrop-blur-md" onMouseDown={(e) => startDrag(e, win.id)} onDoubleClick={(e) => maximizeWindow(win.id, e)}>
-                    <div className="flex space-x-2.5 group">
-                      <button onClick={(e) => closeWindow(win.id, e)} className="w-4 h-4 sm:w-3.5 sm:h-3.5 rounded-full bg-[#ff5f57] border border-[#e0443e] hover:bg-[#ff5f57]/80 flex items-center justify-center transition-colors"><X size={8} className="text-red-900 opacity-0 group-hover:opacity-100" /></button>
-                      <button onClick={(e) => minimizeWindow(win.id, e)} className="w-4 h-4 sm:w-3.5 sm:h-3.5 rounded-full bg-[#febc2e] border border-[#d89e24] hover:bg-[#febc2e]/80 flex items-center justify-center transition-colors"><Minus size={10} className="text-yellow-900 opacity-0 group-hover:opacity-100" /></button>
-                      <button onClick={(e) => maximizeWindow(win.id, e)} className="w-4 h-4 sm:w-3.5 sm:h-3.5 rounded-full bg-[#28c840] border border-[#1aab29] hover:bg-[#28c840]/80 flex items-center justify-center transition-colors">{win.isMaximized ? <Minimize2 size={8} className="text-green-900 opacity-0 group-hover:opacity-100" /> : <Maximize2 size={8} className="text-green-900 opacity-0 group-hover:opacity-100" />}</button>
-                    </div>
-                    <div className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">{win.icon && <span className="text-gray-400">{win.icon}</span>} {win.title}</div>
-                    <div className="w-14"></div>
-                  </div>
-                  <div className="flex-1 overflow-hidden relative bg-transparent">{win.component}</div>
-                </motion.div>
-              );
-            })}
-          </AnimatePresence>
-        </div>
-
-        {/* Dock */}
-        <div className="fixed bottom-3 sm:bottom-4 left-0 w-full flex justify-center z-[10000] px-2">
-          <div className="flex items-end gap-2 sm:gap-3 px-3 sm:px-4 pb-2.5 sm:pb-3 pt-2.5 sm:pt-3 bg-white/10 dark:bg-[#0c1120]/75 backdrop-blur-xl rounded-2xl border border-white/[0.08] shadow-[0_8px_40px_rgba(0,0,0,0.5),0_0_0_1px_rgba(255,255,255,0.04)] transition-all duration-300 overflow-x-auto max-w-[calc(100vw-1rem)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {appIcons.map((app) => {
-              const isOpen = windows.some(w => w.id === app.id && !w.isMinimized);
-              const isRunning = windows.some(w => w.id === app.id);
-              return (
-                <div key={app.id} className="group relative flex flex-col items-center shrink-0">
-                  <div className="absolute -top-12 sm:-top-14 bg-gray-800/90 text-white text-xs font-medium px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm shadow-lg pointer-events-none mb-2 z-50 whitespace-nowrap">{app.name}</div>
-                  <motion.button
-                    onClick={() => openApp(app.id)}
-                    whileHover={{ scale: 1.2, y: -10 }}
-                    whileTap={{ scale: 0.9 }}
-                    animate={bouncingApp === app.id ? { y: [0, -30, 0, -15, 0, -5, 0] } : { y: 0 }}
-                    transition={bouncingApp === app.id ? { duration: 1, times: [0, 0.25, 0.5, 0.7, 0.85, 0.95, 1], ease: "easeOut" } : {}}
-                    className={`${app.color} w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-2xl flex items-center justify-center shadow-lg transition-shadow duration-200 ease-out ring-1 ring-white/20 dark:ring-white/10 overflow-hidden relative ${isOpen ? 'after:content-[""] after:absolute after:inset-0 after:bg-white/10' : ''}`}
-                  >
-                    {renderAppIcon(app, isMobile ? 36 : 50)}
-                  </motion.button>
-                  <div className={`w-1 h-1 rounded-full bg-black dark:bg-white mt-1.5 sm:mt-2 transition-all duration-300 ${isRunning ? 'opacity-100 scale-100' : 'opacity-0 scale-0'}`}></div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-    </ThemeContext.Provider>
+    <motion.div
+      className="flex items-center gap-3 py-1.5 cursor-default select-none"
+      onHoverStart={() => { setHovered(true); sfx.note(PENTA[idx % PENTA.length]); }}
+      onHoverEnd={() => setHovered(false)}
+      animate={{ x: hovered ? 8 : 0 }}
+      transition={{ type: 'spring', stiffness: 500, damping: 30 }}>
+      <motion.span
+        animate={{ opacity: hovered ? 1 : 0, scaleX: hovered ? 1 : 0 }}
+        style={{ originX: 0, color }}
+        className="text-xs font-mono">→</motion.span>
+      <span className="font-mono text-sm transition-colors duration-150"
+        style={{ color: hovered ? color : 'rgba(255,255,255,0.4)' }}>{skill}</span>
+    </motion.div>
   );
 };
 
-export default App;
+const Skills = () => (
+  <Section id="skills">
+    <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }}>
+
+      <motion.p variants={fadeUp} className="text-[#4ade80] font-mono text-xs tracking-[0.25em] uppercase mb-16">
+        04 — Skills
+      </motion.p>
+
+      <motion.h2 variants={fadeUp}
+        className="text-4xl sm:text-5xl font-black text-white tracking-tight mb-2">
+        Tech I work with
+      </motion.h2>
+      <motion.p variants={fadeUp} className="text-white/25 text-xs font-mono mb-14">
+        hover any skill to hear it
+      </motion.p>
+
+      {/* 5-column typographic skill grid */}
+      <motion.div variants={fadeIn}
+        className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-px bg-white/[0.05] mb-16">
+        {SKILL_GROUPS.map((g) => (
+          <div key={g.cat} className="bg-[#030303] p-6">
+            <div className="flex items-center gap-2 mb-5 pb-4 border-b border-white/[0.06]">
+              <g.icon size={12} style={{ color: g.color }} />
+              <span className="text-[10px] font-mono uppercase tracking-[0.2em]" style={{ color: g.color }}>{g.cat}</span>
+            </div>
+            <div className="space-y-0.5">
+              {g.skills.map((sk, i) => (
+                <SkillItem key={sk} skill={sk} color={g.color} idx={i} />
+              ))}
+            </div>
+          </div>
+        ))}
+      </motion.div>
+
+      {/* Single marquee accent row */}
+      <motion.div variants={fadeIn} className="opacity-30">
+        <Marquee items={[...ROW1, ...ROW2]} />
+      </motion.div>
+
+    </motion.div>
+  </Section>
+);
+
+// ─────────────────────────────────────────────────────────────
+// PROJECTS  — Editorial numbered strips
+// ─────────────────────────────────────────────────────────────
+const Projects = () => (
+  <Section id="projects">
+    <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }}>
+
+      <motion.p variants={fadeUp} className="text-[#4ade80] font-mono text-xs tracking-[0.25em] uppercase mb-16">
+        05 — Projects
+      </motion.p>
+
+      {PROJECTS.map((p) => (
+        <motion.div key={p.num} variants={fadeUp}
+          className="group grid grid-cols-1 sm:grid-cols-[80px_1fr] gap-6 sm:gap-12 py-12 border-t border-white/[0.06] hover:border-white/[0.14] transition-colors relative overflow-hidden">
+
+          {/* Faded ghost number — left column on desktop, absolute on mobile */}
+          <div className="hidden sm:flex items-start pt-1">
+            <span className="font-black text-6xl leading-none tabular-nums select-none transition-colors duration-300"
+              style={{ color: `${p.color}18` }}
+              onMouseEnter={() => {}}>
+              {p.num}
+            </span>
+          </div>
+
+          {/* Content */}
+          <div>
+            {/* Mobile ghost number */}
+            <span className="sm:hidden font-black text-5xl leading-none tabular-nums select-none block mb-3"
+              style={{ color: `${p.color}20` }}>{p.num}</span>
+
+            <h3 className="text-white font-black text-3xl sm:text-4xl tracking-tight leading-none mb-4
+              group-hover:text-[#4ade80] transition-colors duration-300">{p.name}</h3>
+
+            <p className="text-white/40 text-sm leading-[1.8] mb-6 max-w-2xl">{p.desc}</p>
+
+            {/* Tech — inline monospace, no pills */}
+            <div className="flex flex-wrap gap-x-4 gap-y-1 mb-6">
+              {p.tech.map(t => (
+                <span key={t} className="text-xs font-mono text-white/25">{t}</span>
+              ))}
+            </div>
+
+            {/* GitHub link — minimal text */}
+            <a href={p.github} target="_blank" rel="noreferrer"
+              onMouseEnter={sfx.hover} onClick={sfx.click}
+              className="inline-flex items-center gap-1.5 text-sm font-mono transition-colors duration-200"
+              style={{ color: `${p.color}60` }}
+              onMouseOver={e => (e.currentTarget.style.color = p.color)}
+              onMouseOut={e => (e.currentTarget.style.color = `${p.color}60`)}>
+              <Github size={13} /> View source <ArrowUpRight size={12} />
+            </a>
+          </div>
+        </motion.div>
+      ))}
+
+      {/* Closing border + more link */}
+      <div className="border-t border-white/[0.06] pt-8">
+        <a href="https://github.com/ashishnanda19" target="_blank" rel="noreferrer"
+          onMouseEnter={sfx.hover}
+          className="inline-flex items-center gap-2 text-xs font-mono text-white/25 hover:text-white/60 transition-colors group">
+          More work on GitHub <ArrowUpRight size={12} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+        </a>
+      </div>
+
+    </motion.div>
+  </Section>
+);
+
+// ─────────────────────────────────────────────────────────────
+// AWARDS  — Numbered editorial list
+// ─────────────────────────────────────────────────────────────
+const Awards = () => (
+  <Section id="awards">
+    <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.15 }}>
+
+      <motion.p variants={fadeUp} className="text-[#4ade80] font-mono text-xs tracking-[0.25em] uppercase mb-16">
+        06 — Awards
+      </motion.p>
+
+      <motion.h2 variants={fadeUp}
+        className="text-4xl sm:text-5xl font-black text-white tracking-tight mb-16">
+        Recognition
+      </motion.h2>
+
+      {/* Award strips */}
+      {AWARDS.map((a, i) => (
+        <motion.div key={i} variants={fadeUp}
+          onMouseEnter={sfx.hover}
+          className="group grid grid-cols-[48px_1fr_auto] sm:grid-cols-[64px_1fr_auto] items-start gap-4 sm:gap-8
+            py-6 border-t border-white/[0.06] hover:border-white/[0.14] transition-colors cursor-default">
+
+          {/* Faded index */}
+          <span className="font-black text-2xl sm:text-3xl tabular-nums select-none leading-none pt-0.5
+            transition-colors duration-300 group-hover:text-white/20"
+            style={{ color: 'rgba(255,255,255,0.06)' }}>
+            {String(i + 1).padStart(2, '0')}
+          </span>
+
+          {/* Award text */}
+          <span className="text-white/50 group-hover:text-white text-sm sm:text-base font-medium
+            transition-colors duration-200 leading-relaxed pt-0.5">
+            {a.text}
+          </span>
+
+          {/* Badge */}
+          <span className="font-black text-[10px] font-mono px-2 py-1 rounded mt-0.5 flex-shrink-0"
+            style={{ color: a.color, background: `${a.color}12`, border: `1px solid ${a.color}20` }}>
+            {a.badge}
+          </span>
+        </motion.div>
+      ))}
+
+      {/* Closing border */}
+      <div className="border-t border-white/[0.06]" />
+
+      {/* Coding profiles — clean strip */}
+      <motion.div variants={fadeUp} className="mt-14">
+        <p className="text-white/20 text-[10px] font-mono uppercase tracking-[0.25em] mb-6">
+          Competitive Programming
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-px bg-white/[0.05]">
+          {[
+            { name: 'LeetCode', url: 'https://leetcode.com/ashishnanda19', rating: '1,743', rank: 'Top 10.78%', solved: '500+ solved', color: '#fb923c' },
+            { name: 'CodeChef', url: 'https://codechef.com/users/ashishnanda19', rating: '1,468', rank: '2 Star', solved: 'Max rating', color: '#38bdf8' },
+            { name: 'GitHub',   url: 'https://github.com/ashishnanda19', rating: 'Open', rank: 'Source', solved: 'ashishnanda19', color: '#94a3b8' },
+          ].map(cp => (
+            <a key={cp.name} href={cp.url} target="_blank" rel="noreferrer" onMouseEnter={sfx.hover}
+              className="group bg-[#030303] p-6 flex flex-col gap-1 hover:bg-white/[0.02] transition-colors">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-mono uppercase tracking-widest" style={{ color: cp.color }}>{cp.name}</span>
+                <ArrowUpRight size={12} className="text-white/15 group-hover:text-white/40 transition-colors" />
+              </div>
+              <div className="font-black text-2xl text-white">{cp.rating}</div>
+              <div className="text-white/30 text-xs font-mono">{cp.rank}</div>
+              <div className="text-white/20 text-[10px] font-mono mt-1">{cp.solved}</div>
+            </a>
+          ))}
+        </div>
+      </motion.div>
+
+    </motion.div>
+  </Section>
+);
+
+// ─────────────────────────────────────────────────────────────
+// CONTACT
+// ─────────────────────────────────────────────────────────────
+const Contact = () => (
+  <Section id="contact" className="relative overflow-hidden">
+    {/* Gradient glow behind */}
+    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+      <div className="w-96 h-96 bg-[#4ade80]/5 rounded-full blur-[100px]" />
+    </div>
+    <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.3 }}>
+      <motion.div variants={fadeUp} className="max-w-2xl mx-auto text-center relative">
+        <p className="text-[#4ade80] font-mono text-xs tracking-[0.25em] uppercase mb-4">07 — Contact</p>
+        <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-tight mb-6">Let's Build<br />Something Together</h2>
+        <p className="text-white/45 text-base leading-relaxed mb-10">
+          Looking for new roles, collaborations, or just want to talk tech? My inbox is always open.
+        </p>
+        <motion.a href="mailto:ashish.nanda1902@gmail.com"
+          whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }} onHoverStart={sfx.hover}
+          className="inline-flex items-center gap-3 px-8 py-4 bg-[#4ade80] hover:bg-[#86efac] text-black font-black text-lg rounded-2xl transition-all shadow-[0_0_40px_rgba(74,222,128,0.3)] hover:shadow-[0_0_60px_rgba(74,222,128,0.5)]">
+          <Mail size={20} /> Say Hello
+        </motion.a>
+
+        <div className="mt-12 flex flex-wrap justify-center gap-3">
+          {SOCIALS.map(s => (
+            <motion.a key={s.name} href={s.url} target="_blank" rel="noreferrer"
+              whileHover={{ scale: 1.06, y: -3 }} whileTap={{ scale: 0.96 }} onHoverStart={sfx.hover}
+              className="flex items-center gap-2.5 px-4 py-2.5 bg-white/[0.03] border border-white/[0.08] rounded-xl hover:border-white/15 transition-all group">
+              <s.icon size={16} className="text-white/40 group-hover:text-[#4ade80] transition-colors" />
+              <span className="text-white/50 group-hover:text-white text-sm font-mono transition-colors">{s.name}</span>
+            </motion.a>
+          ))}
+        </div>
+      </motion.div>
+    </motion.div>
+  </Section>
+);
+
+// ─────────────────────────────────────────────────────────────
+// FOOTER + SCROLL TOP
+// ─────────────────────────────────────────────────────────────
+const Footer = () => (
+  <footer className="py-8 px-6 border-t border-white/[0.05]">
+    <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div className="text-white/20 text-xs font-mono">
+        Built by <span className="text-white/40">Ashish Kumar Nanda</span>
+      </div>
+      <div className="text-white/20 text-xs font-mono">© 2025</div>
+    </div>
+  </footer>
+);
+
+const ScrollTop = () => {
+  const [show, setShow] = useState(false);
+  useEffect(() => {
+    const h = () => setShow(window.scrollY > 500);
+    window.addEventListener('scroll', h, { passive: true });
+    return () => window.removeEventListener('scroll', h);
+  }, []);
+  return (
+    <AnimatePresence>
+      {show && (
+        <motion.button initial={{ opacity: 0, scale: 0.6 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.6 }}
+          onClick={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); sfx.click(); }}
+          onMouseEnter={sfx.hover}
+          className="fixed bottom-6 right-6 z-50 w-10 h-10 bg-[#4ade80] hover:bg-[#86efac] text-black rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(74,222,128,0.4)] transition-colors font-bold">
+          <ChevronDown size={18} className="rotate-180" />
+        </motion.button>
+      )}
+    </AnimatePresence>
+  );
+};
+
+// ─────────────────────────────────────────────────────────────
+// APP
+// ─────────────────────────────────────────────────────────────
+export default function App() {
+  // Unlock audio context on first interaction
+  useEffect(() => {
+    const unlock = () => { getCtx(); };
+    window.addEventListener('click', unlock, { once: true });
+    window.addEventListener('touchstart', unlock, { once: true });
+    return () => {
+      window.removeEventListener('click', unlock);
+      window.removeEventListener('touchstart', unlock);
+    };
+  }, []);
+
+  return (
+    <div className="min-h-screen bg-[#030303] text-white overflow-x-hidden cursor-none">
+      {/* Fixed ambient glows */}
+      <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
+        <div className="absolute -top-32 -right-32 w-[600px] h-[600px] bg-[#4ade80]/4 rounded-full blur-[160px]" />
+        <div className="absolute top-1/2 -left-32 w-[400px] h-[400px] bg-purple-600/4 rounded-full blur-[140px]" />
+        <div className="absolute -bottom-32 right-1/3 w-[500px] h-[500px] bg-sky-600/3 rounded-full blur-[150px]" />
+      </div>
+
+      <Cursor />
+      <Navbar />
+
+      <main>
+        <Hero />
+        <div className="h-px bg-gradient-to-r from-transparent via-white/[0.07] to-transparent" />
+        <About />
+        <div className="h-px bg-gradient-to-r from-transparent via-white/[0.07] to-transparent" />
+        <Experience />
+        <div className="h-px bg-gradient-to-r from-transparent via-white/[0.07] to-transparent" />
+        <Education />
+        <div className="h-px bg-gradient-to-r from-transparent via-white/[0.07] to-transparent" />
+        <Skills />
+        <div className="h-px bg-gradient-to-r from-transparent via-white/[0.07] to-transparent" />
+        <Projects />
+        <div className="h-px bg-gradient-to-r from-transparent via-white/[0.07] to-transparent" />
+        <Awards />
+        <div className="h-px bg-gradient-to-r from-transparent via-white/[0.07] to-transparent" />
+        <Contact />
+      </main>
+
+      <Footer />
+      <ScrollTop />
+    </div>
+  );
+}
