@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence, useScroll, useTransform, useInView } from 'framer-motion';
+import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import type { Variants } from 'framer-motion';
 import {
   Github, Linkedin, Mail, Twitter, Instagram, Download,
@@ -344,33 +344,6 @@ const Marquee = ({ items, reverse }: { items: string[]; reverse?: boolean }) => 
 
 // ─────────────────────────────────────────────────────────────
 // (TiltCard removed — editorial layout no longer uses 3D tilt)
-
-// ─────────────────────────────────────────────────────────────
-// COUNT-UP NUMBER
-// ─────────────────────────────────────────────────────────────
-const CountUp = ({ to, suffix = '' }: { to: string; suffix?: string }) => {
-  const ref  = useRef<HTMLSpanElement>(null);
-  const seen = useInView(ref, { once: true });
-  const num  = parseFloat(to.replace(/[^0-9.]/g, ''));
-  const isFloat = to.includes('.');
-  const [val, setVal] = useState(0);
-
-  useEffect(() => {
-    if (!seen) return;
-    const dur = 1400;
-    const start = performance.now();
-    const tick = (now: number) => {
-      const p = Math.min((now - start) / dur, 1);
-      const eased = 1 - (1 - p) ** 3;
-      setVal(eased * num);
-      if (p < 1) requestAnimationFrame(tick);
-    };
-    requestAnimationFrame(tick);
-  }, [seen, num]);
-
-  const display = isFloat ? val.toFixed(2) : Math.round(val).toString();
-  return <span ref={ref}>{display}{suffix}</span>;
-};
 
 // ─────────────────────────────────────────────────────────────
 // SECTION WRAPPER
