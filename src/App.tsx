@@ -375,11 +375,27 @@ const CountUp = ({ to, suffix = '' }: { to: string; suffix?: string }) => {
 // ─────────────────────────────────────────────────────────────
 // SECTION WRAPPER
 // ─────────────────────────────────────────────────────────────
-const Section = ({ id, children, className = '' }: { id?: string; children: React.ReactNode; className?: string }) => (
-  <section id={id} className={`py-24 px-4 sm:px-6 lg:px-8 ${className}`}>
-    <div className="max-w-7xl mx-auto">{children}</div>
-  </section>
-);
+const SECTION_ORDER = ['about', 'experience', 'education', 'skills', 'projects', 'awards', 'contact'];
+
+const Section = ({ id, children, className = '' }: { id?: string; children: React.ReactNode; className?: string }) => {
+  const idx = id ? SECTION_ORDER.indexOf(id) : -1;
+  const glowRight = idx % 2 === 0;
+  return (
+    <section id={id} className={`py-24 px-4 sm:px-6 lg:px-8 relative overflow-hidden ${className}`}>
+      {/* Per-section green glow */}
+      <div
+        className="absolute pointer-events-none rounded-full blur-[180px]"
+        style={{
+          width: '700px', height: '700px',
+          top: '50%', transform: 'translateY(-50%)',
+          [glowRight ? 'right' : 'left']: '-200px',
+          background: 'radial-gradient(circle, rgba(74,222,128,0.07), transparent 70%)',
+        }}
+      />
+      <div className="max-w-7xl mx-auto relative z-10">{children}</div>
+    </section>
+  );
+};
 
 
 // ─────────────────────────────────────────────────────────────
@@ -418,7 +434,7 @@ const Navbar = () => {
           </div>
 
           <div className="flex items-center gap-2">
-            <a href="https://drive.google.com/file/d/15WXrrq561L2D8in8baT1LVJNn3sdP-m6/view?usp=sharing" target="_blank" rel="noreferrer"
+            <a href="https://drive.google.com/file/d/1Yp1aWurR-TzRDN0AdTkzjhdf7ag_iWXL/view?usp=sharing" target="_blank" rel="noreferrer"
                onMouseEnter={sfx.hover} onClick={sfx.click}
                className="hidden sm:flex items-center gap-1.5 px-4 py-1.5 bg-[#4ade80] hover:bg-[#86efac] text-black text-sm font-bold rounded-lg transition-colors shadow-[0_0_16px_rgba(74,222,128,0.35)]">
               <Download size={13} /> Resume
@@ -445,7 +461,7 @@ const Navbar = () => {
                   <span className="text-[#4ade80] text-lg mr-3 font-mono">0{i + 1}.</span>{l}
                 </motion.button>
               ))}
-              <a href="https://drive.google.com/file/d/15WXrrq561L2D8in8baT1LVJNn3sdP-m6/view?usp=sharing"
+              <a href="https://drive.google.com/file/d/1Yp1aWurR-TzRDN0AdTkzjhdf7ag_iWXL/view?usp=sharing"
                  target="_blank" rel="noreferrer" className="mt-4 flex items-center gap-2 px-6 py-3 bg-[#4ade80] text-black font-bold rounded-xl">
                 <Download size={16} /> Download Resume
               </a>
@@ -472,8 +488,7 @@ const Hero = () => {
       <div className="absolute inset-0 z-0"><Particles /></div>
 
       {/* Glow orbs */}
-      <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-[#4ade80]/5 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-1/4 left-1/4 w-64 h-64 bg-purple-500/5 rounded-full blur-[100px] pointer-events-none" />
+      <div className="absolute top-1/4 right-1/4 w-[500px] h-[500px] bg-[#4ade80]/4 rounded-full blur-[160px] pointer-events-none" />
 
       {/* Grid overlay */}
       <div className="absolute inset-0 pointer-events-none z-0"
@@ -513,7 +528,7 @@ const Hero = () => {
             </motion.p>
 
             <motion.div variants={fadeUp} className="flex flex-wrap gap-3 pt-1">
-              <a href="https://drive.google.com/file/d/15WXrrq561L2D8in8baT1LVJNn3sdP-m6/view?usp=sharing"
+              <a href="https://drive.google.com/file/d/1Yp1aWurR-TzRDN0AdTkzjhdf7ag_iWXL/view?usp=sharing"
                  target="_blank" rel="noreferrer" onMouseEnter={sfx.hover} onClick={sfx.click}
                  className="group inline-flex items-center gap-2 px-5 py-2.5 bg-[#4ade80] hover:bg-[#86efac] text-black font-bold text-sm rounded-xl transition-all shadow-[0_0_24px_rgba(74,222,128,0.35)] hover:shadow-[0_0_40px_rgba(74,222,128,0.5)]">
                 <Download size={14} /> Download Resume
@@ -554,18 +569,6 @@ const Hero = () => {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
               </div>
 
-              {/* Floating stat cards */}
-              <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.8 }}
-                className="absolute -right-4 sm:-right-12 top-8 bg-black/80 backdrop-blur-xl border border-white/[0.08] rounded-2xl px-5 py-3 shadow-2xl">
-                <div className="text-[#4ade80] text-2xl font-black leading-none"><CountUp to="9.22" /></div>
-                <div className="text-white/40 text-xs font-mono mt-0.5">CGPA /10</div>
-              </motion.div>
-
-              <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.95 }}
-                className="absolute -left-4 sm:-left-12 bottom-12 bg-black/80 backdrop-blur-xl border border-white/[0.08] rounded-2xl px-5 py-3 shadow-2xl">
-                <div className="text-purple-400 text-2xl font-black leading-none">500+</div>
-                <div className="text-white/40 text-xs font-mono mt-0.5">LC Solved</div>
-              </motion.div>
             </div>
           </motion.div>
         </motion.div>
@@ -1348,12 +1351,22 @@ export default function App() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#030303] text-white overflow-x-hidden cursor-none">
-      {/* Fixed ambient glows */}
+    <div className="min-h-screen bg-[#050505] text-white overflow-x-hidden cursor-none">
+      {/* Fixed ambient background */}
       <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
-        <div className="absolute -top-32 -right-32 w-[600px] h-[600px] bg-[#4ade80]/4 rounded-full blur-[160px]" />
-        <div className="absolute top-1/2 -left-32 w-[400px] h-[400px] bg-purple-600/4 rounded-full blur-[140px]" />
-        <div className="absolute -bottom-32 right-1/3 w-[500px] h-[500px] bg-sky-600/3 rounded-full blur-[150px]" />
+        {/* Global dot grid */}
+        <div className="dot-grid absolute inset-0 opacity-60" />
+
+        {/* Aurora accent line at very top */}
+        <div className="aurora-band absolute top-0 inset-x-0 h-[1.5px]" />
+
+        {/* Green ambient orbs */}
+        <div className="absolute -top-64 -right-48 w-[900px] h-[900px] bg-[#4ade80]/8 rounded-full blur-[220px]" />
+        <div className="absolute top-[20%] -left-64 w-[750px] h-[750px] bg-[#22c55e]/6 rounded-full blur-[200px]" />
+        <div className="absolute top-[55%] -right-32 w-[650px] h-[650px] bg-[#4ade80]/5 rounded-full blur-[180px]" />
+        <div className="absolute -bottom-48 left-[15%] w-[800px] h-[800px] bg-[#16a34a]/6 rounded-full blur-[200px]" />
+        {/* Faint center depth glow */}
+        <div className="absolute top-[40%] left-[35%] w-[500px] h-[500px] bg-[#4ade80]/3 rounded-full blur-[160px]" />
       </div>
 
       <Cursor />
