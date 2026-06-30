@@ -1,20 +1,117 @@
 @import "tailwindcss";
 
+/* ── Tailwind class-based dark mode ── */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ── Theme tokens ── */
+:root {
+  --bg: #f5f5f4;
+  --surface: #ffffff;
+  --text: #0a0a0a;
+  --text-65: rgba(10,10,10,0.65);
+  --text-55: rgba(10,10,10,0.55);
+  --text-45: rgba(10,10,10,0.45);
+  --text-40: rgba(10,10,10,0.40);
+  --text-30: rgba(10,10,10,0.30);
+  --text-25: rgba(10,10,10,0.25);
+  --text-20: rgba(10,10,10,0.20);
+  --text-15: rgba(10,10,10,0.15);
+  --text-10: rgba(10,10,10,0.10);
+  --border-05: rgba(0,0,0,0.05);
+  --border-07: rgba(0,0,0,0.07);
+  --border-08: rgba(0,0,0,0.08);
+  --border-12: rgba(0,0,0,0.12);
+  --border-15: rgba(0,0,0,0.15);
+  --sub-03: rgba(0,0,0,0.03);
+  --sub-04: rgba(0,0,0,0.04);
+  --sub-05: rgba(0,0,0,0.05);
+  --sub-06: rgba(0,0,0,0.06);
+  --accent: #15803d;
+  --accent-glow: rgba(21,128,61,0.12);
+  --nav-bg: rgba(245,245,244,0.88);
+  --mobile-menu: rgba(255,255,255,0.98);
+  --grid-line: rgba(0,0,0,0.025);
+  --ghost: rgba(0,0,0,0.05);
+  --chat-bg: #f0f0ef;
+  --chat-msg-bg: rgba(0,0,0,0.04);
+  --chat-msg-border: rgba(0,0,0,0.07);
+  --chat-msg-color: rgba(10,10,10,0.72);
+  --chat-input-bg: rgba(0,0,0,0.04);
+  --chat-input-border: rgba(0,0,0,0.09);
+  --chat-input-color: #0a0a0a;
+  --chat-input-ph: rgba(10,10,10,0.35);
+  --chat-divider: rgba(0,0,0,0.06);
+  --chat-shadow: 0 24px 80px rgba(0,0,0,0.10), 0 0 0 1px rgba(21,128,61,0.12);
+}
+
+html.dark {
+  --bg: #050505;
+  --surface: #030303;
+  --text: #ffffff;
+  --text-65: rgba(255,255,255,0.65);
+  --text-55: rgba(255,255,255,0.55);
+  --text-45: rgba(255,255,255,0.45);
+  --text-40: rgba(255,255,255,0.40);
+  --text-30: rgba(255,255,255,0.30);
+  --text-25: rgba(255,255,255,0.25);
+  --text-20: rgba(255,255,255,0.20);
+  --text-15: rgba(255,255,255,0.15);
+  --text-10: rgba(255,255,255,0.10);
+  --border-05: rgba(255,255,255,0.05);
+  --border-07: rgba(255,255,255,0.07);
+  --border-08: rgba(255,255,255,0.08);
+  --border-12: rgba(255,255,255,0.12);
+  --border-15: rgba(255,255,255,0.15);
+  --sub-03: rgba(255,255,255,0.03);
+  --sub-04: rgba(255,255,255,0.04);
+  --sub-05: rgba(255,255,255,0.05);
+  --sub-06: rgba(255,255,255,0.06);
+  --accent: #4ade80;
+  --accent-glow: rgba(74,222,128,0.12);
+  --nav-bg: rgba(0,0,0,0.80);
+  --mobile-menu: rgba(0,0,0,0.97);
+  --grid-line: rgba(255,255,255,0.02);
+  --ghost: rgba(255,255,255,0.05);
+  --chat-bg: #0b0b0b;
+  --chat-msg-bg: rgba(255,255,255,0.04);
+  --chat-msg-border: rgba(255,255,255,0.06);
+  --chat-msg-color: rgba(255,255,255,0.72);
+  --chat-input-bg: rgba(255,255,255,0.04);
+  --chat-input-border: rgba(255,255,255,0.08);
+  --chat-input-color: #ffffff;
+  --chat-input-ph: rgba(255,255,255,0.35);
+  --chat-divider: rgba(255,255,255,0.05);
+  --chat-shadow: 0 24px 80px rgba(0,0,0,0.90), 0 0 0 1px rgba(74,222,128,0.15), inset 0 1px 0 rgba(255,255,255,0.06);
+}
+
 html { scroll-behavior: smooth; }
 
 body {
-  background-color: #050505;
-  color: #ffffff;
+  background-color: var(--bg);
+  color: var(--text);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  cursor: none;
 }
 
-/* Dot grid pattern — used in hero and global background layer */
+/* Hide cursor only on pointer-precise (mouse) devices */
+@media (pointer: fine) {
+  body, .cursor-none {
+    cursor: none;
+  }
+}
+
+/* Restore cursor on touch devices */
+@media (pointer: coarse) {
+  body, .cursor-none, input, textarea, select, a, button {
+    cursor: auto;
+  }
+}
+
+/* Dot grid pattern — uses theme token so it adapts to light/dark */
 .dot-grid {
-  background-image: radial-gradient(circle, rgba(255,255,255,0.07) 1px, transparent 1px);
+  background-image: radial-gradient(circle, var(--border-07) 1px, transparent 1px);
   background-size: 28px 28px;
 }
 
@@ -36,8 +133,10 @@ body {
   animation: aurora-shift 8s ease-in-out infinite;
 }
 
-/* Keep native cursor inside iframes / text inputs */
-input, textarea, iframe, select { cursor: auto; }
+/* Keep native cursor inside iframes / text inputs (pointer-fine devices only) */
+@media (pointer: fine) {
+  input, textarea, iframe, select { cursor: auto; }
+}
 
 ::selection { background: rgba(74,222,128,0.3); color: #fff; }
 

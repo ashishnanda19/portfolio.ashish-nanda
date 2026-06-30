@@ -1,15 +1,14 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, createContext, useContext } from 'react';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import type { Variants } from 'framer-motion';
 import {
   Github, Linkedin, Mail, Twitter, Instagram, Download,
   Menu, X, ChevronDown, Terminal, Code2, Database, Cloud,
-  Layers, ArrowUpRight, Server,
-  FileText, Globe
+  Layers, ArrowUpRight, Server, FileText, Globe, Sun, Moon,
 } from 'lucide-react';
 
 // ─────────────────────────────────────────────────────────────
-// SOUND ENGINE  (Web Audio API — unlocked on first click)
+// SOUND ENGINE
 // ─────────────────────────────────────────────────────────────
 let _ctx: AudioContext | null = null;
 const getCtx = (): AudioContext | null => {
@@ -48,8 +47,23 @@ const sfx = {
   },
 };
 
-// Pentatonic scale for musical name hover
 const PENTA = [261.6, 293.7, 329.6, 392.0, 440.0, 523.3, 587.3, 659.3, 783.9, 880.0];
+
+// ─────────────────────────────────────────────────────────────
+// THEME
+// ─────────────────────────────────────────────────────────────
+const ThemeCtx = createContext(false);
+
+const useTheme = () => {
+  const [dark, setDark] = useState(() => {
+    try { return localStorage.getItem('theme') === 'dark'; } catch { return false; }
+  });
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', dark);
+    try { localStorage.setItem('theme', dark ? 'dark' : 'light'); } catch {}
+  }, [dark]);
+  return { dark, toggle: () => setDark(d => !d) };
+};
 
 // ─────────────────────────────────────────────────────────────
 // DATA
@@ -112,15 +126,6 @@ const PROJECTS = [
   },
   {
     num: '02',
-    name: 'InvoSync',
-    desc: 'AI-powered B2B SaaS automating invoice-to-receipt matching with 98%+ accuracy via OCR and fuzzy-matching reconciliation.',
-    tech: ['React.js', 'Flask', 'Python', 'Tesseract OCR', 'RapidFuzz', 'Pandas'],
-    github: 'https://github.com/ashishnanda19/InvoSync',
-    color: '#34d399',
-    icon: FileText,
-  },
-  {
-    num: '03',
     name: 'SafeTrail',
     desc: 'Cross-platform SOS platform with real-time location tracking, ML-based threat analysis, and instant emergency response for personal safety.',
     tech: ['Node.js', 'Socket.IO', 'PostgreSQL', 'PostGIS', 'Redis', 'BullMQ'],
@@ -129,13 +134,22 @@ const PROJECTS = [
     icon: Globe,
   },
   {
-    num: '04',
+    num: '03',
     name: 'HyperRAG-X',
     desc: 'Enterprise-grade hybrid RAG platform with multi-agent orchestration and a tripartite storage architecture, Vector (Qdrant), Graph (NetworkX), and Memory cache, powered by Groq + LLaMA for near-instant verifiable knowledge synthesis.',
     tech: ['Python', 'FastAPI', 'LangGraph', 'LangChain', 'Qdrant', 'NetworkX', 'Groq', 'Supabase', 'React', 'Playwright'],
     github: 'https://github.com/ashishnanda19/HyperRAG-X',
     color: '#f59e0b',
     icon: Server,
+  },
+  {
+    num: '04',
+    name: 'InvoSync',
+    desc: 'AI-powered B2B SaaS automating invoice-to-receipt matching with 98%+ accuracy via OCR and fuzzy-matching reconciliation.',
+    tech: ['React.js', 'Flask', 'Python', 'Tesseract OCR', 'RapidFuzz', 'Pandas'],
+    github: 'https://github.com/ashishnanda19/InvoSync',
+    color: '#34d399',
+    icon: FileText,
   },
   {
     num: '05',
@@ -176,18 +190,18 @@ const fadeIn: Variants = {
 // CUSTOM CURSOR  (desktop only)
 // ─────────────────────────────────────────────────────────────
 const Cursor = () => {
-  const [pos, setPos]       = useState({ x: -200, y: -200 });
-  const [big, setBig]       = useState(false);
+  const [pos, setPos]         = useState({ x: -200, y: -200 });
+  const [big, setBig]         = useState(false);
   const [clicked, setClicked] = useState(false);
   const touch = useRef(false);
 
   useEffect(() => {
     touch.current = window.matchMedia('(pointer: coarse)').matches;
     if (touch.current) return;
-    const mv  = (e: MouseEvent) => setPos({ x: e.clientX, y: e.clientY });
+    const mv   = (e: MouseEvent) => setPos({ x: e.clientX, y: e.clientY });
     const over = (e: MouseEvent) => setBig(!!(e.target as HTMLElement).closest('a,button,[data-cursor]'));
-    const dn  = () => { setClicked(true); sfx.click(); };
-    const up  = () => setClicked(false);
+    const dn   = () => { setClicked(true); sfx.click(); };
+    const up   = () => setClicked(false);
     window.addEventListener('mousemove', mv);
     window.addEventListener('mouseover', over);
     window.addEventListener('mousedown', dn);
@@ -219,9 +233,10 @@ const Cursor = () => {
 };
 
 // ─────────────────────────────────────────────────────────────
-// MUSICAL NAME  — each letter plays a pentatonic note on hover
+// MUSICAL NAME
 // ─────────────────────────────────────────────────────────────
 const MusicalName = ({ name }: { name: string }) => {
+  const dark = useContext(ThemeCtx);
   const [lit, setLit] = useState<number | null>(null);
   return (
     <span className="select-none">
@@ -231,7 +246,7 @@ const MusicalName = ({ name }: { name: string }) => {
           style={{ display: ch === ' ' ? 'inline' : 'inline-block', cursor: 'default' }}
           onHoverStart={() => { if (ch !== ' ') { setLit(i); sfx.note(PENTA[i % PENTA.length]); } }}
           onHoverEnd={() => setLit(null)}
-          animate={{ color: lit === i ? '#4ade80' : '#ffffff', y: lit === i ? -6 : 0 }}
+          animate={{ color: lit === i ? '#4ade80' : (dark ? '#ffffff' : '#0a0a0a'), y: lit === i ? -6 : 0 }}
           transition={{ type: 'spring', stiffness: 600, damping: 30 }}
         >
           {ch}
@@ -245,9 +260,9 @@ const MusicalName = ({ name }: { name: string }) => {
 // TYPEWRITER
 // ─────────────────────────────────────────────────────────────
 const Typewriter = ({ words }: { words: string[] }) => {
-  const [idx, setIdx]   = useState(0);
-  const [text, setText] = useState('');
-  const [del, setDel]   = useState(false);
+  const [idx, setIdx]       = useState(0);
+  const [text, setText]     = useState('');
+  const [del, setDel]       = useState(false);
   const [paused, setPaused] = useState(false);
 
   useEffect(() => {
@@ -263,9 +278,9 @@ const Typewriter = ({ words }: { words: string[] }) => {
   }, [text, del, paused, idx, words]);
 
   return (
-    <span className="font-mono text-[#4ade80]">
+    <span className="font-mono" style={{ color: 'var(--accent)' }}>
       {text}
-      <span className="inline-block w-[2px] h-[1em] bg-[#4ade80] ml-[2px] align-middle animate-pulse" />
+      <span className="inline-block w-[2px] h-[1em] ml-[2px] align-middle animate-pulse" style={{ background: 'var(--accent)' }} />
     </span>
   );
 };
@@ -274,7 +289,9 @@ const Typewriter = ({ words }: { words: string[] }) => {
 // PARTICLE CANVAS BACKGROUND
 // ─────────────────────────────────────────────────────────────
 const Particles = () => {
+  const dark = useContext(ThemeCtx);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+
   useEffect(() => {
     const canvas = canvasRef.current; if (!canvas) return;
     const ctx = canvas.getContext('2d'); if (!ctx) return;
@@ -289,12 +306,17 @@ const Particles = () => {
     let id: number;
     const draw = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const lineAlpha = dark ? 0.07 : 0.05;
+      const dotColor  = dark ? 'rgba(74,222,128,0.14)' : 'rgba(21,128,61,0.12)';
       pts.forEach((a, i) => {
         pts.slice(i + 1).forEach(b => {
           const d = Math.hypot(a.x - b.x, a.y - b.y);
           if (d < 130) {
             ctx.beginPath();
-            ctx.strokeStyle = `rgba(74,222,128,${0.07 * (1 - d / 130)})`;
+            const alpha = lineAlpha * (1 - d / 130);
+            ctx.strokeStyle = dark
+              ? `rgba(74,222,128,${alpha})`
+              : `rgba(21,128,61,${alpha})`;
             ctx.lineWidth = .8;
             ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
           }
@@ -304,14 +326,15 @@ const Particles = () => {
         if (a.y < 0 || a.y > canvas.height) a.vy *= -1;
         ctx.beginPath();
         ctx.arc(a.x, a.y, 1.5, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(74,222,128,0.18)';
+        ctx.fillStyle = dotColor;
         ctx.fill();
       });
       id = requestAnimationFrame(draw);
     };
     draw();
     return () => { cancelAnimationFrame(id); ro.disconnect(); };
-  }, []);
+  }, [dark]);
+
   return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full opacity-70" />;
 };
 
@@ -332,7 +355,8 @@ const Marquee = ({ items, reverse }: { items: string[]; reverse?: boolean }) => 
             key={i}
             data-cursor
             onMouseEnter={() => { sfx.note(PENTA[i % PENTA.length]); }}
-            className="px-4 py-1.5 border border-white/10 rounded-full text-sm text-white/60 hover:text-white hover:border-[#4ade80]/40 hover:bg-[#4ade80]/5 transition-all cursor-default select-none"
+            className="px-4 py-1.5 rounded-full text-sm transition-all cursor-default select-none hover:border-[#4ade80]/40 hover:bg-[#4ade80]/5"
+            style={{ border: '1px solid var(--border-08)', color: 'var(--text-45)' }}
           >
             {s}
           </span>
@@ -341,9 +365,6 @@ const Marquee = ({ items, reverse }: { items: string[]; reverse?: boolean }) => 
     </div>
   );
 };
-
-// ─────────────────────────────────────────────────────────────
-// (TiltCard removed — editorial layout no longer uses 3D tilt)
 
 // ─────────────────────────────────────────────────────────────
 // SECTION WRAPPER
@@ -355,14 +376,13 @@ const Section = ({ id, children, className = '' }: { id?: string; children: Reac
   const glowRight = idx % 2 === 0;
   return (
     <section id={id} className={`py-24 px-4 sm:px-6 lg:px-8 relative overflow-hidden ${className}`}>
-      {/* Per-section green glow */}
       <div
         className="absolute pointer-events-none rounded-full blur-[180px]"
         style={{
           width: '700px', height: '700px',
           top: '50%', transform: 'translateY(-50%)',
           [glowRight ? 'right' : 'left']: '-200px',
-          background: 'radial-gradient(circle, rgba(74,222,128,0.07), transparent 70%)',
+          background: 'radial-gradient(circle, var(--accent-glow), transparent 70%)',
         }}
       />
       <div className="max-w-7xl mx-auto relative z-10">{children}</div>
@@ -370,11 +390,27 @@ const Section = ({ id, children, className = '' }: { id?: string; children: Reac
   );
 };
 
+// ─────────────────────────────────────────────────────────────
+// THEME TOGGLE
+// ─────────────────────────────────────────────────────────────
+const ThemeToggle = ({ dark, toggle }: { dark: boolean; toggle: () => void }) => (
+  <motion.button
+    onClick={() => { toggle(); sfx.click(); }}
+    onMouseEnter={sfx.hover}
+    whileHover={{ scale: 1.08 }}
+    whileTap={{ scale: 0.92 }}
+    className="p-2 rounded-lg transition-colors"
+    style={{ color: 'var(--text-45)', background: 'var(--sub-04)' }}
+    title={dark ? 'Switch to light mode' : 'Switch to dark mode'}
+  >
+    {dark ? <Sun size={16} /> : <Moon size={16} />}
+  </motion.button>
+);
 
 // ─────────────────────────────────────────────────────────────
 // NAVBAR
 // ─────────────────────────────────────────────────────────────
-const Navbar = () => {
+const Navbar = ({ dark, toggleTheme }: { dark: boolean; toggleTheme: () => void }) => {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen]         = useState(false);
   useEffect(() => {
@@ -388,32 +424,45 @@ const Navbar = () => {
     <>
       <motion.nav
         initial={{ y: -70, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.5 }}
-        className={`fixed top-0 inset-x-0 z-50 h-14 flex items-center transition-all duration-300 ${scrolled ? 'bg-black/80 backdrop-blur-xl border-b border-white/[0.06]' : 'bg-transparent'}`}
+        className="fixed top-0 inset-x-0 z-50 h-14 flex items-center transition-all duration-300"
+        style={scrolled ? {
+          background: 'var(--nav-bg)',
+          backdropFilter: 'blur(20px)',
+          borderBottom: '1px solid var(--border-07)',
+        } : { background: 'transparent' }}
       >
         <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 flex items-center justify-between">
           <button onClick={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); sfx.click(); }}
             className="flex items-center gap-2.5 group">
             <span className="w-8 h-8 rounded-lg bg-[#4ade80] flex items-center justify-center font-black text-black text-sm shadow-[0_0_16px_rgba(74,222,128,0.5)] group-hover:shadow-[0_0_24px_rgba(74,222,128,0.7)] transition-shadow">AN</span>
-            <span className="hidden sm:block text-white font-semibold text-sm tracking-wide">Ashish Nanda</span>
+            <span className="hidden sm:block font-semibold text-sm tracking-wide" style={{ color: 'var(--text)' }}>Ashish Nanda</span>
           </button>
 
           <div className="hidden md:flex items-center gap-1">
             {NAV.map(l => (
               <button key={l} onClick={() => go(l)} onMouseEnter={sfx.hover}
-                className="px-3.5 py-1.5 text-sm text-white/50 hover:text-white transition-colors rounded-lg hover:bg-white/[0.05] font-mono tracking-wide">
+                className="px-3.5 py-1.5 text-sm transition-colors rounded-lg font-mono tracking-wide hover:bg-[#4ade80]/[0.07]"
+                style={{ color: 'var(--text-45)' }}
+                onMouseOver={e => { (e.currentTarget as HTMLElement).style.color = 'var(--text)'; }}
+                onMouseOut={e => { (e.currentTarget as HTMLElement).style.color = 'var(--text-45)'; }}>
                 {l}
               </button>
             ))}
           </div>
 
           <div className="flex items-center gap-2">
-            <a href="https://drive.google.com/file/d/1Yp1aWurR-TzRDN0AdTkzjhdf7ag_iWXL/view?usp=sharing" target="_blank" rel="noreferrer"
+            <ThemeToggle dark={dark} toggle={toggleTheme} />
+            <a href="https://drive.google.com/file/d/1Yp1aWurR-TzRDN0AdTkzjhdf7ag_iWXL/view?usp=sharing"
+               target="_blank" rel="noreferrer"
                onMouseEnter={sfx.hover} onClick={sfx.click}
                className="hidden sm:flex items-center gap-1.5 px-4 py-1.5 bg-[#4ade80] hover:bg-[#86efac] text-black text-sm font-bold rounded-lg transition-colors shadow-[0_0_16px_rgba(74,222,128,0.35)]">
               <Download size={13} /> Resume
             </a>
             <button onClick={() => setOpen(true)} onMouseEnter={sfx.hover}
-              className="md:hidden p-2 text-white/60 hover:text-white"><Menu size={20} /></button>
+              className="md:hidden p-2 transition-colors"
+              style={{ color: 'var(--text-55)' }}>
+              <Menu size={20} />
+            </button>
           </div>
         </div>
       </motion.nav>
@@ -421,21 +470,29 @@ const Navbar = () => {
       <AnimatePresence>
         {open && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] bg-black/97 backdrop-blur-xl flex flex-col">
+            className="fixed inset-0 z-[100] backdrop-blur-xl flex flex-col"
+            style={{ background: 'var(--mobile-menu)' }}>
             <div className="flex justify-between items-center px-6 h-14">
               <span className="w-8 h-8 rounded-lg bg-[#4ade80] flex items-center justify-center font-black text-black text-sm">AN</span>
-              <button onClick={() => setOpen(false)} className="text-white/60 hover:text-white"><X size={22} /></button>
+              <div className="flex items-center gap-2">
+                <ThemeToggle dark={dark} toggle={toggleTheme} />
+                <button onClick={() => setOpen(false)} style={{ color: 'var(--text-55)' }}><X size={22} /></button>
+              </div>
             </div>
             <div className="flex-1 flex flex-col items-center justify-center gap-8">
               {NAV.map((l, i) => (
                 <motion.button key={l} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.06 }} onClick={() => go(l)}
-                  className="text-3xl font-bold text-white/60 hover:text-white transition-colors font-mono">
-                  <span className="text-[#4ade80] text-lg mr-3 font-mono">0{i + 1}.</span>{l}
+                  className="text-3xl font-bold transition-colors font-mono"
+                  style={{ color: 'var(--text-55)' }}
+                  onMouseOver={e => { (e.currentTarget as HTMLElement).style.color = 'var(--text)'; }}
+                  onMouseOut={e => { (e.currentTarget as HTMLElement).style.color = 'var(--text-55)'; }}>
+                  <span className="text-lg mr-3 font-mono" style={{ color: 'var(--accent)' }}>0{i + 1}.</span>{l}
                 </motion.button>
               ))}
               <a href="https://drive.google.com/file/d/1Yp1aWurR-TzRDN0AdTkzjhdf7ag_iWXL/view?usp=sharing"
-                 target="_blank" rel="noreferrer" className="mt-4 flex items-center gap-2 px-6 py-3 bg-[#4ade80] text-black font-bold rounded-xl">
+                 target="_blank" rel="noreferrer"
+                 className="mt-4 flex items-center gap-2 px-6 py-3 bg-[#4ade80] text-black font-bold rounded-xl">
                 <Download size={16} /> Download Resume
               </a>
             </div>
@@ -452,51 +509,44 @@ const Navbar = () => {
 const Hero = () => {
   const ref = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] });
-  const yText    = useTransform(scrollYProgress, [0, 1], [0, -60]);
-  const opText   = useTransform(scrollYProgress, [0, 0.6], [1, 0]);
+  const yText  = useTransform(scrollYProgress, [0, 1], [0, -60]);
+  const opText = useTransform(scrollYProgress, [0, 0.6], [1, 0]);
 
   return (
     <section ref={ref} id="hero" className="relative min-h-screen flex items-center overflow-hidden">
-      {/* Particle bg */}
       <div className="absolute inset-0 z-0"><Particles /></div>
-
-      {/* Glow orbs */}
-      <div className="absolute top-1/4 right-1/4 w-[500px] h-[500px] bg-[#4ade80]/4 rounded-full blur-[160px] pointer-events-none" />
-
-      {/* Grid overlay */}
+      <div className="absolute top-1/4 right-1/4 w-[500px] h-[500px] rounded-full blur-[160px] pointer-events-none bg-[#4ade80]/4" />
       <div className="absolute inset-0 pointer-events-none z-0"
-        style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.02) 1px,transparent 1px)', backgroundSize: '48px 48px' }} />
+        style={{ backgroundImage: `linear-gradient(var(--grid-line) 1px,transparent 1px),linear-gradient(90deg,var(--grid-line) 1px,transparent 1px)`, backgroundSize: '48px 48px' }} />
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
         <motion.div style={{ y: yText, opacity: opText }}
           className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center min-h-[calc(100vh-56px)] py-20">
 
-          {/* ── LEFT TEXT ── */}
           <motion.div variants={stagger} initial="hidden" animate="visible" className="space-y-7 order-2 lg:order-1">
-
             <motion.div variants={fadeUp} className="flex items-center gap-3">
               <span className="relative flex h-2.5 w-2.5">
                 <span className="animate-ping absolute h-full w-full rounded-full bg-[#4ade80] opacity-60" />
                 <span className="relative rounded-full h-2.5 w-2.5 bg-[#4ade80]" />
               </span>
-              <span className="text-[#4ade80] text-xs font-mono tracking-widest uppercase">Open to opportunities</span>
+              <span className="text-xs font-mono tracking-widest uppercase" style={{ color: 'var(--accent)' }}>Open to opportunities</span>
             </motion.div>
 
             <motion.div variants={fadeUp}>
-              <p className="text-white/40 font-mono text-sm mb-3 tracking-widest">CS @ MUJ '27 — Research Intern @ IIT(BHU)</p>
+              <p className="font-mono text-sm mb-3 tracking-widest" style={{ color: 'var(--text-40)' }}>CS @ MUJ '27 — Research Intern @ IIT(BHU)</p>
               <h1 className="text-[3.2rem] sm:text-[4.5rem] lg:text-[5.2rem] font-black leading-[0.95] tracking-tight">
                 <MusicalName name="ASHISH" /><br />
                 <MusicalName name="KUMAR" /><br />
                 <MusicalName name="NANDA" />
               </h1>
-              <p className="text-white/25 text-xs font-mono mt-2 tracking-widest">↑ hover letters to play music</p>
+              <p className="text-xs font-mono mt-2 tracking-widest" style={{ color: 'var(--text-25)' }}>↑ hover letters to play music</p>
             </motion.div>
 
-            <motion.div variants={fadeUp} className="text-lg sm:text-xl font-semibold text-white/80 h-8">
+            <motion.div variants={fadeUp} className="text-lg sm:text-xl font-semibold h-8" style={{ color: 'var(--text-65)' }}>
               <Typewriter words={['Full Stack Developer', 'Backend Engineer', 'Problem Solver', 'Research Intern @ IIT(BHU)']} />
             </motion.div>
 
-            <motion.p variants={fadeUp} className="text-white/50 text-base leading-relaxed max-w-md">
+            <motion.p variants={fadeUp} className="text-base leading-relaxed max-w-md" style={{ color: 'var(--text-55)' }}>
               Building scalable systems, shipping fast, and writing code that doesn't wake you up at 3 AM.
             </motion.p>
 
@@ -508,7 +558,10 @@ const Hero = () => {
               </a>
               <button onClick={() => { document.getElementById('projects')?.scrollIntoView({ behavior: 'smooth' }); sfx.click(); }}
                 onMouseEnter={sfx.hover}
-                className="inline-flex items-center gap-2 px-5 py-2.5 border border-white/15 hover:border-white/30 text-white font-semibold text-sm rounded-xl transition-all hover:bg-white/[0.04]">
+                className="inline-flex items-center gap-2 px-5 py-2.5 font-semibold text-sm rounded-xl transition-all"
+                style={{ border: '1px solid var(--border-15)', color: 'var(--text)' }}
+                onMouseOver={e => { (e.currentTarget as HTMLElement).style.background = 'var(--sub-04)'; }}
+                onMouseOut={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}>
                 View Work <ArrowUpRight size={14} />
               </button>
             </motion.div>
@@ -518,39 +571,35 @@ const Hero = () => {
                 <motion.a key={s.name} href={s.url} target="_blank" rel="noreferrer" title={s.name}
                   whileHover={{ scale: 1.2, y: -3 }} whileTap={{ scale: 0.9 }}
                   onHoverStart={sfx.hover}
-                  className="p-2.5 text-white/30 hover:text-[#4ade80] transition-colors rounded-lg hover:bg-[#4ade80]/[0.06]">
+                  className="p-2.5 transition-colors rounded-lg hover:bg-[#4ade80]/[0.06] hover:text-[#4ade80]"
+                  style={{ color: 'var(--text-30)' }}>
                   <s.icon size={18} />
                 </motion.a>
               ))}
             </motion.div>
           </motion.div>
 
-          {/* ── RIGHT IMAGE ── */}
           <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, delay: 0.2 }}
             className="flex justify-center lg:justify-end order-1 lg:order-2">
             <div className="relative">
-              {/* Rotating ring */}
               <motion.div animate={{ rotate: 360 }} transition={{ duration: 14, repeat: Infinity, ease: 'linear' }}
                 className="absolute inset-[-10px] rounded-full border-[2px] border-dashed border-[#4ade80]/25" />
               <motion.div animate={{ rotate: -360 }} transition={{ duration: 22, repeat: Infinity, ease: 'linear' }}
                 className="absolute inset-[-22px] rounded-full border border-purple-500/15" />
-
-              {/* Image */}
               <div className="relative w-56 h-56 sm:w-72 sm:h-72 lg:w-[320px] lg:h-[320px] rounded-full overflow-hidden ring-2 ring-[#4ade80]/20 shadow-[0_0_80px_rgba(74,222,128,0.12)]">
                 <img src="/portimage.png" alt="Ashish Kumar Nanda" className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
               </div>
-
             </div>
           </motion.div>
         </motion.div>
       </div>
 
-      {/* Scroll cue */}
       <motion.button initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.8 }}
         onClick={() => { document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' }); sfx.click(); }}
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-white/25 hover:text-white/50 transition-colors">
+        className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 transition-colors hover:opacity-60"
+        style={{ color: 'var(--text-25)' }}>
         <span className="text-[9px] font-mono uppercase tracking-[0.25em]">scroll</span>
         <motion.div animate={{ y: [0, 8, 0] }} transition={{ repeat: Infinity, duration: 1.8 }}>
           <ChevronDown size={16} />
@@ -561,68 +610,65 @@ const Hero = () => {
 };
 
 // ─────────────────────────────────────────────────────────────
-// ABOUT  — Editorial magazine layout
+// ABOUT
 // ─────────────────────────────────────────────────────────────
 const About = () => (
   <Section id="about">
     <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.15 }}>
 
-      {/* Section label */}
-      <motion.p variants={fadeUp} className="text-[#4ade80] font-mono text-xs tracking-[0.25em] uppercase mb-16">
+      <motion.p variants={fadeUp} className="font-mono text-xs tracking-[0.25em] uppercase mb-16" style={{ color: 'var(--accent)' }}>
         01 — About
       </motion.p>
 
-      {/* Pull-quote headline */}
       <motion.h2 variants={fadeUp}
-        className="text-5xl sm:text-6xl lg:text-7xl font-black text-white leading-[1.05] tracking-tight mb-16 max-w-5xl">
+        className="text-5xl sm:text-6xl lg:text-7xl font-black leading-[1.05] tracking-tight mb-16 max-w-5xl"
+        style={{ color: 'var(--text)' }}>
         I build systems that<br />
-        <span className="text-white/20">scale, ship, and</span>{' '}
-        <span className="italic text-[#4ade80]">matter.</span>
+        <span style={{ color: 'var(--text-20)' }}>scale, ship, and</span>{' '}
+        <span className="italic" style={{ color: 'var(--accent)' }}>matter.</span>
       </motion.h2>
 
-      {/* Two-column bio */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.15fr] gap-12 lg:gap-20 mb-16">
         <motion.div variants={fadeUp} className="border-l-2 border-[#4ade80]/30 pl-7">
-          <p className="text-white/65 text-base leading-[1.9]">
-            Final-year CSE student at <span className="text-white font-medium">Manipal University Jaipur</span>{' '}
-            and Research Intern at <span className="text-white font-medium">IIT (BHU)</span>, building
+          <p className="text-base leading-[1.9]" style={{ color: 'var(--text-65)' }}>
+            Final-year CSE student at <span className="font-medium" style={{ color: 'var(--text)' }}>Manipal University Jaipur</span>{' '}
+            and Research Intern at <span className="font-medium" style={{ color: 'var(--text)' }}>IIT (BHU)</span>, building
             mathematical models for net-zero integration in MSMEs.
           </p>
-          <p className="text-white/40 text-sm leading-[1.9] mt-5">
+          <p className="text-sm leading-[1.9] mt-5" style={{ color: 'var(--text-40)' }}>
             My work spans distributed systems architecture, AI-powered automation, and production-grade
             backend infrastructure — shipped across three products with real users. Backend-first, comfortable
             across the entire stack. When not building: guitarist and Google Developer Groups Technical Member.
           </p>
         </motion.div>
 
-        {/* Bare stat numbers — SWE-role specific */}
-        <motion.div variants={fadeUp} className="grid grid-cols-2 gap-px bg-white/[0.05]">
+        <motion.div variants={fadeUp} className="grid grid-cols-2 gap-px" style={{ background: 'var(--border-05)' }}>
           {[
             { val: '10+', label: 'Systems in production', color: '#4ade80' },
-            { val: '5×', label: "Dean's List", color: '#a78bfa' },
-            { val: 'IIT', label: 'BHU Research Intern', color: '#fb923c' },
-            { val: "'27", label: 'B.Tech CSE · MUJ', color: '#38bdf8' },
+            { val: '5×',  label: "Dean's List",           color: '#a78bfa' },
+            { val: 'IIT', label: 'BHU Research Intern',   color: '#fb923c' },
+            { val: "'27", label: 'B.Tech CSE · MUJ',      color: '#38bdf8' },
           ].map(s => (
-            <div key={s.label} className="bg-[#030303] p-7 flex flex-col justify-between">
+            <div key={s.label} className="p-7 flex flex-col justify-between" style={{ background: 'var(--surface)' }}>
               <div className="text-4xl font-black tracking-tight" style={{ color: s.color }}>{s.val}</div>
-              <div className="text-white/30 text-xs font-mono uppercase tracking-widest mt-3">{s.label}</div>
+              <div className="text-xs font-mono uppercase tracking-widest mt-3" style={{ color: 'var(--text-30)' }}>{s.label}</div>
             </div>
           ))}
         </motion.div>
       </div>
 
-      {/* Currently bar */}
       <motion.div variants={fadeUp}
-        className="flex flex-wrap items-center gap-4 pt-8 border-t border-white/[0.06]">
-        <span className="flex items-center gap-2 text-xs font-mono text-white/30 uppercase tracking-widest">
+        className="flex flex-wrap items-center gap-4 pt-8"
+        style={{ borderTop: '1px solid var(--border-07)' }}>
+        <span className="flex items-center gap-2 text-xs font-mono uppercase tracking-widest" style={{ color: 'var(--text-30)' }}>
           <span className="w-1.5 h-1.5 rounded-full bg-[#4ade80] shadow-[0_0_6px_#4ade80] animate-pulse" />
           Currently
         </span>
-        <span className="text-sm text-white/55">Research Intern · IIT (BHU)</span>
-        <span className="text-white/15">·</span>
-        <span className="text-sm text-white/55">Technical Member · Google Developer Groups</span>
-        <span className="text-white/15">·</span>
-        <span className="text-sm text-white/55">Open to SWE roles</span>
+        <span className="text-sm" style={{ color: 'var(--text-55)' }}>Research Intern · IIT (BHU)</span>
+        <span style={{ color: 'var(--text-15)' }}>·</span>
+        <span className="text-sm" style={{ color: 'var(--text-55)' }}>Technical Member · Google Developer Groups</span>
+        <span style={{ color: 'var(--text-15)' }}>·</span>
+        <span className="text-sm" style={{ color: 'var(--text-55)' }}>Open to SWE roles</span>
       </motion.div>
 
     </motion.div>
@@ -630,107 +676,96 @@ const About = () => (
 );
 
 // ─────────────────────────────────────────────────────────────
-// EXPERIENCE  — Editorial horizontal strips
+// EXPERIENCE
 // ─────────────────────────────────────────────────────────────
 const Experience = () => (
   <Section id="experience">
     <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.15 }}>
 
-      <motion.p variants={fadeUp} className="text-[#4ade80] font-mono text-xs tracking-[0.25em] uppercase mb-16">
+      <motion.p variants={fadeUp} className="font-mono text-xs tracking-[0.25em] uppercase mb-16" style={{ color: 'var(--accent)' }}>
         02 — Experience
       </motion.p>
 
-      {/* Experience strips */}
       {EXPERIENCE.map((e, i) => (
         <motion.div key={i} variants={fadeUp}
-          className="group grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-6 sm:gap-12 py-10 border-t border-white/[0.06] hover:border-white/[0.12] transition-colors">
-          {/* Left: period + company */}
+          className="group grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-6 sm:gap-12 py-10 transition-colors"
+          style={{ borderTop: '1px solid var(--border-07)' }}>
           <div className="flex sm:flex-col justify-between sm:justify-start gap-2 sm:gap-0">
-            <span className="text-white/25 text-xs font-mono tabular-nums leading-relaxed">{e.period}</span>
-            <span className="text-white/50 text-sm font-mono sm:mt-2 text-right sm:text-left">{e.company}</span>
+            <span className="text-xs font-mono tabular-nums leading-relaxed" style={{ color: 'var(--text-25)' }}>{e.period}</span>
+            <span className="text-sm font-mono sm:mt-2 text-right sm:text-left" style={{ color: 'var(--text-50)' }}>{e.company}</span>
           </div>
-          {/* Right: role + desc + tags */}
           <div>
-            <h3 className="text-white font-black text-2xl sm:text-3xl tracking-tight mb-4
-              group-hover:text-[#4ade80] transition-colors duration-300">{e.role}</h3>
-            <p className="text-white/45 text-sm leading-[1.8] mb-5 max-w-xl">{e.desc}</p>
+            <h3 className="font-black text-2xl sm:text-3xl tracking-tight mb-4 transition-colors duration-300 group-hover:text-[#4ade80]"
+              style={{ color: 'var(--text)' }}>{e.role}</h3>
+            <p className="text-sm leading-[1.8] mb-5 max-w-xl" style={{ color: 'var(--text-45)' }}>{e.desc}</p>
             <div className="flex flex-wrap gap-x-5 gap-y-1">
               {e.tags.map(t => (
-                <span key={t} className="text-xs font-mono text-white/30 uppercase tracking-wider">{t}</span>
+                <span key={t} className="text-xs font-mono uppercase tracking-wider" style={{ color: 'var(--text-30)' }}>{t}</span>
               ))}
             </div>
           </div>
         </motion.div>
       ))}
 
-      {/* Closing border */}
-      <div className="border-t border-white/[0.06]" />
-
+      <div style={{ borderTop: '1px solid var(--border-07)' }} />
     </motion.div>
   </Section>
 );
 
 // ─────────────────────────────────────────────────────────────
-// EDUCATION  — Standalone typographic feature section
+// EDUCATION
 // ─────────────────────────────────────────────────────────────
 const Education = () => (
   <Section id="education">
     <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.15 }}>
 
-      <motion.p variants={fadeUp} className="text-[#4ade80] font-mono text-xs tracking-[0.25em] uppercase mb-16">
+      <motion.p variants={fadeUp} className="font-mono text-xs tracking-[0.25em] uppercase mb-16" style={{ color: 'var(--accent)' }}>
         03 — Education
       </motion.p>
 
-      {/* Year watermark + institution name */}
       <div className="relative mb-16">
-        {/* Ghost year range as background element */}
         <motion.div variants={fadeIn}
-          className="absolute -top-4 right-0 font-black text-[clamp(3rem,10vw,7rem)] leading-none
-            tracking-tighter select-none pointer-events-none tabular-nums text-right"
-          style={{ color: 'rgba(255,255,255,0.05)' }}>
+          className="absolute -top-4 right-0 font-black text-[clamp(3rem,10vw,7rem)] leading-none tracking-tighter select-none pointer-events-none tabular-nums text-right"
+          style={{ color: 'var(--ghost)' }}>
           2023—2027
         </motion.div>
 
         <motion.h2 variants={fadeUp}
-          className="relative text-5xl sm:text-6xl lg:text-7xl font-black text-white tracking-tight leading-[1.04] mb-4">
+          className="relative text-5xl sm:text-6xl lg:text-7xl font-black tracking-tight leading-[1.04] mb-4"
+          style={{ color: 'var(--text)' }}>
           Manipal<br />
-          <span className="text-white/30">University</span>
+          <span style={{ color: 'var(--text-30)' }}>University</span>
         </motion.h2>
-        <motion.p variants={fadeUp} className="text-white/30 text-sm font-mono tracking-widest uppercase">
+        <motion.p variants={fadeUp} className="text-sm font-mono tracking-widest uppercase" style={{ color: 'var(--text-30)' }}>
           Jaipur, Rajasthan · India
         </motion.p>
       </div>
 
-      {/* Degree + metrics row */}
       <motion.div variants={fadeUp}
-        className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-8 sm:gap-20 items-end
-          pb-10 border-b border-white/[0.08]">
+        className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-8 sm:gap-20 items-end pb-10"
+        style={{ borderBottom: '1px solid var(--border-08)' }}>
         <div>
-          <p className="text-white/50 text-base leading-relaxed mb-1">
-            Bachelor of Technology
-          </p>
-          <p className="text-white font-semibold text-xl">
-            Computer Science &amp; Engineering <span className="text-white/30 font-normal">(IoT)</span>
+          <p className="text-base leading-relaxed mb-1" style={{ color: 'var(--text-50)' }}>Bachelor of Technology</p>
+          <p className="font-semibold text-xl" style={{ color: 'var(--text)' }}>
+            Computer Science &amp; Engineering <span className="font-normal" style={{ color: 'var(--text-30)' }}>(IoT)</span>
           </p>
         </div>
         <div className="flex items-baseline gap-3">
-          <span className="text-[#4ade80] font-black text-5xl tracking-tight">9.22</span>
-          <span className="text-white/30 text-base font-mono">/ 10 CGPA</span>
+          <span className="font-black text-5xl tracking-tight" style={{ color: 'var(--accent)' }}>9.22</span>
+          <span className="text-base font-mono" style={{ color: 'var(--text-30)' }}>/ 10 CGPA</span>
         </div>
       </motion.div>
 
-      {/* Highlights strip */}
-      <motion.div variants={fadeIn}
-        className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-white/[0.04] mt-px">
+      <motion.div variants={fadeIn} className="grid grid-cols-2 sm:grid-cols-4 gap-px mt-px" style={{ background: 'var(--border-05)' }}>
         {[
-          { label: 'Duration', val: '2023 – 2027' },
+          { label: 'Duration',    val: '2023 – 2027' },
           { label: 'Distinction', val: "5× Dean's List" },
-          { label: 'Community', val: 'GDG Technical' },
-          { label: 'Standing', val: 'Top of class' },
+          { label: 'Community',   val: 'GDG Technical' },
+          { label: 'Standing',    val: 'Top of class' },
         ].map(item => (
-          <div key={item.label} className="bg-[#030303] px-6 py-5">
-            <div className="text-white/20 text-[10px] font-mono uppercase tracking-[0.2em] mb-2">{item.label}</div>
-            <div className="text-white/70 text-sm font-medium">{item.val}</div>
+          <div key={item.label} className="px-6 py-5" style={{ background: 'var(--surface)' }}>
+            <div className="text-[10px] font-mono uppercase tracking-[0.2em] mb-2" style={{ color: 'var(--text-20)' }}>{item.label}</div>
+            <div className="text-sm font-medium" style={{ color: 'var(--text-65)' }}>{item.val}</div>
           </div>
         ))}
       </motion.div>
@@ -740,9 +775,10 @@ const Education = () => (
 );
 
 // ─────────────────────────────────────────────────────────────
-// SKILLS  — Typographic column layout
+// SKILLS
 // ─────────────────────────────────────────────────────────────
 const SkillItem = ({ skill, color, idx }: { skill: string; color: string; idx: number }) => {
+  const dark = useContext(ThemeCtx);
   const [hovered, setHovered] = useState(false);
   return (
     <motion.div
@@ -756,7 +792,7 @@ const SkillItem = ({ skill, color, idx }: { skill: string; color: string; idx: n
         style={{ originX: 0, color }}
         className="text-xs font-mono">→</motion.span>
       <span className="font-mono text-sm transition-colors duration-150"
-        style={{ color: hovered ? color : 'rgba(255,255,255,0.4)' }}>{skill}</span>
+        style={{ color: hovered ? color : (dark ? 'rgba(255,255,255,0.4)' : 'rgba(10,10,10,0.45)') }}>{skill}</span>
     </motion.div>
   );
 };
@@ -765,24 +801,23 @@ const Skills = () => (
   <Section id="skills">
     <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }}>
 
-      <motion.p variants={fadeUp} className="text-[#4ade80] font-mono text-xs tracking-[0.25em] uppercase mb-16">
+      <motion.p variants={fadeUp} className="font-mono text-xs tracking-[0.25em] uppercase mb-16" style={{ color: 'var(--accent)' }}>
         04 — Skills
       </motion.p>
 
-      <motion.h2 variants={fadeUp}
-        className="text-4xl sm:text-5xl font-black text-white tracking-tight mb-2">
+      <motion.h2 variants={fadeUp} className="text-4xl sm:text-5xl font-black tracking-tight mb-2" style={{ color: 'var(--text)' }}>
         Tech I work with
       </motion.h2>
-      <motion.p variants={fadeUp} className="text-white/25 text-xs font-mono mb-14">
+      <motion.p variants={fadeUp} className="text-xs font-mono mb-14" style={{ color: 'var(--text-25)' }}>
         hover any skill to hear it
       </motion.p>
 
-      {/* 5-column typographic skill grid */}
       <motion.div variants={fadeIn}
-        className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-px bg-white/[0.05] mb-16">
+        className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-px mb-16"
+        style={{ background: 'var(--border-05)' }}>
         {SKILL_GROUPS.map((g) => (
-          <div key={g.cat} className="bg-[#030303] p-6">
-            <div className="flex items-center gap-2 mb-5 pb-4 border-b border-white/[0.06]">
+          <div key={g.cat} className="p-6" style={{ background: 'var(--surface)' }}>
+            <div className="flex items-center gap-2 mb-5 pb-4" style={{ borderBottom: '1px solid var(--border-07)' }}>
               <g.icon size={12} style={{ color: g.color }} />
               <span className="text-[10px] font-mono uppercase tracking-[0.2em]" style={{ color: g.color }}>{g.cat}</span>
             </div>
@@ -795,7 +830,6 @@ const Skills = () => (
         ))}
       </motion.div>
 
-      {/* Single marquee accent row */}
       <motion.div variants={fadeIn} className="opacity-30">
         <Marquee items={[...ROW1, ...ROW2]} />
       </motion.div>
@@ -805,65 +839,60 @@ const Skills = () => (
 );
 
 // ─────────────────────────────────────────────────────────────
-// PROJECTS  — Editorial numbered strips
+// PROJECTS
 // ─────────────────────────────────────────────────────────────
 const Projects = () => (
   <Section id="projects">
     <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }}>
 
-      <motion.p variants={fadeUp} className="text-[#4ade80] font-mono text-xs tracking-[0.25em] uppercase mb-16">
+      <motion.p variants={fadeUp} className="font-mono text-xs tracking-[0.25em] uppercase mb-16" style={{ color: 'var(--accent)' }}>
         05 — Projects
       </motion.p>
 
       {PROJECTS.map((p) => (
         <motion.div key={p.num} variants={fadeUp}
-          className="group grid grid-cols-1 sm:grid-cols-[80px_1fr] gap-6 sm:gap-12 py-12 border-t border-white/[0.06] hover:border-white/[0.14] transition-colors relative overflow-hidden">
+          className="group grid grid-cols-1 sm:grid-cols-[80px_1fr] gap-6 sm:gap-12 py-12 transition-colors relative overflow-hidden"
+          style={{ borderTop: '1px solid var(--border-07)' }}>
 
-          {/* Faded ghost number — left column on desktop, absolute on mobile */}
           <div className="hidden sm:flex items-start pt-1">
             <span className="font-black text-6xl leading-none tabular-nums select-none transition-colors duration-300"
-              style={{ color: `${p.color}18` }}
-              onMouseEnter={() => {}}>
+              style={{ color: `${p.color}18` }}>
               {p.num}
             </span>
           </div>
 
-          {/* Content */}
           <div>
-            {/* Mobile ghost number */}
             <span className="sm:hidden font-black text-5xl leading-none tabular-nums select-none block mb-3"
               style={{ color: `${p.color}20` }}>{p.num}</span>
 
-            <h3 className="text-white font-black text-3xl sm:text-4xl tracking-tight leading-none mb-4
-              group-hover:text-[#4ade80] transition-colors duration-300">{p.name}</h3>
+            <h3 className="font-black text-3xl sm:text-4xl tracking-tight leading-none mb-4 transition-colors duration-300 group-hover:text-[#4ade80]"
+              style={{ color: 'var(--text)' }}>{p.name}</h3>
 
-            <p className="text-white/40 text-sm leading-[1.8] mb-6 max-w-2xl">{p.desc}</p>
+            <p className="text-sm leading-[1.8] mb-6 max-w-2xl" style={{ color: 'var(--text-40)' }}>{p.desc}</p>
 
-            {/* Tech — inline monospace, no pills */}
             <div className="flex flex-wrap gap-x-4 gap-y-1 mb-6">
               {p.tech.map(t => (
-                <span key={t} className="text-xs font-mono text-white/25">{t}</span>
+                <span key={t} className="text-xs font-mono" style={{ color: 'var(--text-25)' }}>{t}</span>
               ))}
             </div>
 
-            {/* GitHub link — minimal text */}
             <a href={p.github} target="_blank" rel="noreferrer"
               onMouseEnter={sfx.hover} onClick={sfx.click}
               className="inline-flex items-center gap-1.5 text-sm font-mono transition-colors duration-200"
               style={{ color: `${p.color}60` }}
-              onMouseOver={e => (e.currentTarget.style.color = p.color)}
-              onMouseOut={e => (e.currentTarget.style.color = `${p.color}60`)}>
+              onMouseOver={e => { (e.currentTarget as HTMLElement).style.color = p.color; }}
+              onMouseOut={e => { (e.currentTarget as HTMLElement).style.color = `${p.color}60`; }}>
               <Github size={13} /> View source <ArrowUpRight size={12} />
             </a>
           </div>
         </motion.div>
       ))}
 
-      {/* Closing border + more link */}
-      <div className="border-t border-white/[0.06] pt-8">
+      <div className="pt-8" style={{ borderTop: '1px solid var(--border-07)' }}>
         <a href="https://github.com/ashishnanda19" target="_blank" rel="noreferrer"
           onMouseEnter={sfx.hover}
-          className="inline-flex items-center gap-2 text-xs font-mono text-white/25 hover:text-white/60 transition-colors group">
+          className="inline-flex items-center gap-2 text-xs font-mono transition-colors group hover:opacity-60"
+          style={{ color: 'var(--text-25)' }}>
           More work on GitHub <ArrowUpRight size={12} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
         </a>
       </div>
@@ -873,42 +902,38 @@ const Projects = () => (
 );
 
 // ─────────────────────────────────────────────────────────────
-// AWARDS  — Numbered editorial list
+// AWARDS
 // ─────────────────────────────────────────────────────────────
 const Awards = () => (
   <Section id="awards">
     <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.15 }}>
 
-      <motion.p variants={fadeUp} className="text-[#4ade80] font-mono text-xs tracking-[0.25em] uppercase mb-16">
+      <motion.p variants={fadeUp} className="font-mono text-xs tracking-[0.25em] uppercase mb-16" style={{ color: 'var(--accent)' }}>
         06 — Awards
       </motion.p>
 
-      <motion.h2 variants={fadeUp}
-        className="text-4xl sm:text-5xl font-black text-white tracking-tight mb-16">
+      <motion.h2 variants={fadeUp} className="text-4xl sm:text-5xl font-black tracking-tight mb-16" style={{ color: 'var(--text)' }}>
         Recognition
       </motion.h2>
 
-      {/* Award strips */}
       {AWARDS.map((a, i) => (
         <motion.div key={i} variants={fadeUp}
           onMouseEnter={sfx.hover}
-          className="group grid grid-cols-[48px_1fr_auto] sm:grid-cols-[64px_1fr_auto] items-start gap-4 sm:gap-8
-            py-6 border-t border-white/[0.06] hover:border-white/[0.14] transition-colors cursor-default">
+          className="group grid grid-cols-[48px_1fr_auto] sm:grid-cols-[64px_1fr_auto] items-start gap-4 sm:gap-8 py-6 transition-colors cursor-default"
+          style={{ borderTop: '1px solid var(--border-07)' }}>
 
-          {/* Faded index */}
-          <span className="font-black text-2xl sm:text-3xl tabular-nums select-none leading-none pt-0.5
-            transition-colors duration-300 group-hover:text-white/20"
-            style={{ color: 'rgba(255,255,255,0.06)' }}>
+          <span className="font-black text-2xl sm:text-3xl tabular-nums select-none leading-none pt-0.5 transition-colors duration-300"
+            style={{ color: 'var(--text-10)' }}>
             {String(i + 1).padStart(2, '0')}
           </span>
 
-          {/* Award text */}
-          <span className="text-white/50 group-hover:text-white text-sm sm:text-base font-medium
-            transition-colors duration-200 leading-relaxed pt-0.5">
+          <span className="text-sm sm:text-base font-medium transition-colors duration-200 leading-relaxed pt-0.5"
+            style={{ color: 'var(--text-50)' }}
+            onMouseOver={e => { (e.currentTarget as HTMLElement).style.color = 'var(--text)'; }}
+            onMouseOut={e => { (e.currentTarget as HTMLElement).style.color = 'var(--text-50)'; }}>
             {a.text}
           </span>
 
-          {/* Badge */}
           <span className="font-black text-[10px] font-mono px-2 py-1 rounded mt-0.5 flex-shrink-0"
             style={{ color: a.color, background: `${a.color}12`, border: `1px solid ${a.color}20` }}>
             {a.badge}
@@ -916,29 +941,30 @@ const Awards = () => (
         </motion.div>
       ))}
 
-      {/* Closing border */}
-      <div className="border-t border-white/[0.06]" />
+      <div style={{ borderTop: '1px solid var(--border-07)' }} />
 
-      {/* Coding profiles — clean strip */}
       <motion.div variants={fadeUp} className="mt-14">
-        <p className="text-white/20 text-[10px] font-mono uppercase tracking-[0.25em] mb-6">
+        <p className="text-[10px] font-mono uppercase tracking-[0.25em] mb-6" style={{ color: 'var(--text-20)' }}>
           Competitive Programming
         </p>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-px bg-white/[0.05]">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-px" style={{ background: 'var(--border-05)' }}>
           {[
-            { name: 'LeetCode', url: 'https://leetcode.com/ashishnanda19', rating: '1,743', rank: 'Top 10.78%', solved: '500+ solved', color: '#fb923c' },
-            { name: 'CodeChef', url: 'https://codechef.com/users/ashishnanda19', rating: '1,468', rank: '2 Star', solved: 'Max rating', color: '#38bdf8' },
-            { name: 'GitHub',   url: 'https://github.com/ashishnanda19', rating: 'Open', rank: 'Source', solved: 'ashishnanda19', color: '#94a3b8' },
+            { name: 'LeetCode', url: 'https://leetcode.com/ashishnanda19',        rating: '1,743', rank: 'Top 10.78%', solved: '500+ solved',  color: '#fb923c' },
+            { name: 'CodeChef', url: 'https://codechef.com/users/ashishnanda19', rating: '1,468', rank: '2 Star',      solved: 'Max rating',   color: '#38bdf8' },
+            { name: 'GitHub',   url: 'https://github.com/ashishnanda19',          rating: 'Open',  rank: 'Source',     solved: 'ashishnanda19', color: '#94a3b8' },
           ].map(cp => (
             <a key={cp.name} href={cp.url} target="_blank" rel="noreferrer" onMouseEnter={sfx.hover}
-              className="group bg-[#030303] p-6 flex flex-col gap-1 hover:bg-white/[0.02] transition-colors">
+              className="group p-6 flex flex-col gap-1 transition-colors"
+              style={{ background: 'var(--surface)' }}
+              onMouseOver={e => { (e.currentTarget as HTMLElement).style.background = 'var(--sub-03)'; }}
+              onMouseOut={e => { (e.currentTarget as HTMLElement).style.background = 'var(--surface)'; }}>
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-mono uppercase tracking-widest" style={{ color: cp.color }}>{cp.name}</span>
-                <ArrowUpRight size={12} className="text-white/15 group-hover:text-white/40 transition-colors" />
+                <ArrowUpRight size={12} style={{ color: 'var(--text-15)' }} />
               </div>
-              <div className="font-black text-2xl text-white">{cp.rating}</div>
-              <div className="text-white/30 text-xs font-mono">{cp.rank}</div>
-              <div className="text-white/20 text-[10px] font-mono mt-1">{cp.solved}</div>
+              <div className="font-black text-2xl" style={{ color: 'var(--text)' }}>{cp.rating}</div>
+              <div className="text-xs font-mono" style={{ color: 'var(--text-30)' }}>{cp.rank}</div>
+              <div className="text-[10px] font-mono mt-1" style={{ color: 'var(--text-20)' }}>{cp.solved}</div>
             </a>
           ))}
         </div>
@@ -953,15 +979,16 @@ const Awards = () => (
 // ─────────────────────────────────────────────────────────────
 const Contact = () => (
   <Section id="contact" className="relative overflow-hidden">
-    {/* Gradient glow behind */}
     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
       <div className="w-96 h-96 bg-[#4ade80]/5 rounded-full blur-[100px]" />
     </div>
     <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.3 }}>
       <motion.div variants={fadeUp} className="max-w-2xl mx-auto text-center relative">
-        <p className="text-[#4ade80] font-mono text-xs tracking-[0.25em] uppercase mb-4">07 — Contact</p>
-        <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-tight mb-6">Let's Build<br />Something Together</h2>
-        <p className="text-white/45 text-base leading-relaxed mb-10">
+        <p className="font-mono text-xs tracking-[0.25em] uppercase mb-4" style={{ color: 'var(--accent)' }}>07 — Contact</p>
+        <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-tight mb-6" style={{ color: 'var(--text)' }}>
+          Let's Build<br />Something Together
+        </h2>
+        <p className="text-base leading-relaxed mb-10" style={{ color: 'var(--text-45)' }}>
           Looking for new roles, collaborations, or just want to talk tech? My inbox is always open.
         </p>
         <motion.a href="mailto:ashish.nanda1902@gmail.com"
@@ -974,9 +1001,14 @@ const Contact = () => (
           {SOCIALS.map(s => (
             <motion.a key={s.name} href={s.url} target="_blank" rel="noreferrer"
               whileHover={{ scale: 1.06, y: -3 }} whileTap={{ scale: 0.96 }} onHoverStart={sfx.hover}
-              className="flex items-center gap-2.5 px-4 py-2.5 bg-white/[0.03] border border-white/[0.08] rounded-xl hover:border-white/15 transition-all group">
-              <s.icon size={16} className="text-white/40 group-hover:text-[#4ade80] transition-colors" />
-              <span className="text-white/50 group-hover:text-white text-sm font-mono transition-colors">{s.name}</span>
+              className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl transition-all group"
+              style={{ background: 'var(--sub-03)', border: '1px solid var(--border-08)' }}>
+              <s.icon size={16} className="group-hover:text-[#4ade80] transition-colors" style={{ color: 'var(--text-40)' }} />
+              <span className="text-sm font-mono transition-colors" style={{ color: 'var(--text-50)' }}
+                onMouseOver={e => { (e.currentTarget as HTMLElement).style.color = 'var(--text)'; }}
+                onMouseOut={e => { (e.currentTarget as HTMLElement).style.color = 'var(--text-50)'; }}>
+                {s.name}
+              </span>
             </motion.a>
           ))}
         </div>
@@ -989,12 +1021,12 @@ const Contact = () => (
 // FOOTER + SCROLL TOP
 // ─────────────────────────────────────────────────────────────
 const Footer = () => (
-  <footer className="py-8 px-6 border-t border-white/[0.05]">
+  <footer className="py-8 px-6" style={{ borderTop: '1px solid var(--border-05)' }}>
     <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
-      <div className="text-white/20 text-xs font-mono">
-        Built by <span className="text-white/40">Ashish Kumar Nanda</span>
+      <div className="text-xs font-mono" style={{ color: 'var(--text-20)' }}>
+        Built by <span style={{ color: 'var(--text-40)' }}>Ashish Kumar Nanda</span>
       </div>
-      <div className="text-white/20 text-xs font-mono">© 2025</div>
+      <div className="text-xs font-mono" style={{ color: 'var(--text-20)' }}>© 2025</div>
     </div>
   </footer>
 );
@@ -1021,8 +1053,73 @@ const ScrollTop = () => {
 };
 
 // ─────────────────────────────────────────────────────────────
-// APP
+// QUOTE SPLASH
 // ─────────────────────────────────────────────────────────────
+const QuoteSplash = ({ onDone }: { onDone: () => void }) => {
+  useEffect(() => {
+    const t = setTimeout(onDone, 2500);
+    const onKey = () => onDone();
+    window.addEventListener('keydown', onKey, { once: true });
+    return () => { clearTimeout(t); window.removeEventListener('keydown', onKey); };
+  }, [onDone]);
+
+  return (
+    <motion.div
+      key="splash"
+      initial={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.9, ease: 'easeInOut' }}
+      onClick={onDone}
+      className="fixed inset-0 z-99999 flex items-center justify-center px-6 select-none"
+      style={{ background: 'var(--bg)', cursor: 'pointer' }}
+    >
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#4ade80]/5 rounded-full blur-[200px]" />
+      </div>
+      <div className="relative max-w-2xl mx-auto text-center">
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 0.12, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.2 }}
+          className="font-black leading-none mb-2 select-none"
+          style={{ fontSize: 'clamp(5rem, 15vw, 8rem)', color: 'var(--accent)' }}>
+          "
+        </motion.div>
+        <motion.p
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1, delay: 0.5 }}
+          className="font-semibold leading-relaxed"
+          style={{ fontSize: 'clamp(1.1rem, 3vw, 1.75rem)', color: 'var(--text)' }}>
+          If you're offered a seat on a rocket ship, don't ask what seat!
+        </motion.p>
+        <motion.div
+          initial={{ scaleX: 0 }}
+          animate={{ scaleX: 1 }}
+          transition={{ duration: 0.7, delay: 1.4 }}
+          className="mx-auto mt-7 mb-7 h-px w-12 origin-left"
+          style={{ background: 'var(--accent)', opacity: 0.4 }}
+        />
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.8, delay: 1.6 }}
+          className="font-mono text-sm tracking-[0.22em] uppercase"
+          style={{ color: 'var(--accent)' }}>
+          — Sheryl Sandberg
+        </motion.p>
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6, delay: 1.8 }}
+          className="mt-14 text-[10px] font-mono tracking-[0.25em] uppercase"
+          style={{ color: 'var(--text-15)' }}>
+          click anywhere to continue
+        </motion.p>
+      </div>
+    </motion.div>
+  );
+};
 
 // ─────────────────────────────────────────────────────────────
 // CHATBOT — knowledge base
@@ -1031,7 +1128,7 @@ const BOT_KB: [RegExp, string][] = [
   [/hi|hello|hey|sup|yo|meow/i, "Hey there! 👋 I'm AshBot, Ashish's AI assistant.\nAsk me about his projects, skills, awards, or how to reach him!"],
   [/about|who|yourself|intro|tell me/i, "Ashish is a Backend Engineer & third-year CSE student at Manipal University Jaipur, currently a Research Intern at IIT (BHU).\n\nHe ships distributed systems, AI-powered products, and production-grade infrastructure. 5× Dean's List · Open to SWE roles."],
   [/skill|tech|stack|language|framework|tool|database|cloud|devops/i, "Here's Ashish's full stack ⚡\n\n▸ Languages   C++, Python, Java, JS, SQL\n▸ Frameworks  React, Node.js, Express, Flask\n▸ Databases   MongoDB, PostgreSQL, Redis\n▸ Cloud       AWS, Docker, Jenkins, CI/CD\n▸ Tools       Git, Socket.IO, BullMQ, REST APIs"],
-  [/project|built|build|made|created|shipped/i, "Ashish has shipped 5 production systems:\n\n01 Distributed Video Transcoder\n   AWS · Redis · Docker · ffmpeg\n\n02 InvoSync — AI invoice SaaS\n   98%+ OCR accuracy · Flask · React\n\n03 SafeTrail — SOS platform\n   Socket.IO · PostGIS · BullMQ\n\n04 HyperRAG-X — Enterprise RAG\n   LangGraph · Qdrant · Groq · FastAPI\n\n05 Music Mindscape — Spotify map\n   D3-Force · Gemini 2.5 · Supabase"],
+  [/project|built|build|made|created|shipped/i, "Ashish has shipped 5 production systems:\n\n01 Distributed Video Transcoder\n   AWS · Redis · Docker · ffmpeg\n\n02 SafeTrail — SOS platform\n   Socket.IO · PostGIS · BullMQ\n\n03 HyperRAG-X — Enterprise RAG\n   LangGraph · Qdrant · Groq · FastAPI\n\n04 InvoSync — AI invoice SaaS\n   98%+ OCR accuracy · Flask · React\n\n05 Music Mindscape — Spotify map\n   D3-Force · Gemini 2.5 · Supabase"],
   [/award|achiev|honor|win|leetcode|codechef|grid|iic|dean/i, "Achievements 🏆\n\n▸ IIC Finalist (International Innovation Challenge)\n▸ Flipkart GRiD 7.0 National Semifinalist\n▸ 5× Dean's List of Excellence\n▸ LeetCode — 500+ solved · Peak 1,743 rating\n▸ CodeChef — 2 Star · Max 1468"],
   [/educ|univer|college|muj|manipal|degree|cgpa|gpa/i, "Education 📚\n\nB.Tech CSE (IoT) — Manipal University Jaipur\n2023 – 2027 · CGPA 9.22/10\n5× Dean's List · GDG Technical Member"],
   [/experi|intern|iit|bhu|gdg|google developer/i, "Experience 💼\n\n🔬 Research Intern @ IIT (BHU)\n   Dec 2025 – Present\n   Net-zero models for MSMEs\n\n👥 Technical Member @ GDG\n   Sept 2023 – Oct 2025\n   Workshops · Hackathons · Cloud"],
@@ -1044,32 +1141,26 @@ const getResponse = (q: string) => {
 };
 
 // ─────────────────────────────────────────────────────────────
-// BOT SVG ICON — cat-ears + robot face
+// BOT ICON — Discord-bot style (rounded head, pill eyes, headphone panels)
 // ─────────────────────────────────────────────────────────────
 const BotIcon = ({ size = 24, className = '' }: { size?: number; className?: string }) => (
   <svg width={size} height={size} viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-    {/* Cat ears */}
-    <path d="M8 14 L5 5 L14 11 Z" fill="currentColor" fillOpacity="0.9"/>
-    <path d="M28 14 L31 5 L22 11 Z" fill="currentColor" fillOpacity="0.9"/>
-    {/* Inner ear shine */}
-    <path d="M8.5 13 L6.5 7 L12 11 Z" fill="currentColor" fillOpacity="0.25"/>
-    <path d="M27.5 13 L29.5 7 L24 11 Z" fill="currentColor" fillOpacity="0.25"/>
-    {/* Head */}
-    <rect x="5" y="12" width="26" height="20" rx="5" fill="currentColor" fillOpacity="0.08" stroke="currentColor" strokeWidth="1.4"/>
-    {/* Eyes — glowing rectangles */}
-    <rect x="9" y="17" width="7" height="6" rx="1.5" fill="currentColor" fillOpacity="0.2"/>
-    <rect x="20" y="17" width="7" height="6" rx="1.5" fill="currentColor" fillOpacity="0.2"/>
-    <rect x="10" y="18" width="5" height="4" rx="1" fill="currentColor"/>
-    <rect x="21" y="18" width="5" height="4" rx="1" fill="currentColor"/>
-    {/* Mouth smile */}
-    <path d="M13 27 Q18 30.5 23 27" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" fill="none"/>
-    {/* Antenna */}
-    <line x1="18" y1="12" x2="18" y2="6" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
-    <circle cx="18" cy="4.5" r="2" fill="currentColor"/>
-    <circle cx="18" cy="4.5" r="1" fill="currentColor" fillOpacity="0.3"/>
-    {/* Side bolts */}
-    <circle cx="8" cy="28" r="1.2" fill="currentColor" fillOpacity="0.35"/>
-    <circle cx="28" cy="28" r="1.2" fill="currentColor" fillOpacity="0.35"/>
+    {/* Head — rounded rectangle, no ears */}
+    <rect x="5" y="6" width="26" height="24" rx="8" fill="currentColor" fillOpacity="0.08" stroke="currentColor" strokeWidth="1.4"/>
+    {/* Left eye — tall pill */}
+    <rect x="8" y="11" width="8" height="11" rx="4" fill="currentColor" fillOpacity="0.15"/>
+    <rect x="9.5" y="12.5" width="5" height="8" rx="2.5" fill="currentColor"/>
+    {/* Right eye — tall pill */}
+    <rect x="20" y="11" width="8" height="11" rx="4" fill="currentColor" fillOpacity="0.15"/>
+    <rect x="21.5" y="12.5" width="5" height="8" rx="2.5" fill="currentColor"/>
+    {/* Eye glints */}
+    <rect x="10.5" y="13.5" width="1.5" height="1.5" rx="0.75" fill="currentColor" fillOpacity="0.4"/>
+    <rect x="22.5" y="13.5" width="1.5" height="1.5" rx="0.75" fill="currentColor" fillOpacity="0.4"/>
+    {/* Smile */}
+    <path d="M12 26 Q18 30 24 26" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+    {/* Side panels — headphone / Discord bot style */}
+    <rect x="1" y="13" width="4" height="8" rx="2" fill="currentColor" fillOpacity="0.35"/>
+    <rect x="31" y="13" width="4" height="8" rx="2" fill="currentColor" fillOpacity="0.35"/>
   </svg>
 );
 
@@ -1109,9 +1200,7 @@ const CatBot = () => {
 
   return (
     <>
-      {/* ── Toggle button ──────────────────────────────── */}
       <div className="fixed bottom-6 left-6 z-50">
-        {/* Pulse ring */}
         {!open && (
           <motion.div
             animate={{ scale: [1, 1.5, 1], opacity: [0.35, 0, 0.35] }}
@@ -1127,7 +1216,6 @@ const CatBot = () => {
           className="relative w-14 h-14 rounded-2xl flex items-center justify-center shadow-[0_0_28px_rgba(74,222,128,0.5)] overflow-hidden"
           style={{ background: 'linear-gradient(135deg, #4ade80 0%, #22c55e 100%)' }}
         >
-          {/* Inner shine */}
           <div className="absolute top-0 left-0 right-0 h-1/2 bg-white/[0.12] rounded-t-2xl pointer-events-none" />
           <AnimatePresence mode="wait">
             {open
@@ -1140,7 +1228,6 @@ const CatBot = () => {
         </motion.button>
       </div>
 
-      {/* ── Chat window ────────────────────────────────── */}
       <AnimatePresence>
         {open && (
           <motion.div
@@ -1148,37 +1235,29 @@ const CatBot = () => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.92 }}
             transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-            className="fixed bottom-[92px] left-6 z-50 w-[320px] sm:w-[355px] flex flex-col rounded-2xl overflow-hidden"
-            style={{
-              maxHeight: '480px',
-              boxShadow: '0 24px 80px rgba(0,0,0,0.9), 0 0 0 1px rgba(74,222,128,0.15), inset 0 1px 0 rgba(255,255,255,0.06)',
-              background: '#0b0b0b',
-            }}
+            className="fixed bottom-[92px] left-4 right-4 sm:left-6 sm:right-auto sm:w-[355px] z-50 flex flex-col rounded-2xl overflow-hidden"
+            style={{ maxHeight: '480px', boxShadow: 'var(--chat-shadow)', background: 'var(--chat-bg)' }}
           >
-            {/* Gradient top accent line */}
             <div className="h-[2px] flex-shrink-0" style={{ background: 'linear-gradient(90deg, #4ade80, #86efac 40%, #a78bfa 70%, transparent)' }} />
 
-            {/* Header */}
             <div className="flex items-center gap-3 px-4 py-3 flex-shrink-0 relative"
-              style={{ background: 'linear-gradient(135deg, rgba(74,222,128,0.06) 0%, transparent 60%)' }}>
-              {/* Avatar with scan line */}
+              style={{ background: 'linear-gradient(135deg, var(--accent-glow) 0%, transparent 60%)' }}>
               <div className="relative w-10 h-10 rounded-xl flex-shrink-0 overflow-hidden"
-                style={{ background: 'linear-gradient(135deg, rgba(74,222,128,0.12), rgba(74,222,128,0.04))', border: '1px solid rgba(74,222,128,0.25)' }}>
+                style={{ background: 'linear-gradient(135deg, var(--accent-glow), transparent)', border: '1px solid rgba(74,222,128,0.25)' }}>
                 <BotIcon size={22} className="text-[#4ade80] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
-                {/* Scan line */}
                 <motion.div
                   animate={{ top: ['-10%', '110%'] }}
                   transition={{ duration: 1.6, repeat: Infinity, repeatDelay: 2.5, ease: 'linear' }}
                   className="absolute left-0 right-0 h-[2px] pointer-events-none"
                   style={{ background: 'linear-gradient(90deg, transparent, rgba(74,222,128,0.6), transparent)' }}
                 />
-                {/* Online dot */}
-                <div className="absolute bottom-0.5 right-0.5 w-2 h-2 rounded-full bg-[#4ade80] border border-[#0b0b0b]" />
+                <div className="absolute bottom-0.5 right-0.5 w-2 h-2 rounded-full bg-[#4ade80]"
+                  style={{ border: '1px solid var(--chat-bg)' }} />
               </div>
 
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="text-white font-bold text-sm tracking-tight">AshBot</span>
+                  <span className="font-bold text-sm tracking-tight" style={{ color: 'var(--text)' }}>AshBot</span>
                   <span className="text-[8px] font-mono px-1.5 py-0.5 rounded-md text-[#4ade80] border border-[#4ade80]/25"
                     style={{ background: 'rgba(74,222,128,0.08)' }}>AI</span>
                 </div>
@@ -1188,17 +1267,15 @@ const CatBot = () => {
                     transition={{ duration: 1.5, repeat: Infinity }}
                     className="w-1.5 h-1.5 rounded-full bg-[#4ade80] block flex-shrink-0"
                   />
-                  <span className="text-white/35 text-[10px] font-mono">Online · knows everything about Ashish</span>
+                  <span className="text-[10px] font-mono" style={{ color: 'var(--text-30)' }}>Online · knows everything about Ashish</span>
                 </div>
               </div>
             </div>
 
-            {/* Divider */}
-            <div className="h-px flex-shrink-0" style={{ background: 'linear-gradient(90deg, rgba(74,222,128,0.15), rgba(255,255,255,0.04), transparent)' }} />
+            <div className="h-px flex-shrink-0"
+              style={{ background: 'linear-gradient(90deg, var(--accent-glow), var(--border-05), transparent)' }} />
 
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto px-3 py-3 space-y-2.5 min-h-0"
-              style={{ scrollbarWidth: 'none' }}>
+            <div className="flex-1 overflow-y-auto px-3 py-3 space-y-2.5 min-h-0" style={{ scrollbarWidth: 'none' }}>
               {msgs.map((m) => (
                 <motion.div
                   key={m.id}
@@ -1216,11 +1293,11 @@ const CatBot = () => {
                   <div
                     className="max-w-[82%] text-[11px] leading-relaxed whitespace-pre-wrap"
                     style={m.role === 'bot' ? {
-                      background: 'rgba(255,255,255,0.04)',
-                      border: '1px solid rgba(255,255,255,0.06)',
+                      background: 'var(--chat-msg-bg)',
+                      border: '1px solid var(--chat-msg-border)',
                       borderRadius: '0 12px 12px 12px',
                       padding: '8px 12px',
-                      color: 'rgba(255,255,255,0.72)',
+                      color: 'var(--chat-msg-color)',
                     } : {
                       background: 'linear-gradient(135deg, #4ade80, #22c55e)',
                       borderRadius: '12px 0 12px 12px',
@@ -1235,16 +1312,14 @@ const CatBot = () => {
                 </motion.div>
               ))}
 
-              {/* Typing */}
               {typing && (
-                <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                  className="flex gap-2 items-end">
+                <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex gap-2 items-end">
                   <div className="w-6 h-6 rounded-lg flex-shrink-0 flex items-center justify-center"
                     style={{ background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.2)' }}>
                     <BotIcon size={13} className="text-[#4ade80]" />
                   </div>
                   <div className="px-3 py-2.5 flex gap-1.5 items-center"
-                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '0 12px 12px 12px' }}>
+                    style={{ background: 'var(--chat-msg-bg)', border: '1px solid var(--chat-msg-border)', borderRadius: '0 12px 12px 12px' }}>
                     {[0,1,2].map(i => (
                       <motion.span key={i}
                         animate={{ y: [0,-5,0], opacity: [0.4,1,0.4] }}
@@ -1258,7 +1333,6 @@ const CatBot = () => {
               <div ref={bottomRef} />
             </div>
 
-            {/* Chips */}
             <div className="px-3 pt-2 pb-1.5 flex gap-1.5 flex-wrap flex-shrink-0">
               {chips.map(c => (
                 <motion.button key={c}
@@ -1272,10 +1346,8 @@ const CatBot = () => {
               ))}
             </div>
 
-            {/* Divider */}
-            <div className="h-px mx-3 flex-shrink-0" style={{ background: 'rgba(255,255,255,0.05)' }} />
+            <div className="h-px mx-3 flex-shrink-0" style={{ background: 'var(--chat-divider)' }} />
 
-            {/* Input */}
             <div className="flex gap-2 px-3 py-3 flex-shrink-0">
               <input
                 type="text"
@@ -1283,16 +1355,16 @@ const CatBot = () => {
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && send()}
                 placeholder="Ask me anything…"
-                className="flex-1 text-[11px] text-white outline-none transition-all"
+                className="flex-1 text-[11px] outline-none transition-all"
                 style={{
-                  background: 'rgba(255,255,255,0.04)',
-                  border: '1px solid rgba(255,255,255,0.08)',
+                  background: 'var(--chat-input-bg)',
+                  border: '1px solid var(--chat-input-border)',
                   borderRadius: '10px',
                   padding: '8px 12px',
-                  color: 'white',
+                  color: 'var(--chat-input-color)',
                 }}
-                onFocus={e => (e.currentTarget.style.borderColor = 'rgba(74,222,128,0.4)')}
-                onBlur={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)')}
+                onFocus={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(74,222,128,0.4)'; }}
+                onBlur={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--chat-input-border)'; }}
               />
               <motion.button
                 onClick={() => send()}
@@ -1311,8 +1383,14 @@ const CatBot = () => {
   );
 };
 
+// ─────────────────────────────────────────────────────────────
+// APP
+// ─────────────────────────────────────────────────────────────
 export default function App() {
-  // Unlock audio context on first interaction
+  const { dark, toggle } = useTheme();
+  const [splashDone, setSplashDone] = useState(false);
+  const handleSplashDone = () => setSplashDone(true);
+
   useEffect(() => {
     const unlock = () => { getCtx(); };
     window.addEventListener('click', unlock, { once: true });
@@ -1324,48 +1402,46 @@ export default function App() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white overflow-x-hidden cursor-none">
-      {/* Fixed ambient background */}
-      <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
-        {/* Global dot grid */}
-        <div className="dot-grid absolute inset-0 opacity-60" />
+    <ThemeCtx.Provider value={dark}>
+      <AnimatePresence>
+        {!splashDone && <QuoteSplash onDone={handleSplashDone} />}
+      </AnimatePresence>
+      <div className="min-h-screen overflow-x-hidden cursor-none" style={{ background: 'var(--bg)', color: 'var(--text)' }}>
+        <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
+          <div className="dot-grid absolute inset-0 opacity-60" />
+          <div className="aurora-band absolute top-0 inset-x-0 h-[1.5px]" />
+          <div className="absolute -top-64 -right-48 w-[900px] h-[900px] bg-[#4ade80]/8 rounded-full blur-[220px]" />
+          <div className="absolute top-[20%] -left-64 w-[750px] h-[750px] bg-[#22c55e]/6 rounded-full blur-[200px]" />
+          <div className="absolute top-[55%] -right-32 w-[650px] h-[650px] bg-[#4ade80]/5 rounded-full blur-[180px]" />
+          <div className="absolute -bottom-48 left-[15%] w-[800px] h-[800px] bg-[#16a34a]/6 rounded-full blur-[200px]" />
+          <div className="absolute top-[40%] left-[35%] w-[500px] h-[500px] bg-[#4ade80]/3 rounded-full blur-[160px]" />
+        </div>
 
-        {/* Aurora accent line at very top */}
-        <div className="aurora-band absolute top-0 inset-x-0 h-[1.5px]" />
+        <Cursor />
+        <Navbar dark={dark} toggleTheme={toggle} />
 
-        {/* Green ambient orbs */}
-        <div className="absolute -top-64 -right-48 w-[900px] h-[900px] bg-[#4ade80]/8 rounded-full blur-[220px]" />
-        <div className="absolute top-[20%] -left-64 w-[750px] h-[750px] bg-[#22c55e]/6 rounded-full blur-[200px]" />
-        <div className="absolute top-[55%] -right-32 w-[650px] h-[650px] bg-[#4ade80]/5 rounded-full blur-[180px]" />
-        <div className="absolute -bottom-48 left-[15%] w-[800px] h-[800px] bg-[#16a34a]/6 rounded-full blur-[200px]" />
-        {/* Faint center depth glow */}
-        <div className="absolute top-[40%] left-[35%] w-[500px] h-[500px] bg-[#4ade80]/3 rounded-full blur-[160px]" />
+        <main>
+          <Hero />
+          <div className="h-px" style={{ backgroundImage: 'linear-gradient(to right, transparent, var(--border-07), transparent)' }} />
+          <About />
+          <div className="h-px" style={{ backgroundImage: 'linear-gradient(to right, transparent, var(--border-07), transparent)' }} />
+          <Experience />
+          <div className="h-px" style={{ backgroundImage: 'linear-gradient(to right, transparent, var(--border-07), transparent)' }} />
+          <Education />
+          <div className="h-px" style={{ backgroundImage: 'linear-gradient(to right, transparent, var(--border-07), transparent)' }} />
+          <Skills />
+          <div className="h-px" style={{ backgroundImage: 'linear-gradient(to right, transparent, var(--border-07), transparent)' }} />
+          <Projects />
+          <div className="h-px" style={{ backgroundImage: 'linear-gradient(to right, transparent, var(--border-07), transparent)' }} />
+          <Awards />
+          <div className="h-px" style={{ backgroundImage: 'linear-gradient(to right, transparent, var(--border-07), transparent)' }} />
+          <Contact />
+        </main>
+
+        <Footer />
+        <CatBot />
+        <ScrollTop />
       </div>
-
-      <Cursor />
-      <Navbar />
-
-      <main>
-        <Hero />
-        <div className="h-px bg-gradient-to-r from-transparent via-white/[0.07] to-transparent" />
-        <About />
-        <div className="h-px bg-gradient-to-r from-transparent via-white/[0.07] to-transparent" />
-        <Experience />
-        <div className="h-px bg-gradient-to-r from-transparent via-white/[0.07] to-transparent" />
-        <Education />
-        <div className="h-px bg-gradient-to-r from-transparent via-white/[0.07] to-transparent" />
-        <Skills />
-        <div className="h-px bg-gradient-to-r from-transparent via-white/[0.07] to-transparent" />
-        <Projects />
-        <div className="h-px bg-gradient-to-r from-transparent via-white/[0.07] to-transparent" />
-        <Awards />
-        <div className="h-px bg-gradient-to-r from-transparent via-white/[0.07] to-transparent" />
-        <Contact />
-      </main>
-
-      <Footer />
-      <CatBot />
-      <ScrollTop />
-    </div>
+    </ThemeCtx.Provider>
   );
 }
