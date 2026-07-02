@@ -189,3 +189,9 @@ body {
   0%, 100% { transform: translate(0, 0) scale(1); }
   50% { transform: translate(5vw, -4vh) scale(1.1); }
 }
+
+/* ── Hero height: vh fallback, svh where supported (mobile URL bars) ── */
+.hero-vh { height: 100vh; }
+@supports (height: 100svh) {
+  .hero-vh { height: 100svh; }
+}

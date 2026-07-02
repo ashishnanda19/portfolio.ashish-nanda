@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import * as THREE from 'three';
+import { Canvas, useFrame } from '@react-three/fiber';
 import {
   motion, AnimatePresence, MotionConfig,
   useScroll, useTransform, useSpring, useInView,
@@ -28,7 +30,8 @@ const REDUCED = typeof window !== 'undefined'
   && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const TOUCH = typeof window !== 'undefined'
   && window.matchMedia('(pointer: coarse)').matches;
-const RESUME_URL = 'https://drive.google.com/file/d/1Yp1aWurR-TzRDN0AdTkzjhdf7ag_iWXL/view?usp=sharing';
+const SMALL = typeof window !== 'undefined' && window.innerWidth < 640;
+const RESUME_URL = 'https://drive.google.com/file/d/1Sq69vpiR5Dg5fN66w-nQwEi_hUS-8lcg/view?usp=sharing';
 
 // ─────────────────────────────────────────────────────────────
 // SOUND ENGINE
@@ -134,11 +137,12 @@ const EXPERIENCE = [
 ];
 
 const SKILL_GROUPS = [
-  { cat: 'Languages', icon: Code2, skills: ['C++', 'Python', 'Java', 'JavaScript', 'SQL', 'HTML', 'CSS'] },
-  { cat: 'Frameworks', icon: Layers, skills: ['React.js', 'Node.js', 'Express.js', 'Flask', 'TailwindCSS'] },
-  { cat: 'Databases', icon: Database, skills: ['MongoDB', 'MySQL', 'PostgreSQL', 'Redis'] },
-  { cat: 'Cloud & DevOps', icon: Cloud, skills: ['AWS', 'Docker', 'Jenkins', 'CI/CD', 'Linux'] },
-  { cat: 'Tools', icon: Terminal, skills: ['Git', 'GitHub', 'Postman', 'REST APIs', 'Socket.IO', 'BullMQ'] },
+  { cat: 'Languages', icon: Code2, skills: ['C++', 'Java', 'Python', 'JavaScript', 'SQL'] },
+  { cat: 'Frontend', icon: Layers, skills: ['React', 'Tailwind CSS', 'HTML'] },
+  { cat: 'Backend & APIs', icon: Server, skills: ['Node.js', 'Express.js', 'FastAPI', 'REST APIs'] },
+  { cat: 'Databases', icon: Database, skills: ['MongoDB', 'MySQL', 'PostgreSQL', 'Redis', 'ChromaDB'] },
+  { cat: 'AI/ML & GenAI', icon: Terminal, skills: ['LangChain', 'LangGraph', 'Hugging Face', 'NumPy', 'Pandas'] },
+  { cat: 'Cloud & Tools', icon: Cloud, skills: ['AWS', 'Docker', 'Jenkins', 'CI/CD', 'Git', 'GitHub', 'Supabase'] },
 ];
 const ALL_SKILLS = SKILL_GROUPS.flatMap(g => g.skills);
 
@@ -199,8 +203,8 @@ const AWARDS = [
   { text: 'Finalist — International Innovation Challenge (IIC)', badge: 'IIC' },
   { text: 'National Semifinalist — Flipkart GRiD 7.0', badge: 'GRID' },
   { text: "5× Dean's List of Excellence", badge: '5×' },
-  { text: 'LeetCode — 500+ solved · Peak 1,743 rating (Top 10.78%)', badge: 'LC' },
-  { text: 'CodeChef — 2 Star · Max rating 1468', badge: 'CC' },
+  { text: 'LeetCode — 600+ solved · Peak 1,808 rating (Top 7.71%)', badge: 'LC' },
+  { text: 'CodeChef — 2 Star · Max rating 1,540', badge: 'CC' },
 ];
 
 // ─────────────────────────────────────────────────────────────
@@ -828,10 +832,10 @@ const RotatingBadge = () => (
           <path id="badge-circ" d="M50,50 m-40,0 a40,40 0 1,1 80,0 a40,40 0 1,1 -80,0" />
         </defs>
         <text
-          style={{ fontSize: '10.5px', letterSpacing: '2.6px', fontFamily: "'JetBrains Mono', monospace", fontWeight: 500 }}
+          style={{ fontSize: '9.5px', letterSpacing: '3.4px', fontFamily: "'JetBrains Mono', monospace", fontWeight: 500 }}
           fill="var(--text-55)"
         >
-          <textPath href="#badge-circ">OPEN TO WORK · SWE 2027 · LET'S TALK ·</textPath>
+          <textPath href="#badge-circ" startOffset="0">OPEN TO WORK — SWE 2027 —</textPath>
         </text>
       </motion.svg>
       <span
@@ -845,16 +849,222 @@ const RotatingBadge = () => (
 );
 
 // ─────────────────────────────────────────────────────────────
+// HERO 3D — WebGL particle wave (GPU shader, mouse-reactive)
+// ─────────────────────────────────────────────────────────────
+const WAVE_VERT = /* glsl */ `
+uniform float uTime;
+uniform vec2 uMouse;
+uniform vec2 uClick;
+uniform float uClickTime;
+uniform float uPixelRatio;
+varying float vElev;
+varying float vDepth;
+void main() {
+  vec3 p = position;
+  float t = uTime * 0.62;
+  float e = sin(p.x * 0.5 + t) * 0.55
+          + sin(p.z * 0.75 + t * 1.25) * 0.4
+          + sin((p.x + p.z) * 0.3 + t * 0.65) * 0.5;
+  // cursor swell — gently breathing
+  float md = distance(p.xz, vec2(uMouse.x * 13.0, -uMouse.y * 6.0 - 4.0));
+  e += smoothstep(5.5, 0.0, md) * (1.0 + sin(uTime * 2.6) * 0.25) * 1.25;
+  // click / tap shockwave — expanding damped ring
+  float ct = uTime - uClickTime;
+  float cd = distance(p.xz, uClick);
+  float ring = sin(cd * 2.4 - ct * 6.5) * exp(-cd * 0.28) * exp(-ct * 1.1) * step(0.001, ct);
+  e += ring * 1.7;
+  p.y += e;
+  vElev = e;
+  vec4 mv = modelViewMatrix * vec4(p, 1.0);
+  vDepth = -mv.z;
+  gl_Position = projectionMatrix * mv;
+  gl_PointSize = (1.5 + max(e, 0.0) * 1.2) * uPixelRatio * (34.0 / vDepth);
+}`;
+
+const WAVE_FRAG = /* glsl */ `
+varying float vElev;
+varying float vDepth;
+void main() {
+  float a = smoothstep(0.5, 0.05, length(gl_PointCoord - 0.5));
+  vec3 bone = vec3(0.42, 0.415, 0.395);
+  vec3 lime = vec3(0.773, 0.969, 0.310);
+  vec3 col = mix(bone, lime, smoothstep(0.15, 1.5, vElev));
+  float fade = smoothstep(30.0, 9.0, vDepth);
+  gl_FragColor = vec4(col, a * fade * 0.72);
+}`;
+
+const ParticleWave = () => {
+  const matRef = useRef<THREE.ShaderMaterial>(null);
+  const mouse = useRef({ x: 0, y: 0 });
+  const pendingClick = useRef<{ x: number; y: number } | null>(null);
+
+  useEffect(() => {
+    const norm = (e: PointerEvent) => ({
+      x: (e.clientX / window.innerWidth) * 2 - 1,
+      y: (e.clientY / window.innerHeight) * 2 - 1,
+    });
+    const mv = (e: PointerEvent) => { mouse.current = norm(e); };
+    const dn = (e: PointerEvent) => {
+      // only ripple for taps/clicks inside the hero viewport
+      if (window.scrollY < window.innerHeight) pendingClick.current = norm(e);
+    };
+    window.addEventListener('pointermove', mv, { passive: true });
+    window.addEventListener('pointerdown', dn, { passive: true });
+    return () => {
+      window.removeEventListener('pointermove', mv);
+      window.removeEventListener('pointerdown', dn);
+    };
+  }, []);
+
+  const { positions, uniforms } = useMemo(() => {
+    const small = SMALL;
+    const nx = small ? 90 : 150;
+    const nz = small ? 42 : 64;
+    const pos = new Float32Array(nx * nz * 3);
+    let i = 0;
+    for (let ix = 0; ix < nx; ix++) {
+      for (let iz = 0; iz < nz; iz++) {
+        pos[i++] = (ix / (nx - 1) - 0.5) * 36;
+        pos[i++] = 0;
+        pos[i++] = (iz / (nz - 1) - 0.5) * 24 - 5;
+      }
+    }
+    return {
+      positions: pos,
+      uniforms: {
+        uTime: { value: 0 },
+        uMouse: { value: new THREE.Vector2(0, 0) },
+        uClick: { value: new THREE.Vector2(0, 0) },
+        uClickTime: { value: -100 },
+        uPixelRatio: { value: Math.min(window.devicePixelRatio, 2) },
+      },
+    };
+  }, []);
+
+  useFrame((state) => {
+    if (matRef.current) {
+      const uniforms = matRef.current.uniforms;
+      if (!REDUCED) uniforms.uTime.value = state.clock.elapsedTime;
+      const u = uniforms.uMouse.value as THREE.Vector2;
+      u.x += (mouse.current.x - u.x) * 0.05;
+      u.y += (mouse.current.y - u.y) * 0.05;
+      if (pendingClick.current) {
+        (uniforms.uClick.value as THREE.Vector2).set(
+          pendingClick.current.x * 13, -pendingClick.current.y * 6 - 4,
+        );
+        uniforms.uClickTime.value = state.clock.elapsedTime;
+        pendingClick.current = null;
+      }
+    }
+    state.camera.position.x += (mouse.current.x * 1.1 - state.camera.position.x) * 0.03;
+    state.camera.position.y += (3.4 - mouse.current.y * 0.6 - state.camera.position.y) * 0.03;
+    state.camera.lookAt(0, 0, -3);
+  });
+
+  return (
+    <points position={[0, -1.6, 0]}>
+      <bufferGeometry>
+        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
+      </bufferGeometry>
+      <shaderMaterial
+        ref={matRef}
+        vertexShader={WAVE_VERT}
+        fragmentShader={WAVE_FRAG}
+        uniforms={uniforms}
+        transparent
+        depthWrite={false}
+        blending={THREE.AdditiveBlending}
+      />
+    </points>
+  );
+};
+
+const canWebGL = () => {
+  try {
+    const c = document.createElement('canvas');
+    return !!(window.WebGLRenderingContext && (c.getContext('webgl2') || c.getContext('webgl')));
+  } catch {
+    return false;
+  }
+};
+
+const HeroCanvas = () => {
+  // stop rendering once the hero is scrolled out of view
+  const [active, setActive] = useState(true);
+  useEffect(() => {
+    const h = () => setActive(window.scrollY < window.innerHeight * 1.1);
+    window.addEventListener('scroll', h, { passive: true });
+    return () => window.removeEventListener('scroll', h);
+  }, []);
+  return (
+    <Canvas
+      frameloop={active ? 'always' : 'never'}
+      camera={{ position: [0, 3.4, 11], fov: 50 }}
+      dpr={[1, SMALL ? 1.5 : 1.75]}
+      gl={{ antialias: false, alpha: true, powerPreference: 'high-performance' }}
+      style={{ pointerEvents: 'none' }}
+    >
+      <ParticleWave />
+    </Canvas>
+  );
+};
+
+// ─────────────────────────────────────────────────────────────
 // HERO — single-viewport, cinematic entry
 // ─────────────────────────────────────────────────────────────
-const Hero = ({ ready }: { ready: boolean }) => (
-  <section id="hero" className="relative h-[100svh] overflow-hidden flex flex-col">
+const Hero = ({ ready }: { ready: boolean }) => {
+  const [gl] = useState(canWebGL);
+  // subtle parallax depth on the centered content
+  const px = useSpring(0, { stiffness: 55, damping: 18, mass: 0.6 });
+  const py = useSpring(0, { stiffness: 55, damping: 18, mass: 0.6 });
+  const rx = useSpring(0, { stiffness: 60, damping: 16, mass: 0.5 });
+  const ry = useSpring(0, { stiffness: 60, damping: 16, mass: 0.5 });
+  useEffect(() => {
+    if (TOUCH) return;
+    const h = (e: PointerEvent) => {
+      const nx = e.clientX / window.innerWidth - 0.5;
+      const ny = e.clientY / window.innerHeight - 0.5;
+      px.set(nx * -16);
+      py.set(ny * -10);
+      ry.set(nx * 12);
+      rx.set(ny * -9);
+    };
+    window.addEventListener('pointermove', h, { passive: true });
+    return () => window.removeEventListener('pointermove', h);
+  }, [px, py, rx, ry]);
+
+  return (
+  <section id="hero" className="hero-vh relative overflow-hidden flex flex-col">
     {/* drifting ambient gradients */}
     <div className="hero-blob one" aria-hidden />
     <div className="hero-blob two" aria-hidden />
 
+    {/* 3D particle wave */}
+    {gl && (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={ready ? { opacity: 1 } : {}}
+        transition={{ duration: 2, delay: 0.9 }}
+        className="absolute inset-0 z-0"
+      >
+        <HeroCanvas />
+      </motion.div>
+    )}
+
+    {/* legibility: linear frame fade + radial safe-zone behind the headline */}
+    <div
+      className="absolute inset-0 z-[1] pointer-events-none"
+      style={{ background: 'linear-gradient(to bottom, rgba(11,11,9,0.6), transparent 28%, transparent 70%, #0b0b09 100%)' }}
+      aria-hidden
+    />
+    <div
+      className="absolute inset-0 z-[1] pointer-events-none"
+      style={{ background: 'radial-gradient(58% 40% at 50% 47%, rgba(11,11,9,0.82), rgba(11,11,9,0.4) 55%, transparent 78%)' }}
+      aria-hidden
+    />
+
     {/* centered composition */}
-    <div className="relative z-10 flex-1 flex flex-col items-center justify-center text-center px-5 pt-16">
+    <motion.div style={{ x: px, y: py }} className="relative z-10 flex-1 flex flex-col items-center justify-center text-center px-5 pt-16">
 
       <motion.p
         initial={{ opacity: 0, y: 12, letterSpacing: '0.65em' }}
@@ -867,14 +1077,26 @@ const Hero = ({ ready }: { ready: boolean }) => (
       </motion.p>
 
       <motion.div
-        initial={{ opacity: 0, scale: 1.06, filter: 'blur(12px)' }}
-        animate={ready ? { opacity: 1, scale: 1, filter: 'blur(0px)' } : {}}
+        initial={{ opacity: 0, scale: 1.1, y: 40 }}
+        animate={ready ? { opacity: 1, scale: 1, y: 0 } : {}}
         transition={{ duration: 1.3, ease: EASE, delay: 0.45 }}
-        className="relative overflow-hidden px-2"
+        className="relative px-2"
+        style={{ perspective: 1100 }}
       >
-        <h1
+        <motion.h1
           className="font-display font-semibold uppercase tracking-tight leading-[0.95]"
-          style={{ fontSize: 'min(14vw, 16vh)', color: 'var(--text)' }}
+          style={{
+            fontSize: 'min(14vw, 16vh)',
+            color: 'var(--text)',
+            rotateX: rx,
+            rotateY: ry,
+            transformStyle: 'preserve-3d',
+            textShadow: [
+              '0 1px 0 #3d402f', '0 2px 0 #363928', '0 3px 0 #2f3223',
+              '0 4px 0 #282b1e', '0 5px 0 #212418', '0 6px 0 #1a1d13',
+              '0 12px 28px rgba(0,0,0,0.6)', '0 28px 70px rgba(0,0,0,0.55)',
+            ].join(', '),
+          }}
           aria-label="Ashish Nanda"
         >
           <span className="inline-block whitespace-nowrap">
@@ -890,16 +1112,18 @@ const Hero = ({ ready }: { ready: boolean }) => (
               style={{ color: ACCENT }}
             >.</motion.span>
           </span>
-        </h1>
+        </motion.h1>
 
         {/* one-time light sheen sweep across the name */}
-        <motion.div
-          initial={{ x: '-140%', skewX: -18 }}
-          animate={ready ? { x: '140%', skewX: -18 } : {}}
-          transition={{ duration: 1.5, ease: 'easeInOut', delay: 1.8 }}
-          className="absolute inset-y-0 left-0 w-1/2 pointer-events-none"
-          style={{ background: 'linear-gradient(100deg, transparent, rgba(235,232,224,0.09), transparent)' }}
-        />
+        <span className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden>
+          <motion.span
+            initial={{ x: '-180%', skewX: -18, opacity: 0 }}
+            animate={ready ? { x: '280%', skewX: -18, opacity: [0, 1, 1, 0] } : {}}
+            transition={{ duration: 1.6, ease: 'easeInOut', delay: 1.9 }}
+            className="absolute inset-y-0 left-0 w-1/2 block"
+            style={{ background: 'linear-gradient(100deg, transparent, rgba(235,232,224,0.12), transparent)' }}
+          />
+        </span>
       </motion.div>
 
       <motion.p
@@ -945,7 +1169,7 @@ const Hero = ({ ready }: { ready: boolean }) => (
       >
         Press <kbd className="px-1.5 py-0.5 rounded border mx-1" style={{ borderColor: 'var(--border-08)', color: 'var(--text-40)' }}>⌘K</kbd> for quick actions
       </motion.p>
-    </div>
+    </motion.div>
 
     {/* rotating badge */}
     <motion.div
@@ -965,7 +1189,7 @@ const Hero = ({ ready }: { ready: boolean }) => (
       className="relative z-10 flex items-center justify-between gap-4 px-5 sm:px-10 h-16 shrink-0"
       style={{ borderTop: '1px solid var(--border-07)' }}
     >
-      <div className="flex items-center gap-0.5">
+      <div className="flex items-center gap-0.5 pl-16 sm:pl-0">
         {SOCIALS.map(s => (
           <motion.a key={s.name} href={s.url} target="_blank" rel="noreferrer" title={s.name}
             whileHover={{ y: -3, color: ACCENT }} whileTap={{ scale: 0.9 }}
@@ -980,7 +1204,7 @@ const Hero = ({ ready }: { ready: boolean }) => (
       <button
         onClick={() => { scrollToId('about'); sfx.click(); }}
         onMouseEnter={sfx.hover}
-        className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2.5"
+        className="absolute left-1/2 -translate-x-1/2 hidden sm:flex items-center gap-2.5"
         aria-label="Scroll to about"
       >
         <span className="font-mono text-[9px] uppercase tracking-[0.3em]" style={{ color: 'var(--text-30)' }}>Scroll</span>
@@ -1005,7 +1229,8 @@ const Hero = ({ ready }: { ready: boolean }) => (
       </div>
     </motion.div>
   </section>
-);
+  );
+};
 
 // ─────────────────────────────────────────────────────────────
 // SKILLS TICKER — marquee strip between hero and about
@@ -1016,7 +1241,7 @@ const SkillsTicker = () => (
     style={{ borderTop: '1px solid var(--border-07)', borderBottom: '1px solid var(--border-07)' }}
   >
     <MarqueeStrip
-      items={['Full-Stack Engineering', 'Distributed Systems', 'AI Products', 'Backend Architecture', 'Open Source']}
+      items={['Full-Stack Engineering', 'Backend & APIs', 'GenAI & AI/ML', 'Distributed Systems', 'Open Source']}
       dur={30}
       itemClass="font-display font-medium uppercase text-lg sm:text-2xl tracking-tight"
     />
@@ -1101,7 +1326,7 @@ const About = () => {
             { render: <Counter to={10} suffix="+" />, label: 'Systems in production' },
             { render: <Counter to={5} suffix="×" />, label: "Dean's List of Excellence" },
             { render: <Counter to={9.22} decimals={2} />, label: 'CGPA / 10 · B.Tech CSE' },
-            { render: <Counter to={1743} />, label: 'Peak LeetCode rating' },
+            { render: <Counter to={1808} />, label: 'Peak LeetCode rating' },
           ].map((s, i) => (
             <div key={i} className="p-6 sm:p-8 flex flex-col justify-between gap-6" style={{ background: 'var(--surface)' }}>
               <div className="font-display font-semibold text-4xl sm:text-5xl tracking-tight" style={{ color: i % 3 === 0 ? ACCENT : 'var(--text)' }}>
@@ -1323,12 +1548,12 @@ const Skills = () => {
         className="space-y-3 -mx-5 sm:-mx-8 lg:-mx-12"
       >
         <MarqueeStrip
-          items={ALL_SKILLS.slice(0, 13)}
+          items={ALL_SKILLS.slice(0, 15)}
           dur={44}
           itemClass="font-display font-semibold uppercase text-3xl sm:text-5xl tracking-tight"
         />
         <MarqueeStrip
-          items={ALL_SKILLS.slice(13)}
+          items={ALL_SKILLS.slice(15)}
           reverse
           dur={40}
           itemClass="font-display font-semibold uppercase text-3xl sm:text-5xl tracking-tight"
@@ -1351,11 +1576,11 @@ const ProjectCard = ({ p, i, progress, range, targetScale }: {
   return (
     <div className="sticky top-0 h-screen flex items-center justify-center px-2 sm:px-0">
       <motion.div
-        style={{ scale, top: `calc(-5vh + ${i * 26}px)` }}
+        style={{ scale, top: `calc(-4vh + ${i * (SMALL ? 12 : 26)}px)` }}
         className="relative w-full max-w-6xl rounded-3xl sm:rounded-[28px] overflow-hidden origin-top"
       >
         <div
-          className="relative border rounded-3xl sm:rounded-[28px] p-6 sm:p-10 lg:p-14"
+          className="relative border rounded-3xl sm:rounded-[28px] p-6 sm:p-10 lg:p-14 max-h-[84vh] overflow-y-auto overscroll-contain"
           style={{
             background: `linear-gradient(135deg, var(--surface-2) 0%, var(--surface) 60%)`,
             borderColor: 'var(--border-08)',
@@ -1519,8 +1744,8 @@ const Awards = () => (
       </p>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-px rounded-2xl overflow-hidden" style={{ background: 'var(--border-07)', border: '1px solid var(--border-07)' }}>
         {[
-          { name: 'LeetCode', url: 'https://leetcode.com/ashishnanda19', num: 1743, rank: 'Top 10.78%', sub: '500+ solved' },
-          { name: 'CodeChef', url: 'https://codechef.com/users/ashishnanda19', num: 1468, rank: '2 Star', sub: 'Max rating' },
+          { name: 'LeetCode', url: 'https://leetcode.com/ashishnanda19', num: 1808, rank: 'Top 7.71%', sub: '600+ solved' },
+          { name: 'CodeChef', url: 'https://codechef.com/users/ashishnanda19', num: 1540, rank: '2 Star', sub: 'Max rating' },
           { name: 'GitHub', url: 'https://github.com/ashishnanda19', num: null, rank: 'Open source', sub: '@ashishnanda19' },
         ].map(cp => (
           <a key={cp.name} href={cp.url} target="_blank" rel="noreferrer" onMouseEnter={sfx.hover}
@@ -1677,9 +1902,9 @@ const ScrollTop = () => {
 const BOT_KB: [RegExp, string][] = [
   [/hi|hello|hey|sup|yo|meow/i, "Hey there! 👋 I'm AshBot, Ashish's AI assistant.\nAsk me about his projects, skills, awards, or how to reach him!"],
   [/about|who|yourself|intro|tell me/i, "Ashish is a Backend Engineer & final-year CSE student at Manipal University Jaipur, currently a Research Intern at IIT (BHU).\n\nHe ships distributed systems, AI-powered products, and production-grade infrastructure. 5× Dean's List · Open to SWE roles."],
-  [/skill|tech|stack|language|framework|tool|database|cloud|devops/i, "Here's Ashish's full stack ⚡\n\n▸ Languages   C++, Python, Java, JS, SQL\n▸ Frameworks  React, Node.js, Express, Flask\n▸ Databases   MongoDB, PostgreSQL, Redis\n▸ Cloud       AWS, Docker, Jenkins, CI/CD\n▸ Tools       Git, Socket.IO, BullMQ, REST APIs"],
+  [/skill|tech|stack|language|framework|frontend|backend|tool|database|cloud|devops|ai|ml|genai/i, "Here's Ashish's full stack ⚡\n\n▸ Languages      C++, Java, Python, JS, SQL\n▸ Frontend       React, Tailwind CSS, HTML\n▸ Backend/APIs   Node.js, Express, FastAPI, REST\n▸ Databases      MongoDB, MySQL, PostgreSQL, Redis, ChromaDB\n▸ AI/ML & GenAI  LangChain, LangGraph, Hugging Face, NumPy, Pandas\n▸ Cloud & Tools  AWS, Docker, Jenkins, CI/CD, Git, Supabase"],
   [/project|built|build|made|created|shipped/i, "Ashish has shipped 5 production systems:\n\n01 Distributed Video Transcoder\n   AWS · Redis · Docker · ffmpeg\n\n02 SafeTrail — SOS platform\n   Socket.IO · PostGIS · BullMQ\n\n03 HyperRAG-X — Enterprise RAG\n   LangGraph · Qdrant · Groq · FastAPI\n\n04 InvoSync — AI invoice SaaS\n   98%+ OCR accuracy · Flask · React\n\n05 Music Mindscape — Spotify map\n   D3-Force · Gemini 2.5 · Supabase"],
-  [/award|achiev|honor|win|leetcode|codechef|grid|iic|dean/i, "Achievements 🏆\n\n▸ IIC Finalist (International Innovation Challenge)\n▸ Flipkart GRiD 7.0 National Semifinalist\n▸ 5× Dean's List of Excellence\n▸ LeetCode — 500+ solved · Peak 1,743 rating\n▸ CodeChef — 2 Star · Max 1468"],
+  [/award|achiev|honor|win|leetcode|codechef|grid|iic|dean/i, "Achievements 🏆\n\n▸ IIC Finalist (International Innovation Challenge)\n▸ Flipkart GRiD 7.0 National Semifinalist\n▸ 5× Dean's List of Excellence\n▸ LeetCode — 600+ solved · Peak 1,808 rating\n▸ CodeChef — 2 Star · Max 1,540"],
   [/educ|univer|college|muj|manipal|degree|cgpa|gpa/i, "Education 📚\n\nB.Tech CSE (IoT) — Manipal University Jaipur\n2023 – 2027 · CGPA 9.22/10\n5× Dean's List · GDG Technical Member"],
   [/experi|intern|iit|bhu|gdg|google developer/i, "Experience 💼\n\n🔬 Research Intern @ IIT (BHU)\n   Dec 2025 – Present\n   Net-zero models for MSMEs\n\n👥 Technical Member @ GDG\n   Sept 2023 – Oct 2025\n   Workshops · Hackathons · Cloud"],
   [/contact|reach|email|hire|connect|linkedin|github/i, "Reach Ashish here:\n\n📧 ashish.nanda1902@gmail.com\n🐙 github.com/ashishnanda19\n💼 linkedin.com/in/ashishnanda19\n🐦 x.com/ashish19n"],
