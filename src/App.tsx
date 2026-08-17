@@ -1,6 +1,32 @@
-import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Github, Linkedin, Mail, Twitter, Instagram, Code, FileText, Search, X, ChevronDown, ExternalLink } from 'lucide-react';
+import { Github, Linkedin, Mail, Twitter, Code, FileText, Search, X, ChevronDown, ExternalLink } from 'lucide-react';
+
+interface ExperienceItem {
+  title: string;
+  role: string;
+  dates: string;
+  location: string;
+  image?: string;
+  emoji?: string;
+  description: string;
+  tech: string[];
+  metrics?: { label: string; value: string }[];
+}
+
+interface ProjectItem {
+  slug: string;
+  name: string;
+  desc: string;
+  tech: string[];
+  github: string;
+  live: string;
+  status: 'live' | 'building' | 'not_started';
+  bgColor?: string;
+  accent?: string;
+  image?: string;
+  emoji?: string;
+}
 
 // ─────────────────────────────────────────────────────────────
 // CONSTANTS
@@ -10,7 +36,7 @@ const RESUME_URL = 'https://drive.google.com/file/d/1Sq69vpiR5Dg5fN66w-nQwEi_hUS
 // ─────────────────────────────────────────────────────────────
 // DATA
 // ─────────────────────────────────────────────────────────────
-const EXPERIENCE = [
+const EXPERIENCE: ExperienceItem[] = [
   {
     title: 'Indian Institute of Technology (BHU)',
     role: 'Research Intern',
@@ -47,7 +73,7 @@ Mentored junior developers and helped grow the local tech ecosystem.`,
   },
 ];
 
-const EDUCATION = [
+const EDUCATION: ExperienceItem[] = [
   {
     title: 'Manipal University Jaipur',
     role: 'B.Tech in Computer Science',
@@ -60,7 +86,7 @@ const EDUCATION = [
   }
 ];
 
-const PROJECTS = [
+const PROJECTS: ProjectItem[] = [
   {
     slug: 'video-transcoder',
     name: 'Distributed Video Transcoder',
@@ -286,14 +312,14 @@ const RightNav = () => {
 // ─────────────────────────────────────────────────────────────
 // EXPERIENCE ACCORDION ITEM
 // ─────────────────────────────────────────────────────────────
-const ExpItem = ({ item }: { item: typeof EXPERIENCE[0] }) => {
+const ExpItem = ({ item }: { item: ExperienceItem }) => {
   const [open, setOpen] = useState(false);
   return (
     <div className="group">
       <div className="flex items-center gap-3 py-3 cursor-pointer hover:bg-white/[0.02] px-2 rounded-lg -mx-2 transition-colors"
         onClick={() => setOpen(o => !o)}>
         <div className="w-9 h-9 shrink-0 rounded-lg border border-white/10 bg-white/5 flex items-center justify-center text-base emoji-icon overflow-hidden">
-          {item.image ? <img src={item.image} alt={item.title} className="w-full h-full object-cover" /> : item.emoji}
+          {item.image ? <img src={item.image} alt={item.title} className="w-full h-full object-cover" /> : item.emoji || '💼'}
         </div>
         <div className="flex-1 min-w-0">
           <div className="text-[14px] font-semibold text-white leading-tight">{item.title}</div>
@@ -342,7 +368,7 @@ const ExpItem = ({ item }: { item: typeof EXPERIENCE[0] }) => {
 // ─────────────────────────────────────────────────────────────
 // PROJECT CARD (matching screenshots style)
 // ─────────────────────────────────────────────────────────────
-const ProjectCard = ({ project }: { project: typeof PROJECTS[0] }) => {
+const ProjectCard = ({ project }: { project: ProjectItem }) => {
   const [hovered, setHovered] = useState(false);
   const statusMap = {
     live: { dot: 'bg-emerald-400', label: 'Live' },
@@ -357,13 +383,13 @@ const ProjectCard = ({ project }: { project: typeof PROJECTS[0] }) => {
       onMouseLeave={() => setHovered(false)}
       onClick={() => window.open(project.github, '_blank')}>
       {/* Card preview */}
-      <div className={`relative w-full rounded-xl border border-white/[0.08] overflow-hidden bg-gradient-to-br ${project.bgColor} transition-all duration-300 transform group-hover:-translate-y-1.5 group-hover:shadow-2xl ${hovered ? 'border-white/[0.15]' : ''}`}
+      <div className={`relative w-full rounded-xl border border-white/[0.08] overflow-hidden bg-gradient-to-br ${project.bgColor || 'from-zinc-900 to-black'} transition-all duration-300 transform group-hover:-translate-y-1.5 group-hover:shadow-2xl ${hovered ? 'border-white/[0.15]' : ''}`}
         style={{ aspectRatio: '1.45' }}>
         {/* macOS-style dots */}
         <div className="absolute top-3 left-3 flex gap-1.5 z-10">
           <div className="w-2.5 h-2.5 rounded-full bg-red-500/60" />
           <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/60" />
-          <div className="w-2.5 h-2.5 rounded-full" style={{ background: `${project.accent}90` }} />
+          <div className="w-2.5 h-2.5 rounded-full" style={{ background: project.accent ? `${project.accent}90` : 'rgba(255,255,255,0.2)' }} />
         </div>
         {/* Pin icon top right */}
         {project.status === 'live' && (
@@ -376,8 +402,8 @@ const ProjectCard = ({ project }: { project: typeof PROJECTS[0] }) => {
           <img src={project.image} alt={project.name} className="absolute inset-0 w-full h-full object-cover transition-all duration-700 ease-out group-hover:scale-90 group-hover:rounded-xl avatar" />
         ) : (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 pt-4">
-            <span className="text-5xl emoji-icon">{project.emoji}</span>
-            <div className="font-mono text-[11px] font-bold uppercase tracking-widest" style={{ color: project.accent }}>
+            <span className="text-5xl emoji-icon">{project.emoji || '⚡'}</span>
+            <div className="font-mono text-[11px] font-bold uppercase tracking-widest" style={{ color: project.accent || '#a1a1aa' }}>
               {project.tech[0]}
             </div>
             <div className="flex flex-wrap justify-center gap-1 px-4">
@@ -536,97 +562,6 @@ const GithubActivity = () => {
           </div>
         </div>
       )}
-    </div>
-  );
-};
-
-// ─────────────────────────────────────────────────────────────
-// OPEN SOURCE CONTRIBUTIONS (matching screenshots)
-// ─────────────────────────────────────────────────────────────
-type FilterType = 'merged' | 'open' | 'closed';
-interface PR { id: number; title: string; html_url: string; state: string; pull_request?: { merged_at: string | null }; repository_url: string; }
-
-const OpenSourceSection = () => {
-  const [filter, setFilter] = useState<FilterType>('merged');
-  const [allPrs, setAllPrs] = useState<Record<FilterType, PR[]>>({ merged: [], open: [], closed: [] });
-  const [loading, setLoading] = useState(true);
-  const fetched = useRef(false);
-
-  useEffect(() => {
-    if (fetched.current) return;
-    fetched.current = true;
-    const cached = localStorage.getItem('gh_prs_v2_ashish19');
-    if (cached) { try { setAllPrs(JSON.parse(cached)); setLoading(false); } catch { /* ignore */ } }
-    const fetch1 = (q: string) => fetch(`https://api.github.com/search/issues?q=${encodeURIComponent(q)}&per_page=30&sort=updated`)
-      .then(r => r.json()).then(d => d.items || []).catch(() => []);
-    Promise.all([
-      fetch1('author:ashishnanda19 type:pr is:merged'),
-      fetch1('author:ashishnanda19 type:pr is:open'),
-      fetch1('author:ashishnanda19 type:pr is:closed is:unmerged'),
-    ]).then(([merged, open, closed]) => {
-      const data = { merged, open, closed };
-      setAllPrs(data); setLoading(false);
-      localStorage.setItem('gh_prs_v2_ashish19', JSON.stringify(data));
-    }).catch(() => setLoading(false));
-  }, []);
-
-  const currentPrs = allPrs[filter] || [];
-  const dotColor = (pr: PR, f: FilterType) => {
-    if (f === 'merged') return 'bg-purple-500';
-    if (f === 'open') return 'bg-blue-400';
-    return 'bg-zinc-600';
-  };
-  const repoName = (url: string) => url.split('/').slice(-2).join('/');
-
-  return (
-    <div>
-      <div className="flex items-center justify-between mb-5">
-        <h2 className="text-[16px] font-semibold text-white">Open Source Contributions</h2>
-        <div className="flex items-center rounded-lg border border-white/[0.08] overflow-hidden">
-          {(['merged', 'open', 'closed'] as FilterType[]).map(f => (
-            <button key={f} onClick={() => setFilter(f)}
-              className={`px-4 py-1.5 font-mono text-[11px] uppercase tracking-widest transition-all ${filter === f ? 'bg-white/10 text-white' : 'text-zinc-600 hover:text-zinc-400'
-                }`}>
-              {f}
-            </button>
-          ))}
-        </div>
-      </div>
-      <div className="flex flex-col gap-0">
-        {loading && currentPrs.length === 0 ? (
-          Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="py-3 border-b border-white/[0.04]">
-              <div className="flex items-center gap-3">
-                <div className="w-2 h-2 rounded-full bg-white/10 animate-pulse shrink-0" />
-                <div className="h-3.5 bg-white/5 rounded animate-pulse w-2/3" />
-              </div>
-              <div className="h-3 bg-white/[0.03] rounded animate-pulse w-1/3 mt-2 ml-5" />
-            </div>
-          ))
-        ) : currentPrs.length > 0 ? (
-          <>
-            {currentPrs.slice(0, 6).map(pr => (
-              <a key={pr.id} href={pr.html_url} target="_blank" rel="noopener noreferrer"
-                className="py-3 border-b border-white/[0.04] hover:bg-white/[0.02] -mx-2 px-2 rounded transition-colors group">
-                <div className="flex items-center gap-3">
-                  <div className={`w-2 h-2 rounded-full shrink-0 ${dotColor(pr, filter)}`} />
-                  <span className="text-[14px] font-medium text-zinc-300 group-hover:text-white transition-colors leading-snug">{pr.title}</span>
-                </div>
-                <p className="font-mono text-[11px] text-zinc-600 mt-0.5 ml-5 uppercase tracking-wide">{repoName(pr.repository_url)}</p>
-              </a>
-            ))}
-            {currentPrs.length > 6 && (
-              <div className="flex justify-center mt-4">
-                <button className="flex items-center gap-2 font-mono text-[11px] text-zinc-500 hover:text-zinc-300 transition-colors border border-white/[0.08] rounded-lg px-4 py-2 hover:border-white/15">
-                  View All ({currentPrs.length - 6} more) <ExternalLink size={11} />
-                </button>
-              </div>
-            )}
-          </>
-        ) : (
-          <p className="text-center font-mono text-[11px] text-zinc-600 py-8">No pull requests found.</p>
-        )}
-      </div>
     </div>
   );
 };
