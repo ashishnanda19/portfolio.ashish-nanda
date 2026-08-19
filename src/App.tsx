@@ -182,15 +182,6 @@ const SKILLS = [
   { name: 'Linux', icon: 'linux' },
 ];
 
-const NAV_SECTIONS = [
-  { id: 'experience', label: 'Experience' },
-  { id: 'education', label: 'Education' },
-  { id: 'projects', label: 'Projects' },
-  { id: 'skills', label: 'Skills' },
-  { id: 'awards', label: 'Awards' },
-  { id: 'highlights', label: 'Highlights' },
-];
-
 const HIGHLIGHTS = [
   { id: 'iic', title: 'Finalist — International Innovation Challenge (IIC)', badge: 'IIC 2024', image: 'https://images.unsplash.com/photo-1553484771-371a605b060b?auto=format&fit=crop&q=80&w=400' },
   { id: 'grid', title: 'National Semifinalist — Flipkart GRiD 7.0', badge: 'Flipkart', image: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?auto=format&fit=crop&q=80&w=400' },
@@ -200,7 +191,6 @@ const HIGHLIGHTS = [
   { id: 'gdg', title: 'Technical Member — Google Developer Groups (GDG)', badge: 'GDG', image: '/gdg.png' },
   { id: 'iit', title: 'Research Intern at IIT (BHU) — Varanasi', badge: 'IIT(BHU)', image: 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&q=80&w=400' },
 ];
-
 
 // ─────────────────────────────────────────────────────────────
 // CLOCK (IST)
@@ -218,6 +208,14 @@ const Clock = () => {
   return <span className="font-mono text-[11px] tabular-nums text-zinc-500">{t}</span>;
 };
 
+const scrollToSection = (id: string) => {
+  const el = document.getElementById(id);
+  if (el) {
+    const y = el.getBoundingClientRect().top + window.scrollY - 32;
+    window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
+  }
+};
+
 // ─────────────────────────────────────────────────────────────
 // COMMAND PALETTE
 // ─────────────────────────────────────────────────────────────
@@ -225,11 +223,13 @@ const CommandPalette = ({ onClose }: { onClose: () => void }) => {
   const [query, setQuery] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
   const actions = [
-    { label: 'Experience', action: () => document.getElementById('experience')?.scrollIntoView({ behavior: 'smooth' }) },
-    { label: 'Education', action: () => document.getElementById('education')?.scrollIntoView({ behavior: 'smooth' }) },
-    { label: 'Projects', action: () => document.getElementById('projects')?.scrollIntoView({ behavior: 'smooth' }) },
-    { label: 'Skills & Tech', action: () => document.getElementById('skills')?.scrollIntoView({ behavior: 'smooth' }) },
-    { label: 'Awards', action: () => document.getElementById('awards')?.scrollIntoView({ behavior: 'smooth' }) },
+    { label: 'Experience', action: () => scrollToSection('experience') },
+    { label: 'Education', action: () => scrollToSection('education') },
+    { label: 'Projects', action: () => scrollToSection('projects') },
+    { label: 'GitHub Activity', action: () => scrollToSection('github') },
+    { label: 'Skills & Tech', action: () => scrollToSection('skills') },
+    { label: 'Awards', action: () => scrollToSection('awards') },
+    { label: 'Highlights', action: () => scrollToSection('highlights') },
     { label: 'View Resume', action: () => window.open(RESUME_URL, '_blank') },
     { label: 'Send Email', action: () => window.location.href = 'mailto:ashish.nanda1902@gmail.com' },
     { label: 'GitHub Profile', action: () => window.open('https://github.com/ashishnanda19', '_blank') },
@@ -261,7 +261,7 @@ const CommandPalette = ({ onClose }: { onClose: () => void }) => {
         <div className="max-h-60 overflow-y-auto p-2">
           {filtered.map((a, i) => (
             <button key={i} onClick={() => { a.action?.(); onClose(); }}
-              className="w-full flex items-center px-3 py-2.5 rounded-lg hover:bg-white/5 transition-colors text-left">
+              className="w-full flex items-center px-3 py-2.5 rounded-lg hover:bg-white/5 transition-colors text-left cursor-pointer">
               <span className="font-mono text-[13px] text-zinc-400">{a.label}</span>
             </button>
           ))}
@@ -275,39 +275,7 @@ const CommandPalette = ({ onClose }: { onClose: () => void }) => {
   );
 };
 
-// ─────────────────────────────────────────────────────────────
-// RIGHT SIDEBAR NAV
-// ─────────────────────────────────────────────────────────────
-const RightNav = () => {
-  const [active, setActive] = useState<string | null>(null);
-  useEffect(() => {
-    const obs = new IntersectionObserver(
-      entries => entries.forEach(e => { if (e.isIntersecting) setActive(e.target.id); }),
-      { rootMargin: '-20% 0px -60% 0px', threshold: 0.1 }
-    );
-    NAV_SECTIONS.forEach(({ id }) => { const el = document.getElementById(id); if (el) obs.observe(el); });
-    return () => obs.disconnect();
-  }, []);
-  return (
-    <div className="hidden xl:flex fixed right-12 top-1/2 -translate-y-1/2 flex-col gap-1 z-50">
-      <div className="flex flex-col gap-4 p-4 min-w-[120px]">
-        <p className="text-[14px] font-bold tracking-[0.2em] text-zinc-500 uppercase mb-2">Index</p>
-        <div className="flex flex-col gap-5 border-l border-white/[0.08] pl-5 border-dotted">
-          {NAV_SECTIONS.map(({ id, label }) => {
-            const isActive = active === id;
-            return (
-              <button key={id} onClick={() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })}
-                className={`text-left text-[16px] tracking-wide transition-all flex items-center relative ${isActive ? 'text-white font-medium' : 'text-zinc-600 hover:text-zinc-400'}`}>
-                {isActive && <span className="absolute -left-9 text-zinc-400 font-mono">—</span>}
-                {label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    </div>
-  );
-};
+
 
 // ─────────────────────────────────────────────────────────────
 // EXPERIENCE ACCORDION ITEM
@@ -318,7 +286,7 @@ const ExpItem = ({ item }: { item: ExperienceItem }) => {
     <div className="group">
       <div className="flex items-center gap-3 py-3 cursor-pointer hover:bg-white/[0.02] px-2 rounded-lg -mx-2 transition-colors"
         onClick={() => setOpen(o => !o)}>
-        <div className="w-9 h-9 shrink-0 rounded-lg border border-white/10 bg-white/5 flex items-center justify-center text-base emoji-icon overflow-hidden">
+        <div className="w-10 h-10 shrink-0 rounded-lg border border-white/10 bg-white/5 flex items-center justify-center text-base emoji-icon overflow-hidden">
           {item.image ? <img src={item.image} alt={item.title} className="w-full h-full object-cover" /> : item.emoji || '💼'}
         </div>
         <div className="flex-1 min-w-0">
@@ -671,11 +639,10 @@ export default function App() {
         {palOpen && <CommandPalette onClose={() => setPalOpen(false)} />}
       </AnimatePresence>
 
-      {/* Right Sidebar */}
-      <RightNav />
+
 
       {/* Single centered column — everything inside */}
-      <div style={{ maxWidth: 680, margin: '0 auto', backgroundColor: '#0b0b09', borderLeft: '1px solid rgba(255,255,255,0.06)', borderRight: '1px solid rgba(255,255,255,0.06)', minHeight: '100vh', position: 'relative' }}>
+      <div style={{ maxWidth: 780, margin: '0 auto', backgroundColor: '#0b0b09', borderLeft: '1px solid rgba(255,255,255,0.06)', borderRight: '1px solid rgba(255,255,255,0.06)', minHeight: '100vh', position: 'relative' }}>
 
       {/* Banner — within the centered column */}
       <div style={{ width: '100%', height: 220, position: 'relative', overflow: 'hidden', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
@@ -715,34 +682,34 @@ export default function App() {
           </div>
 
           {/* Name + bio */}
-          <div className="mb-1 flex items-baseline gap-2">
+          <div className="mb-1 flex items-baseline gap-5">
             <h1 className="text-[26px] font-bold text-white tracking-tight">Ashish Nanda</h1>
             <span className="font-mono text-[14px] text-zinc-600">22</span>
           </div>
 
-          <div className="flex flex-col gap-5 mb-8 text-[15px] text-zinc-400 leading-relaxed">
+          <div className="flex flex-col gap-3.5 mb-6 text-[15px] text-zinc-400 leading-relaxed">
             <p>Engineer. I love building, breaking, and shipping things.</p>
             <p>Backend, distributed systems, and AI infrastructure excite me. I believe actions speak louder than words, so I put my code where my mouth is.</p>
             <p>Currently a <span className="text-white font-medium">Research Intern at IIT (BHU)</span>, open to SWE roles (2027).</p>
           </div>
 
           {/* CTA buttons */}
-          <div className="flex items-center gap-3 mb-6">
+          <div className="flex items-center gap-3 mb-8">
             <a href="mailto:ashish.nanda1902@gmail.com"
-              className="flex items-center gap-2 px-4 py-2 bg-[#1a1a18] border border-white/[0.08] rounded-lg font-mono text-[12px] text-zinc-300 hover:border-white/20 hover:text-white transition-all">
+              className="flex items-center gap-2 px-4 py-2 bg-[#1a1a18] border border-white/[0.08] rounded-lg font-mono text-[12px] text-zinc-300 hover:border-white/20 hover:text-white transition-all shadow-sm">
               <Mail size={13} />
               Send an email
             </a>
             <a href={RESUME_URL} target="_blank" rel="noreferrer"
-              className="flex items-center gap-2 px-4 py-2 bg-[#1a1a18] border border-white/[0.08] rounded-lg font-mono text-[12px] text-zinc-300 hover:border-white/20 hover:text-white transition-all">
+              className="flex items-center gap-2 px-4 py-2 bg-[#1a1a18] border border-white/[0.08] rounded-lg font-mono text-[12px] text-zinc-300 hover:border-white/20 hover:text-white transition-all shadow-sm">
               <FileText size={13} />
               Resume
             </a>
           </div>
 
           {/* Socials */}
-          <div className="flex items-center gap-4 mb-4">
-            <span className="text-[15px] text-zinc-400">Here are my <span className="text-white font-medium">socials</span></span>
+          <div className="mb-3">
+            <span className="text-[14px] text-zinc-400">Here are my <span className="text-white font-medium">socials</span></span>
           </div>
           <div className="flex flex-wrap gap-3">
             {[
@@ -750,7 +717,6 @@ export default function App() {
               { name: 'Twitter', icon: Twitter, url: 'https://x.com/ashish19n' },
               { name: 'LinkedIn', icon: Linkedin, url: 'https://www.linkedin.com/in/ashishnanda19/' },
               { name: 'LeetCode', icon: Code, url: 'https://leetcode.com/u/ashishnanda19/' },
-              { name: 'Resume', icon: FileText, url: RESUME_URL },
             ].map(s => (
               <a key={s.name} href={s.url} target="_blank" rel="noreferrer"
                 className="flex items-center gap-2 px-3 py-2 bg-[#161615] border border-white/5 rounded-md text-[13px] text-zinc-300 hover:text-white hover:border-white/10 transition-all shadow-sm">
@@ -762,7 +728,7 @@ export default function App() {
         </div>
 
         {/* Content sections */}
-        <div className="flex flex-col gap-5 py-10 pb-24">
+        <div className="flex flex-col gap-3 py-10 pb-24">
 
           {/* EXPERIENCES */}
           <div id="experience" className="scroll-mt-24">
