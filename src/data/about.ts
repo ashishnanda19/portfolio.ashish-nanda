@@ -57,7 +57,7 @@ export const EDUCATION: TimelineItem[] = [
     dates: "2023 — 2027",
     location: "Jaipur, IN",
     image: "/images/logos/muj.png",
-    description: ["CGPA: 9.22 / 10"],
+    description: ["CGPA: 9.12 / 10"],
     tech: [],
   },
 ];
@@ -65,7 +65,8 @@ export const EDUCATION: TimelineItem[] = [
 export const AWARDS = [
   { text: "Finalist — International Innovation Challenge (IIC)", badge: "IIC" },
   { text: "National Semifinalist — Flipkart GRiD 7.0", badge: "GRID" },
-  { text: "5× Dean's List of Excellence at Manipal University Jaipur", badge: "5×" },
-  { text: "LeetCode — 600+ solved · Peak 1,808 rating (Top 7.71% globally)", badge: "LC" },
-  { text: "CodeChef — 2 Star · Max rating 1,540", badge: "CC" },
+  { text: "4× Dean's List of Excellence at Manipal University Jaipur", badge: "4×" },
+  { text: "LeetCode — 750+ solved · Peak 1,832 rating (Top 6.68% globally)", badge: "LC" },
+  { text: "CodeForces — Pupil · Max rating 1,210", badge: "CF" },
+  { text: "CodeChef — 3 Star · Max rating 1,600", badge: "CC" }
 ];
