@@ -1,0 +1,7 @@
+{
+  "/api/leetcode/route": "app/api/leetcode/route.js",
+  "/api/nasa/route": "app/api/nasa/route.js",
+  "/(arena)/(home)/page": "app/(arena)/(home)/page.js",
+  "/(arena)/about/page": "app/(arena)/about/page.js",
+  "/(arena)/skills/page": "app/(arena)/skills/page.js"
+}
