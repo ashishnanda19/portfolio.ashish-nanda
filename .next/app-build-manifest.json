@@ -21,20 +21,15 @@
       "static/chunks/main-app.js",
       "static/chunks/app/api/leetcode/route.js"
     ],
+    "/api/quotes/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/quotes/route.js"
+    ],
     "/api/nasa/route": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/api/nasa/route.js"
-    ],
-    "/(arena)/skills/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(arena)/skills/page.js"
-    ],
-    "/(arena)/about/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(arena)/about/page.js"
     ]
   }
 }
