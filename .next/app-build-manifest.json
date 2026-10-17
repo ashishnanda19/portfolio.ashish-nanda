@@ -21,40 +21,15 @@
       "static/chunks/main-app.js",
       "static/chunks/app/api/leetcode/route.js"
     ],
-    "/api/quotes/route": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/api/quotes/route.js"
-    ],
     "/api/nasa/route": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/api/nasa/route.js"
     ],
-    "/(arena)/about/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(arena)/about/page.js"
-    ],
     "/(arena)/work/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/(arena)/work/page.js"
-    ],
-    "/(arena)/blog/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(arena)/blog/page.js"
-    ],
-    "/(arena)/skills/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(arena)/skills/page.js"
-    ],
-    "/(arena)/arena/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(arena)/arena/page.js"
     ]
   }
 }

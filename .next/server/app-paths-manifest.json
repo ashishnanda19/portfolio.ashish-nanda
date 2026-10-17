@@ -1,10 +1,6 @@
 {
   "/api/leetcode/route": "app/api/leetcode/route.js",
   "/api/nasa/route": "app/api/nasa/route.js",
-  "/(arena)/blog/page": "app/(arena)/blog/page.js",
-  "/(arena)/about/page": "app/(arena)/about/page.js",
-  "/(arena)/(home)/page": "app/(arena)/(home)/page.js",
-  "/(arena)/skills/page": "app/(arena)/skills/page.js",
-  "/(arena)/arena/page": "app/(arena)/arena/page.js",
-  "/(arena)/work/page": "app/(arena)/work/page.js"
+  "/(arena)/work/page": "app/(arena)/work/page.js",
+  "/(arena)/(home)/page": "app/(arena)/(home)/page.js"
 }

@@ -46,6 +46,7 @@ import {
   Flask,
   SocketIO,
   D3,
+  CMake,
 } from "@/components/Skills/SkillsLogo";
 
 // Re-export SKILLS from the separate file for convenience
@@ -106,6 +107,7 @@ const skillLogoMap: { [key: string]: React.ComponentType } = {
   Flask: Flask,
   "Socket.io": SocketIO,
   "D3.js": D3,
+  CMake: CMake,
 };
 
 interface TechStackOverlapProps {

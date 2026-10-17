@@ -106,6 +106,7 @@ const Nasa = ({ className }: { className: string }) => {
             src={imageUrl}
             alt={apodData.title || "NASA APOD"}
             className="w-full h-full object-cover rounded-xl"
+            referrerPolicy="no-referrer"
             onError={() => setImageError(true)}
           />
         ) : (
