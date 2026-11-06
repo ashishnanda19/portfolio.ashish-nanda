@@ -10,7 +10,7 @@ import SideScroller from "@/components/Miscellaneous/SideScroller";
 export const metadata: Metadata = {
   title: "Ashish Nanda — Software Engineer",
   description:
-    "Ashish Nanda — Software engineer building scalable systems. CS @ Manipal University Jaipur '27, Research Intern @ IIT (BHU).",
+    "Ashish Nanda — Software engineer building scalable systems. CS @ Manipal University Jaipur '27, Founder @ Kredo, ML Analyst @ Shipd (YC W24), ex-Research Intern @ IIT (BHU).",
 };
 
 export default function RootLayout({

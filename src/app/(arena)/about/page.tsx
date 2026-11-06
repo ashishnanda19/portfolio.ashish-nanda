@@ -33,8 +33,13 @@ function TimelineCard({ item }: { item: TimelineItem }) {
             )}
           </div>
           <div className="flex-1 min-w-0 text-left">
-            <div className="smalll text-sm font-semibold leading-tight">
+            <div className="smalll text-sm font-semibold leading-tight flex items-center gap-2">
               {item.title}
+              {item.tag && (
+                <span className="smalll text-[9px] px-2 py-0.5 rounded border border-yellow-400/40 text-yellow-400 bg-yellow-400/10 uppercase tracking-wider">
+                  {item.tag}
+                </span>
+              )}
             </div>
             <div className="smalll text-xs text-muted-foreground mt-0.5">
               {item.role}
@@ -104,7 +109,8 @@ export default function AboutPage() {
           Engineer. I love building, breaking, and shipping things. Backend,
           distributed systems, and AI infrastructure excite me — I believe
           actions speak louder than words, so I put my code where my mouth
-          is. Currently a Research Intern at IIT (BHU), open to SWE roles
+          is. Founder of Kredo, ML Analyst at Shipd (YC W24), and a former
+          Research Intern at IIT (BHU) (completed May 2026). Open to SWE roles
           starting 2027.
         </p>
       </div>

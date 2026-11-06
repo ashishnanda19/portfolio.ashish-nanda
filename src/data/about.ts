@@ -7,9 +7,29 @@ export interface TimelineItem {
   description: string[];
   tech: string[];
   metrics?: { label: string; value: string }[];
+  tag?: string;
 }
 
 export const EXPERIENCE: TimelineItem[] = [
+  {
+    title: "Kredo",
+    role: "Founder",
+    tag: "Founder",
+    dates: "Oct 2026 — Present",
+    location: "India",
+    image: "/images/logos/kredo.png",
+    description: [
+      "Building Kredo — the app and technology partner for student financing.",
+      "A licensed lending partner (an NBFC) assesses credit and moves all the money. Kredo never holds, pools or transfers funds: the lender pays the vendor, and the student repays the lender.",
+    ],
+    tech: ["Fintech", "Product", "Mobile App", "Lending Infrastructure"],
+    metrics: [
+      { label: "Role", value: "Founder" },
+      { label: "Model", value: "NBFC Partner" },
+      { label: "Funds Held", value: "None" },
+      { label: "Status", value: "Present" },
+    ],
+  },
   {
     title: "Shipd (YC W24)",
     role: "ML Analyst",
