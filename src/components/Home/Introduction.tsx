@@ -186,7 +186,7 @@ export default function Introduction({ name }: { name: string }) {
               </svg>
             </motion.a>
             <motion.a
-              href="https://paykredo.vercel.app/"
+              href="https://www.kredopay.site/"
               target="_blank"
               rel="noopener noreferrer"
               className="relative group inline-flex"
