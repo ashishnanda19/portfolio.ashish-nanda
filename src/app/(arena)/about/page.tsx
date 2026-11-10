@@ -12,9 +12,7 @@ import {
 import { EXPERIENCE, EDUCATION, AWARDS, type TimelineItem } from "@/data/about";
 
 function TimelineCard({ item }: { item: TimelineItem }) {
-  const theme = useThemeMode();
-  const image =
-    theme === "dark" && item.imageDark ? item.imageDark : item.image;
+  const image = item.image;
   return (
     <AccordionItem
       value={item.title}

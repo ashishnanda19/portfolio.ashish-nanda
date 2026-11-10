@@ -4,7 +4,6 @@ export interface TimelineItem {
   dates: string;
   location: string;
   image?: string;
-  imageDark?: string;
   description: string[];
   tech: string[];
   metrics?: { label: string; value: string }[];
@@ -36,8 +35,7 @@ export const EXPERIENCE: TimelineItem[] = [
     role: "Open Source Contributor",
     dates: "Nov 2026 — Present",
     location: "Remote",
-    image: "/images/logos/opensre-light.svg",
-    imageDark: "/images/logos/opensre-dark.svg",
+    image: "/images/logos/opensre.svg",
     description: [
       "Fixed a resource leak in OpenSRE's remote-sync layer: storage backends (S3, GCS, Azure, Vercel, Neon) never closed their network clients, leaking sockets across repeated syncs.",
       "Added a close() to each backend with ownership tracking, plus an optional SupportsClose protocol so community providers keep working.",
