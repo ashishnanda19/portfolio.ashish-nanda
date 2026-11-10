@@ -4,6 +4,7 @@ export interface TimelineItem {
   dates: string;
   location: string;
   image?: string;
+  imageDark?: string;
   description: string[];
   tech: string[];
   metrics?: { label: string; value: string }[];
@@ -27,6 +28,26 @@ export const EXPERIENCE: TimelineItem[] = [
       { label: "Role", value: "Founder" },
       { label: "Model", value: "NBFC Partner" },
       { label: "Funds Held", value: "None" },
+      { label: "Status", value: "Present" },
+    ],
+  },
+  {
+    title: "OpenSRE",
+    role: "Open Source Contributor",
+    dates: "Nov 2026 — Present",
+    location: "Remote",
+    image: "/images/logos/opensre-light.svg",
+    imageDark: "/images/logos/opensre-dark.svg",
+    description: [
+      "Fixed a resource leak in OpenSRE's remote-sync layer: storage backends (S3, GCS, Azure, Vercel, Neon) never closed their network clients, leaking sockets across repeated syncs.",
+      "Added a close() to each backend with ownership tracking, plus an optional SupportsClose protocol so community providers keep working.",
+      "Wrote 16 regression tests covering every backend and the sync failure paths.",
+    ],
+    tech: ["Python", "Open Source", "Cloud Storage", "Testing"],
+    metrics: [
+      { label: "Role", value: "Contributor" },
+      { label: "Tests", value: "16" },
+      { label: "Backends", value: "5" },
       { label: "Status", value: "Present" },
     ],
   },

@@ -12,6 +12,9 @@ import {
 import { EXPERIENCE, EDUCATION, AWARDS, type TimelineItem } from "@/data/about";
 
 function TimelineCard({ item }: { item: TimelineItem }) {
+  const theme = useThemeMode();
+  const image =
+    theme === "dark" && item.imageDark ? item.imageDark : item.image;
   return (
     <AccordionItem
       value={item.title}
@@ -20,9 +23,9 @@ function TimelineCard({ item }: { item: TimelineItem }) {
       <AccordionTrigger className="w-full hover:no-underline [&>svg]:hidden group">
         <div className="flex items-center gap-3 w-full">
           <div className="w-10 h-10 shrink-0 rounded-lg border border-border bg-muted/30 flex items-center justify-center overflow-hidden">
-            {item.image ? (
+            {image ? (
               <Image
-                src={item.image}
+                src={image}
                 alt={item.title}
                 width={40}
                 height={40}
