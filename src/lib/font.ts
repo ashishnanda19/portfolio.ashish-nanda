@@ -1,5 +1,4 @@
 import localFont from "next/font/local";
-import { Playfair_Display, Instrument_Serif } from "next/font/google";
 
 export const neu = localFont({
   src: [
@@ -46,18 +45,19 @@ export const jap = localFont({
   variable: "--font-jap",
 });
 
-// Elegant serif font for quotes
-export const playfair = Playfair_Display({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  style: ["normal", "italic"],
-  variable: "--font-playfair",
-});
-
-// Instrument Serif — refined editorial serif (test theme)
-export const instrument = Instrument_Serif({
-  subsets: ["latin"],
-  weight: ["400"],
-  style: ["normal", "italic"],
+// Instrument Serif — self-hosted (avoids build-time Google Fonts fetch)
+export const instrument = localFont({
+  src: [
+    {
+      path: "../../public/fonts/InstrumentSerif-Regular.ttf",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../../public/fonts/InstrumentSerif-Italic.ttf",
+      weight: "400",
+      style: "italic",
+    },
+  ],
   variable: "--font-instrument",
 });
