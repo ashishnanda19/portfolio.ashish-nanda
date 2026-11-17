@@ -28,7 +28,7 @@ export default function Introduction({ name }: { name: string }) {
     ],
     [
       "Currently building Kredo, the app and technology partner for student financing, where a licensed NBFC lender assesses credit and moves the money.",
-      "I also work as an ML Analyst at Shipd (YC W24), and recently completed my research internship at IIT (BHU) in May 2026, working on mathematical models for Net Zero practices in MSMEs.",
+      "I've shipped products used by over 250 users, contributed to open source by fixing a resource leak in OpenSRE, and recently completed my research internship at IIT (BHU) in May 2026, working on mathematical models for Net Zero practices in MSMEs.",
     ],
     [
       "When I'm not coding, I'm usually hacking on side projects or breaking things just to see how they tick.",
